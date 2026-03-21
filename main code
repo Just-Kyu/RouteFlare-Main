@@ -252,6 +252,20 @@ body {
 }
 .finput:focus { border-color: var(--purple-lt); box-shadow: 0 0 0 3px var(--purple-dim); }
 .finput::placeholder { color: var(--text3); }
+.api-input {
+  width: 100%; background: var(--surface2);
+  border: 1px solid var(--border2); border-radius: 10px;
+  color: var(--text); font-family: var(--font); font-size: 13px;
+  padding: 11px 14px; outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.api-input:focus { border-color: var(--purple-lt); box-shadow: 0 0 0 3px var(--purple-dim); }
+.eye-btn {
+  background: none; border: 1px solid var(--border2); border-radius: 8px;
+  padding: 8px 10px; color: var(--text3); cursor: pointer;
+  transition: border-color .2s;
+}
+.eye-btn:hover { border-color: var(--purple-lt); color: var(--purple-lt); }
 .co-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 7px; }
 .co-row { display: flex; gap: 7px; }
 .co-row input {
@@ -1233,7 +1247,7 @@ body {
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
                 <div>
                   <div style="font-size:20px;font-weight:800;color:var(--text)">Map Intelligence</div>
-                  <div style="font-size:12px;color:var(--text2);margin-top:3px)">Geographic fuel spend, pricing, and activity across the US</div>
+                  <div style="font-size:12px;color:var(--text2);margin-top:3px">Geographic fuel spend, pricing, and activity across the US</div>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;">
                   <div class="live-badge">LIVE</div>
@@ -1433,8 +1447,14 @@ const S = {
 
 function startAutoRefresh(){
   if(S.refreshTimer) clearInterval(S.refreshTimer);
-  S.refreshTimer = startAutoRefresh();
+  S.refreshTimer = setInterval(()=>{ refreshAll(); }, 300000);
 };
+
+function toggleVis(inputId, btn){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
 
 // ═══════════════════════════════════════════════════════
 // THEME
@@ -1743,10 +1763,7 @@ async function connect(){
   if(eiaInput&&savedEIA){ eiaInput.value=savedEIA; }
   const eiaStatus=document.getElementById('eiaStatus');
   if(eiaStatus&&savedEIA) eiaStatus.textContent='Key saved — will use on next search';
-  setInterval(async()=>{
-    for(let i=0;i<S.companies.length;i++) S.vehicles[i]=await fetchVehicles(i);
-    renderDashboard(); buildQuickPick();
-  }, 30000);
+  startAutoRefresh();
 }
 
 // ═══════════════════════════════════════════════════════

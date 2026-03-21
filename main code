@@ -2678,12 +2678,16 @@ async function findStops(){
   const eiaKey     = localStorage.getItem('eia_api_key') || '';
 
   try {
-    // ── 1. Geocode origin & destination ──────────────────────────────────
-    setFindStatus('Locating origin & destination...');
-    const [oc, dc] = await Promise.all([geocodeCity(orig), geocodeCity(dest)]);
-    if(!oc || !dc){
-      const failed = !oc ? orig : dest;
-      showFindError(`Could not locate "${failed}". Try a simpler format like "Dallas, TX" or "Nashville, TN".`); return;
+    // ── 1. Geocode origin & destination (sequential to avoid Nominatim rate-limit) ──
+    setFindStatus('Locating origin...');
+    const oc = await geocodeCity(orig);
+    if(!oc){
+      showFindError(`Could not locate "${orig}". Try a simpler format like "Dallas, TX" or "Nashville, TN".`); return;
+    }
+    setFindStatus('Locating destination...');
+    const dc = await geocodeCity(dest);
+    if(!dc){
+      showFindError(`Could not locate "${dest}". Try a simpler format like "Dallas, TX" or "Nashville, TN".`); return;
     }
 
     // ── 2. Get OSRM route geometry ────────────────────────────────────────
@@ -3530,7 +3534,17 @@ async function geocodeCity(city){
     de:'Delaware',ct:'Connecticut',ri:'Rhode Island',ma:'Massachusetts',
     vt:'Vermont',nh:'New Hampshire',me:'Maine'};
   const trimmed = city.trim();
-  const expanded = stateMap[trimmed.toLowerCase()] || trimmed;
+  // Expand state abbreviation within "City, ST" format (e.g. "Fairfield Township, OH" → "Fairfield Township, Ohio")
+  const stateAbbrMatch = trimmed.match(/,\s*([A-Za-z]{2})$/);
+  let expanded = trimmed;
+  if(stateAbbrMatch){
+    const abbr = stateAbbrMatch[1].toLowerCase();
+    if(stateMap[abbr]){
+      expanded = trimmed.replace(/,\s*[A-Za-z]{2}$/, ', ' + stateMap[abbr]);
+    }
+  } else if(stateMap[trimmed.toLowerCase()]){
+    expanded = stateMap[trimmed.toLowerCase()];
+  }
 
   // ── Method 1: Hardcoded city lookup (instant, 100% reliable) ──
   const hardcoded = lookupCity(expanded);
@@ -3668,7 +3682,8 @@ function getTileUrl(dark){
 // Google Maps API key is loaded via the JS API script tag
 
 async function buildLeafletRouteMap(mapDiv, orig, dest, stops, dark, isFullscreen){
-  const [oc, dc] = await Promise.all([geocodeCity(orig), geocodeCity(dest)]);
+  const oc = await geocodeCity(orig);
+  const dc = await geocodeCity(dest);
   if(!oc||!dc){
     mapDiv.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;color:#777;font-size:12px;"><div style="font-size:28px;color:var(--orange);">!</div><div>Could not locate "${!oc?orig:dest}"</div><div style="font-size:10px;opacity:.6;">Try "Chicago, IL" format</div></div>`;
     return null;

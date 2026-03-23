@@ -947,10 +947,143 @@ body {
 .empty .ei { font-size: 30px; margin-bottom: 10px; }
 @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
+/* ═══════════ AUTOCOMPLETE ═══════════ */
+.ac-wrap { position: relative; }
+.ac-list {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 80;
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 10px;
+  margin-top: 4px; max-height: 200px; overflow-y: auto; display: none;
+  box-shadow: var(--shadow);
+}
+.ac-list.open { display: block; }
+.ac-item {
+  padding: 9px 14px; font-size: 12px; color: var(--text); cursor: pointer;
+  transition: background .1s; display: flex; align-items: center; gap: 8px;
+}
+.ac-item:first-child { border-radius: 10px 10px 0 0; }
+.ac-item:last-child { border-radius: 0 0 10px 10px; }
+.ac-item:hover, .ac-item.sel { background: var(--purple-dim); color: var(--purple-lt); }
+.ac-item .ac-city { font-weight: 600; }
+.ac-item .ac-state { color: var(--text3); font-size: 11px; }
+.ac-list::-webkit-scrollbar { width: 4px; }
+.ac-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ═══════════ LOCATION INPUTS (single/multi mode) ═══════════ */
+.loc-inputs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 13px; }
+.loc-row { display: flex; gap: 8px; align-items: flex-end; }
+.loc-row .ig { flex: 1; }
+.loc-remove-btn {
+  background: var(--red-dim); border: 1px solid rgba(239,68,68,.3); color: var(--red);
+  border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center;
+  justify-content: center; cursor: pointer; font-size: 16px; transition: all .2s;
+  flex-shrink: 0; margin-bottom: 1px;
+}
+.loc-remove-btn:hover { background: rgba(239,68,68,.2); }
+.add-loc-btn {
+  background: var(--surface2); border: 1px dashed var(--border2); border-radius: 8px;
+  color: var(--text3); font-family: var(--font); font-size: 12px; font-weight: 600;
+  padding: 8px; cursor: pointer; transition: all .2s; display: flex;
+  align-items: center; justify-content: center; gap: 6px;
+}
+.add-loc-btn:hover { border-color: var(--purple-lt); color: var(--purple-lt); }
+
+/* ═══════════ SEARCH MODE TOGGLE ═══════════ */
+.mode-toggle {
+  display: flex; background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 8px; overflow: hidden; margin-bottom: 14px;
+}
+.mode-btn {
+  flex: 1; padding: 8px 12px; font-family: var(--font); font-size: 11px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .8px;
+  background: none; border: none; color: var(--text3); cursor: pointer;
+  transition: all .2s;
+}
+.mode-btn.on { background: var(--purple-dim); color: var(--purple-lt); }
+
+/* ═══════════ RADIUS SELECTOR ═══════════ */
+.radius-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 13px; }
+.radius-chip {
+  background: var(--surface2); border: 1px solid var(--border2); border-radius: 20px;
+  padding: 5px 14px; font-size: 11px; font-weight: 600; color: var(--text3);
+  cursor: pointer; transition: all .15s; font-family: var(--font);
+}
+.radius-chip:hover { border-color: var(--purple-lt); color: var(--purple-lt); }
+.radius-chip.on { background: var(--purple-dim); border-color: var(--purple); color: var(--purple-lt); }
+
+/* ═══════════ FUEL LOG PAGE ═══════════ */
+#page-fuelLog { padding: 18px 20px; }
+.fl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.fl-tabs { display: flex; gap: 4px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 3px; }
+.fl-tab {
+  padding: 6px 14px; font-family: var(--font); font-size: 11px; font-weight: 700;
+  background: none; border: none; border-radius: 6px; color: var(--text3);
+  cursor: pointer; transition: all .15s; text-transform: uppercase; letter-spacing: .5px;
+}
+.fl-tab.on { background: var(--purple-dim); color: var(--purple-lt); }
+.fl-section { display: none; }
+.fl-section.on { display: block; }
+
+/* Dispatched stations queue */
+.dispatch-queue { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.dispatch-card {
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 12px;
+  padding: 14px 16px; display: flex; align-items: center; gap: 14px;
+  box-shadow: var(--shadow-sm); transition: border-color .2s;
+}
+.dispatch-card:hover { border-color: var(--purple-lt); }
+.dispatch-card .dc-info { flex: 1; min-width: 0; }
+.dispatch-card .dc-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.dispatch-card .dc-addr { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.dispatch-card .dc-price { font-size: 11px; color: var(--purple-lt); margin-top: 2px; font-weight: 600; }
+.dc-log-btn {
+  background: linear-gradient(135deg, var(--green), #16A34A); color: #fff; border: none;
+  border-radius: 8px; padding: 8px 16px; font-family: var(--font); font-size: 11px;
+  font-weight: 700; cursor: pointer; transition: all .2s; white-space: nowrap;
+}
+.dc-log-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(34,197,94,.3); }
+
+/* Fuel log history table */
+.fl-table { width: 100%; border-collapse: collapse; }
+.fl-table th {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--text3); padding: 10px 12px; text-align: left;
+  border-bottom: 2px solid var(--border); position: sticky; top: 0;
+  background: var(--bg);
+}
+.fl-table td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text2); }
+.fl-table tr:hover td { background: var(--surface2); }
+.fl-table .fl-station { font-weight: 600; color: var(--text); }
+.fl-table .fl-saved { font-weight: 700; color: var(--green); }
+.fl-table .fl-total { font-weight: 700; color: var(--text); }
+
+/* Monthly report cards */
+.monthly-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+.monthly-kpi {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 16px 18px; box-shadow: var(--shadow-sm);
+}
+.monthly-kpi .mk-label { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; }
+.monthly-kpi .mk-value { font-size: 24px; font-weight: 800; color: var(--text); }
+.monthly-kpi .mk-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.month-select {
+  background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px;
+  color: var(--text); font-family: var(--font); font-size: 12px; font-weight: 600;
+  padding: 6px 12px; cursor: pointer; appearance: none;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 40px 20px; color: var(--text3);
+}
+.empty-state .es-icon { font-size: 40px; margin-bottom: 10px; opacity: .4; }
+.empty-state .es-text { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+.empty-state .es-sub { font-size: 11px; opacity: .7; }
+
 @media(max-width:960px) {
   .dash-grid { grid-template-columns: repeat(2,1fr); }
   .dash-body { grid-template-columns: 1fr; }
   .analytics-grid { grid-template-columns: 1fr; }
+  .monthly-grid { grid-template-columns: repeat(2,1fr); }
 }
 </style>
 </head>
@@ -1012,6 +1145,7 @@ body {
       <button class="sbn on" data-p="dashboard" onclick="goPage('dashboard',this)"><span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="lbl">Dash</span></button>
       <button class="sbn" data-p="finder" onclick="goPage('finder',this)"><span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19.77 7.23l.01-.01-3.72-3.72L15 4.56l2.11 2.11c-.94.36-1.61 1.26-1.61 2.33a2.5 2.5 0 002.5 2.5c.36 0 .69-.08 1-.21V19c0 .55-.45 1-1 1s-1-.45-1-1v-3c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H6C4.9 3 4 3.9 4 5v16h10v-7.5h1.5V19a2.5 2.5 0 005 0V9c0-.69-.28-1.32-.73-1.77zM12 10H6V5h6v5zm6 0a1 1 0 110-2 1 1 0 010 2z"/></svg></span><span class="lbl">Finder</span></button>
       <button class="sbn" data-p="mapReport" onclick="goPage('mapReport',this)"><span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="lbl">Map</span></button>
+      <button class="sbn" data-p="fuelLog" onclick="goPage('fuelLog',this)"><span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span><span class="lbl">Fuel Log</span></button>
       <button class="sbn" data-p="analytics" onclick="goPage('analytics',this)"><span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span class="lbl">Reports</span></button>
     </div>
     <div class="sb-bot">
@@ -1145,19 +1279,55 @@ body {
 
                   <div style="padding:18px 18px 0;">
                     <div class="finder-h">Fuel Station Finder</div>
-                    <div class="finder-sub">Enter origin & destination — ranked by cheapest diesel price along your route</div>
+                    <div class="finder-sub" id="finderSub">Search nearby stations or find cheapest diesel along your route</div>
                     <div class="qp-label" id="qpLbl" style="display:none">Quick Pick — Low Fuel Trucks</div>
                     <div class="qp-list" id="qpList"></div>
-                    <div class="route-grid">
-                      <div class="ig"><label>Origin</label><input type="text" id="fOrig" placeholder="e.g. Chicago, IL"/></div>
-                      <div class="arr-div">→</div>
-                      <div class="ig"><label>Destination</label><input type="text" id="fDest" placeholder="e.g. Nashville, TN"/></div>
+
+                    <!-- Search Mode Toggle -->
+                    <div class="mode-toggle">
+                      <button class="mode-btn on" id="modeNearby" onclick="setFinderMode('nearby')">Nearby Search</button>
+                      <button class="mode-btn" id="modeRoute" onclick="setFinderMode('route')">Route Search</button>
                     </div>
+
+                    <!-- Nearby Mode: single location + radius -->
+                    <div id="nearbySection">
+                      <div class="loc-inputs" id="locInputs">
+                        <div class="loc-row" data-idx="0">
+                          <div class="ig ac-wrap" style="flex:1;">
+                            <label>Location</label>
+                            <input type="text" class="loc-input" id="fLoc0" placeholder="e.g. Hot Springs, AR" oninput="onLocInput(this)" onfocus="onLocInput(this)" autocomplete="off"/>
+                            <div class="ac-list" id="ac-fLoc0"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <button class="add-loc-btn" onclick="addLocInput()">+ Add Location</button>
+                      <div style="margin-top:12px;">
+                        <div class="qp-label" style="display:block;margin-bottom:6px;">Search Radius</div>
+                        <div class="radius-row" id="radiusRow">
+                          <button class="radius-chip" data-r="5" onclick="setRadius(5,this)">5 mi</button>
+                          <button class="radius-chip on" data-r="10" onclick="setRadius(10,this)">10 mi</button>
+                          <button class="radius-chip" data-r="15" onclick="setRadius(15,this)">15 mi</button>
+                          <button class="radius-chip" data-r="20" onclick="setRadius(20,this)">20 mi</button>
+                          <button class="radius-chip" data-r="30" onclick="setRadius(30,this)">30 mi</button>
+                          <button class="radius-chip" data-r="50" onclick="setRadius(50,this)">50 mi</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Route Mode: origin → destination (hidden by default) -->
+                    <div id="routeSection" style="display:none;">
+                      <div class="route-grid">
+                        <div class="ig ac-wrap"><label>Origin</label><input type="text" id="fOrig" placeholder="e.g. Chicago, IL" oninput="onLocInput(this)" onfocus="onLocInput(this)" autocomplete="off"/><div class="ac-list" id="ac-fOrig"></div></div>
+                        <div class="arr-div">→</div>
+                        <div class="ig ac-wrap"><label>Destination</label><input type="text" id="fDest" placeholder="e.g. Nashville, TN" oninput="onLocInput(this)" onfocus="onLocInput(this)" autocomplete="off"/><div class="ac-list" id="ac-fDest"></div></div>
+                      </div>
+                      <div class="ig sm" style="margin-bottom:10px;"><label>Max Detour</label><select id="fDetour"><option value="2">2 miles</option><option value="5" selected>5 miles</option><option value="10">10 miles</option><option value="25">25 miles</option></select></div>
+                    </div>
+
                     <div class="opts-row">
                       <div class="ig sm"><label>Fuel Type</label><select id="fType"><option value="diesel">Diesel</option><option value="def">DEF</option><option value="gas">Gasoline</option></select></div>
-                      <div class="ig sm"><label>Sort By</label><select id="fSort"><option value="price">Cheapest Price</option><option value="distance">Least Detour</option></select></div>
-                      <div class="ig sm"><label>Max Detour</label><select id="fDetour"><option value="2">2 miles</option><option value="5" selected>5 miles</option><option value="10">10 miles</option><option value="25">25 miles</option></select></div>
-                      <button class="find-stops-btn" id="fBtn" onclick="findStops()">Find Stops</button>
+                      <div class="ig sm"><label>Sort By</label><select id="fSort"><option value="price">Cheapest Price</option><option value="distance">Nearest</option></select></div>
+                      <button class="find-stops-btn" id="fBtn" onclick="doFinderSearch()">Find Stops</button>
                     </div>
                     <!-- Chain filter -->
                     <div style="margin-top:10px;margin-bottom:14px;">
@@ -1308,6 +1478,72 @@ body {
                 </div>
               </div>
             </div>
+
+      <!-- FUEL LOG -->
+      <div class="page" id="page-fuelLog">
+        <div class="fl-header">
+          <div>
+            <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:2px;">Fuel Log</div>
+            <div style="font-size:12px;color:var(--text2);">Track fueling history, savings, and monthly reports</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select class="month-select" id="flMonthSelect" onchange="renderFuelLog()">
+              <option value="all">All Time</option>
+            </select>
+            <button class="tb-btn primary" onclick="openAddFueling()">+ Log Fueling</button>
+          </div>
+        </div>
+
+        <div class="fl-tabs">
+          <button class="fl-tab on" onclick="setFlTab('dispatch',this)">Dispatched</button>
+          <button class="fl-tab" onclick="setFlTab('history',this)">History</button>
+          <button class="fl-tab" onclick="setFlTab('reports',this)">Monthly Report</button>
+        </div>
+
+        <!-- Dispatched stations queue -->
+        <div class="fl-section on" id="flDispatch" style="margin-top:14px;">
+          <div class="qp-label" style="display:block;margin-bottom:8px;">Stations Sent to Drivers — Log Fueling</div>
+          <div class="dispatch-queue" id="dispatchQueue"></div>
+          <div class="empty-state" id="dispatchEmpty" style="display:none;">
+            <div class="es-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4z"/></svg></div>
+            <div class="es-text">No dispatched stations yet</div>
+            <div class="es-sub">Use the Finder to find stations and send to drivers via Telegram</div>
+          </div>
+        </div>
+
+        <!-- History table -->
+        <div class="fl-section" id="flHistory" style="margin-top:14px;">
+          <div class="card" style="overflow-x:auto;">
+            <table class="fl-table">
+              <thead><tr>
+                <th>Date</th><th>Station</th><th>Truck</th><th>Gallons</th>
+                <th>Price/Gal</th><th>Disc. Price</th><th>Total</th><th>Saved</th>
+              </tr></thead>
+              <tbody id="flHistoryBody"></tbody>
+            </table>
+            <div class="empty-state" id="historyEmpty" style="display:none;">
+              <div class="es-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+              <div class="es-text">No fueling records yet</div>
+              <div class="es-sub">Log a fueling from a dispatched station or use + Log Fueling</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly Report -->
+        <div class="fl-section" id="flReports" style="margin-top:14px;">
+          <div class="monthly-grid" id="monthlyKpis"></div>
+          <div class="card" style="overflow-x:auto;">
+            <div class="card-title">Fueling Breakdown</div>
+            <table class="fl-table">
+              <thead><tr>
+                <th>Station</th><th>Visits</th><th>Total Gallons</th>
+                <th>Avg $/Gal</th><th>Total Spent</th><th>Total Saved</th>
+              </tr></thead>
+              <tbody id="flReportBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
     </div><!-- end .pages -->
 
@@ -1971,6 +2207,20 @@ function saveFueling(){
     saved:parseFloat((gals*(price-disc)).toFixed(2)),
   };
   S.fuelRecords.push(rec);
+  // Persist to localStorage fuel log
+  const logHistory = getFuelLogHistory();
+  logHistory.unshift(rec);
+  saveFuelLogHistory(logHistory);
+  // Mark dispatched station as logged if applicable
+  const modal = document.getElementById('fuelModal');
+  const dispatchId = modal.dataset.dispatchId;
+  if(dispatchId){
+    const dispatched = getDispatchedStations();
+    const ds = dispatched.find(d=>d.id===dispatchId);
+    if(ds) ds.logged = true;
+    saveDispatchedStations(dispatched);
+    delete modal.dataset.dispatchId;
+  }
   closeFuelModal();
   renderDashboard(); refreshCharts();
   showToast('ok','ok','Fueling Logged',`${gals} gals at ${station} — saved $${rec.saved.toFixed(2)}`);
@@ -2130,6 +2380,7 @@ function jumpToTruckAlert(companyIndex, location){
   renderDashboard(); buildQuickPick();
   closeTbAlerts();
   document.getElementById('fOrig').value = location;
+  if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value = location;
   goPage('finder', document.querySelector('[data-p="finder"]'));
 }
 
@@ -2647,7 +2898,7 @@ function buildQuickPick(){
   document.getElementById('qpLbl').style.display=low.length?'block':'none';
   document.getElementById('qpList').innerHTML=low.map(v=>`
     <span class="qp-chip ${v.fuelPercent<10?'vcr':'vwa'}"
-      onclick="document.getElementById('fOrig').value='${v.location}'"
+      onclick="document.getElementById('fOrig').value='${v.location}';if(document.getElementById('fLoc0'))document.getElementById('fLoc0').value='${v.location}'"
       title="${v.unitNumber} — ${v.fuelPercent}% fuel">
       ${v.unitNumber} · ${v.fuelPercent}%
     </span>`).join('');
@@ -2655,6 +2906,7 @@ function buildQuickPick(){
 
 function goFindForTruck(loc){
   document.getElementById('fOrig').value=loc;
+  if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value=loc;
   goPage('finder',document.querySelector('[data-p="finder"]'));
 }
 
@@ -2842,7 +3094,8 @@ function renderStopsList(stops, orig, dest, hasRealPrices){
   document.getElementById('stopCount').textContent = stops.length;
   document.getElementById('routeInfo').textContent = `${orig} → ${dest}`;
   document.getElementById('bestName').textContent  = best.name;
-  document.getElementById('bestAddr').textContent  = `${best.address} · ${best.detour} mi off route`;
+  const distLabel = finderMode==='nearby' ? 'mi away' : 'mi off route';
+  document.getElementById('bestAddr').textContent  = `${best.address} · ${best.detour} ${distLabel}`;
   document.getElementById('bestPrice').textContent = `$${best.price}`;
 
   const eiaStatus = document.getElementById('eiaStatus');
@@ -2873,7 +3126,7 @@ function renderStopsList(stops, orig, dest, hasRealPrices){
       </div>
       <div class="smeta">
         <div class="sprice">${priceDisp}</div>
-        <div class="sdist">${st.detour} mi off route</div>
+        <div class="sdist">${st.detour} ${distLabel}</div>
         ${parseFloat(save) > 0 ? `<div class="save-badge">Save $${save}/gal</div>` : ''}
       </div>`;
     list.appendChild(card);
@@ -2892,7 +3145,8 @@ function selectStop(st, card){
   document.querySelectorAll('.stop-tg-inline').forEach(el=>el.remove());
   card.classList.add('sel');
   document.getElementById('bestName').textContent = st.name;
-  document.getElementById('bestAddr').textContent = `${st.address} · ${st.detour} mi off route`;
+  const dl = finderMode==='nearby' ? 'mi away' : 'mi off route';
+  document.getElementById('bestAddr').textContent = `${st.address} · ${st.detour} ${dl}`;
   document.getElementById('bestPrice').textContent = `$${st.price}`;
   S.selectedStop = st;
 
@@ -2988,6 +3242,8 @@ async function sendToTelegram(){
     if(data.ok){
       localStorage.setItem('tg_bot_token', token);
       localStorage.setItem('tg_chat_id', chatId);
+      // Save dispatched station to fuel log queue
+      if(S.selectedStop) addDispatchedStation(S.selectedStop);
       statusEl.className='tg-status ok';
       statusEl.textContent='Message sent to driver successfully!';
       statusEl.style.display='block';
@@ -3004,6 +3260,458 @@ async function sendToTelegram(){
     statusEl.style.display='block';
   }
   btn.disabled=false; btn.textContent='Send to Driver via Telegram';
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTOCOMPLETE
+// ═══════════════════════════════════════════════════════
+function onLocInput(inp){
+  const val = inp.value.trim().toLowerCase();
+  const listId = 'ac-' + inp.id;
+  let list = document.getElementById(listId);
+  if(!list){
+    list = document.createElement('div');
+    list.className = 'ac-list';
+    list.id = listId;
+    inp.parentElement.appendChild(list);
+  }
+  if(val.length < 1){ list.classList.remove('open'); return; }
+  const matches = [];
+  const keys = Object.keys(CITY_COORDS);
+  const seen = new Set();
+  for(const k of keys){
+    if(k.includes(val) && !seen.has(CITY_COORDS[k].lat+','+CITY_COORDS[k].lng)){
+      seen.add(CITY_COORDS[k].lat+','+CITY_COORDS[k].lng);
+      const parts = k.split(' ');
+      const state = parts.length > 1 && parts[parts.length-1].length === 2 ? parts[parts.length-1].toUpperCase() : '';
+      const city = state ? parts.slice(0,-1).join(' ') : k;
+      const display = state ? city.split(' ').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ')+', '+state : k.split(' ').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ');
+      matches.push({display, key:k});
+      if(matches.length >= 8) break;
+    }
+  }
+  if(!matches.length){ list.classList.remove('open'); return; }
+  list.innerHTML = matches.map((m,i)=>
+    `<div class="ac-item" data-val="${m.display}" onmousedown="selectAc(this,'${inp.id}')">${m.display}</div>`
+  ).join('');
+  list.classList.add('open');
+}
+function selectAc(item, inputId){
+  const inp = document.getElementById(inputId);
+  inp.value = item.dataset.val;
+  const list = document.getElementById('ac-'+inputId);
+  if(list) list.classList.remove('open');
+}
+document.addEventListener('click', e=>{
+  document.querySelectorAll('.ac-list.open').forEach(l=>{
+    if(!l.parentElement.contains(e.target)) l.classList.remove('open');
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+// FINDER MODE (Nearby / Route)
+// ═══════════════════════════════════════════════════════
+let finderMode = 'nearby';
+let searchRadius = 10;
+let locInputCount = 1;
+
+function setFinderMode(mode){
+  finderMode = mode;
+  document.getElementById('modeNearby').classList.toggle('on', mode==='nearby');
+  document.getElementById('modeRoute').classList.toggle('on', mode==='route');
+  document.getElementById('nearbySection').style.display = mode==='nearby' ? 'block' : 'none';
+  document.getElementById('routeSection').style.display = mode==='route' ? 'block' : 'none';
+  document.getElementById('finderSub').textContent = mode==='nearby'
+    ? 'Search nearby stations or find cheapest diesel along your route'
+    : 'Enter origin & destination — ranked by cheapest diesel price along your route';
+}
+
+function setRadius(r, btn){
+  searchRadius = r;
+  document.querySelectorAll('.radius-chip').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function addLocInput(){
+  const container = document.getElementById('locInputs');
+  const idx = locInputCount++;
+  const row = document.createElement('div');
+  row.className = 'loc-row';
+  row.dataset.idx = idx;
+  row.innerHTML = `
+    <div class="ig ac-wrap" style="flex:1;">
+      <label>Location ${idx+1}</label>
+      <input type="text" class="loc-input" id="fLoc${idx}" placeholder="e.g. Dallas, TX" oninput="onLocInput(this)" onfocus="onLocInput(this)" autocomplete="off"/>
+      <div class="ac-list" id="ac-fLoc${idx}"></div>
+    </div>
+    <button class="loc-remove-btn" onclick="removeLocInput(this)">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+function removeLocInput(btn){
+  btn.closest('.loc-row').remove();
+}
+
+function doFinderSearch(){
+  if(finderMode === 'route'){
+    findStops();
+  } else {
+    findNearbyStops();
+  }
+}
+
+async function findNearbyStops(){
+  const inputs = document.querySelectorAll('.loc-input');
+  const locations = [];
+  for(const inp of inputs){
+    const val = inp.value.trim();
+    if(val) locations.push(val);
+  }
+  if(!locations.length){
+    showFindError('Please enter at least one location.');
+    return;
+  }
+
+  document.getElementById('fLoad').classList.add('on');
+  document.getElementById('fResults').classList.remove('on');
+  document.getElementById('fBtn').disabled = true;
+
+  const fType = document.getElementById('fType').value;
+  const fSort = document.getElementById('fSort').value;
+  const eiaKey = localStorage.getItem('eia_api_key') || '';
+
+  try {
+    // Geocode all locations
+    setFindStatus('Locating...');
+    const coords = [];
+    for(const loc of locations){
+      const c = await geocodeCity(loc);
+      if(!c){
+        showFindError(`Could not locate "${loc}". Try a format like "Dallas, TX".`);
+        return;
+      }
+      coords.push({...c, label: loc});
+    }
+
+    // Search around each location
+    setFindStatus('Scanning for fuel stations...');
+    const radiusMeters = searchRadius * 1609.34;
+    let allRaw = [];
+    const seenIds = new Set();
+    for(const coord of coords){
+      const stations = await fetchStationsNearby(coord.lat, coord.lng, radiusMeters, fType);
+      stations.forEach(st=>{
+        const key = `${st.lat.toFixed(4)},${st.lng.toFixed(4)}`;
+        if(!seenIds.has(key)){
+          seenIds.add(key);
+          st.distMi = haversine(coord.lat, coord.lng, st.lat, st.lng);
+          allRaw.push(st);
+        }
+      });
+    }
+
+    // EIA prices
+    setFindStatus('Loading diesel prices...');
+    const eiaData = eiaKey ? await fetchEIAPrices(eiaKey) : null;
+    const hasRealPrices = !!(eiaData && eiaData.national);
+
+    // Chain filter
+    const activeChips = Array.from(document.querySelectorAll('.chain-chip.active'));
+    const allActive = activeChips.length === document.querySelectorAll('.chain-chip').length;
+    const CHIP_CHAINS = ['pilot flying j',"love's travel stop",'flying j','ta / petro','one9 fuel network','speedway'];
+
+    let stops = allRaw.map(st=>{
+      const chain = matchChain(st.name, st.brand);
+      if(!chain) return null;
+      if(!allActive){
+        const chainLower = chain.name.toLowerCase();
+        const isMainChip = CHIP_CHAINS.some(cc=>chainLower.includes(cc.split(' ')[0])||cc.includes(chainLower.split(' ')[0]));
+        if(isMainChip){
+          const isActive = activeChips.some(chip=>{
+            const txt = chip.textContent.trim().toLowerCase();
+            return chain.name.split(' ').some(w=>w.length>2&&txt.includes(w.toLowerCase()));
+          });
+          if(!isActive) return null;
+        } else {
+          const otherActive = activeChips.some(chip=>chip.textContent.trim().toLowerCase().includes('other'));
+          if(!otherActive) return null;
+        }
+      }
+      if(st.distMi > searchRadius) return null;
+      const h = coordHash(st.lat, st.lng);
+      const basePrice = hasRealPrices ? eiaData.national : 3.45;
+      const price = Math.max(3.05, basePrice + (h*0.20-0.08));
+      const addr = st.address && st.address.trim() && !st.address.match(/^-?\d+\.\d{3,},\s*-?\d+\.\d{3,}$/)
+        ? st.address.trim() : `${st.lat.toFixed(4)}, ${st.lng.toFixed(4)}`;
+      const displayName = (st.name && st.name.trim()) ? st.name.trim() : chain.name;
+      return {...chain, name:displayName, chainName:chain.name,
+        lat:st.lat, lng:st.lng, address:addr,
+        price:price.toFixed(3), detour:st.distMi.toFixed(1), priceEst:!hasRealPrices};
+    }).filter(Boolean);
+
+    stops.sort((a,b)=> fSort==='distance'
+      ? parseFloat(a.detour)-parseFloat(b.detour)
+      : parseFloat(a.price)-parseFloat(b.price));
+
+    if(!stops.length){
+      showFindError(`No fuel stations found within ${searchRadius} miles. Try a larger radius.`);
+      return;
+    }
+
+    const locLabel = locations.join(' + ');
+    renderStopsList(stops, locLabel, `${searchRadius} mi radius`, hasRealPrices);
+    S.finderStops = stops;
+    document.getElementById('fLoad').classList.remove('on');
+    document.getElementById('fResults').classList.add('on');
+    document.getElementById('fBtn').disabled = false;
+    document.querySelector('#fLoad p').textContent = 'Scanning for fuel stations...';
+    renderNearbyMap(coords, stops);
+  } catch(e){
+    console.error('findNearbyStops error:', e);
+    showFindError('Error fetching stations. Check your connection and try again.');
+  }
+}
+
+async function fetchStationsNearby(lat, lng, radiusMeters, fuelType){
+  let stations = [];
+  const seenIds = new Set();
+  function addSt(st){ const key=st.placeId||`${st.lat.toFixed(4)},${st.lng.toFixed(4)}`; if(!seenIds.has(key)){seenIds.add(key);stations.push(st);} }
+
+  const placesAvailable = !!(typeof google!=='undefined'&&google.maps&&google.maps.places);
+  if(placesAvailable){
+    const results = await googleNearbySearch(lat, lng, Math.min(radiusMeters, 50000), null);
+    results.forEach(addSt);
+  }
+  if(stations.length < 10){
+    const PAD = (radiusMeters/1609.34) * 0.0145;
+    const bbox = {south:lat-PAD, north:lat+PAD, west:lng-PAD, east:lng+PAD};
+    const osm = await fetchOverpassStations(bbox, fuelType);
+    osm.forEach(st=>addSt({...st, source:'overpass'}));
+  }
+  return deduplicateStations(stations);
+}
+
+function renderNearbyMap(coords, stops){
+  const mapPanel = document.getElementById('finderMapPanel');
+  mapPanel.classList.add('visible');
+  const mapDiv = document.getElementById('leafletMap');
+  const placeholder = document.getElementById('finderMapPlaceholder');
+  if(placeholder) placeholder.style.display = 'none';
+  if(S.leafletMap){ S.leafletMap.remove(); S.leafletMap = null; }
+
+  const dark = S.theme === 'dark';
+  const lmap = L.map(mapDiv, {zoomControl:true, attributionControl:true});
+  L.tileLayer(getTileUrl(dark), {
+    attribution:'© <a href="https://carto.com">CARTO</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    subdomains:'abcd', maxZoom:19
+  }).addTo(lmap);
+
+  const prices = stops.map(s=>parseFloat(s.price));
+  const minP = Math.min(...prices), maxP = Math.max(...prices);
+
+  // Add location markers
+  coords.forEach((c,i)=>{
+    const icon = L.divIcon({
+      html:`<div style="width:32px;height:32px;border-radius:50%;background:var(--purple);border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.3);">★</div>`,
+      className:'', iconSize:[32,32], iconAnchor:[16,16]
+    });
+    L.marker([c.lat, c.lng], {icon}).addTo(lmap).bindPopup(`<b>${c.label}</b>`);
+    // Draw radius circle
+    L.circle([c.lat, c.lng], {radius:searchRadius*1609.34, color:dark?'#7C3AED':'#6D28D9', weight:2, opacity:.4, fillOpacity:.05}).addTo(lmap);
+  });
+
+  // Station markers
+  S.finderMarkers = [];
+  stops.forEach((st,i)=>{
+    const p = parseFloat(st.price);
+    const ratio = maxP>minP ? (p-minP)/(maxP-minP) : 0.5;
+    const color = ratio<0.33?'#22C55E':ratio<0.66?'#F59E0B':'#EF4444';
+    const sz = i===0?30:22;
+    const icon = makeStationIcon(st.price, color, sz);
+    const m = L.marker([st.lat, st.lng], {icon}).addTo(lmap);
+    m.bindPopup(`<b>${st.name}</b><br>$${st.price}/gal<br>${st.detour} mi away`);
+    S.finderMarkers.push(m);
+  });
+
+  const allPts = [...coords.map(c=>[c.lat,c.lng]), ...stops.map(s=>[s.lat,s.lng])];
+  if(allPts.length) lmap.fitBounds(allPts, {padding:[30,30]});
+  S.leafletMap = lmap;
+
+  const countEl = document.getElementById('mapStopCount');
+  countEl.textContent = `${stops.length} stops`;
+  countEl.style.display = 'inline';
+  const legend = document.getElementById('mapLegend');
+  if(legend) legend.style.display = 'flex';
+  [100,350,700].forEach(t=>setTimeout(()=>lmap.invalidateSize(),t));
+}
+
+// ═══════════════════════════════════════════════════════
+// DISPATCHED STATIONS & FUEL LOG
+// ═══════════════════════════════════════════════════════
+function getDispatchedStations(){
+  try { return JSON.parse(localStorage.getItem('ff_dispatched')||'[]'); } catch(e){ return []; }
+}
+function saveDispatchedStations(list){
+  localStorage.setItem('ff_dispatched', JSON.stringify(list));
+}
+function addDispatchedStation(st){
+  const list = getDispatchedStations();
+  const discPrice = (parseFloat(st.price)-0.15).toFixed(3);
+  list.unshift({
+    id: 'ds_'+Date.now(),
+    name: st.name||st.chainName||'Fuel Station',
+    address: st.address||'',
+    lat: st.lat, lng: st.lng,
+    price: st.price,
+    discountedPrice: discPrice,
+    detour: st.detour||'0',
+    date: new Date().toISOString().split('T')[0],
+    logged: false
+  });
+  saveDispatchedStations(list);
+}
+
+function getFuelLogHistory(){
+  try { return JSON.parse(localStorage.getItem('ff_fuel_log')||'[]'); } catch(e){ return []; }
+}
+function saveFuelLogHistory(list){
+  localStorage.setItem('ff_fuel_log', JSON.stringify(list));
+}
+
+function setFlTab(tab, btn){
+  document.querySelectorAll('.fl-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.fl-section').forEach(s=>s.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(tab==='dispatch'?'flDispatch':tab==='history'?'flHistory':'flReports').classList.add('on');
+}
+
+function renderFuelLog(){
+  populateMonthSelect();
+  renderDispatchQueue();
+  renderFuelHistory();
+  renderMonthlyReport();
+}
+
+function populateMonthSelect(){
+  const sel = document.getElementById('flMonthSelect');
+  const history = getFuelLogHistory();
+  const months = new Set();
+  history.forEach(r=>{ if(r.date) months.add(r.date.substring(0,7)); });
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">All Time</option>';
+  Array.from(months).sort().reverse().forEach(m=>{
+    const [y,mo] = m.split('-');
+    const label = new Date(y, parseInt(mo)-1).toLocaleDateString('en-US',{year:'numeric',month:'long'});
+    sel.innerHTML += `<option value="${m}">${label}</option>`;
+  });
+  sel.value = cur || 'all';
+}
+
+function renderDispatchQueue(){
+  const list = getDispatchedStations().filter(d=>!d.logged);
+  const container = document.getElementById('dispatchQueue');
+  const empty = document.getElementById('dispatchEmpty');
+  if(!list.length){
+    container.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  container.innerHTML = list.map(d=>`
+    <div class="dispatch-card" data-id="${d.id}">
+      <div style="width:36px;height:36px;border-radius:10px;background:var(--purple-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--purple-lt)" stroke="none"><path d="M19.77 7.23l.01-.01-3.72-3.72L15 4.56l2.11 2.11c-.94.36-1.61 1.26-1.61 2.33a2.5 2.5 0 002.5 2.5c.36 0 .69-.08 1-.21V19c0 .55-.45 1-1 1s-1-.45-1-1v-3c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H6C4.9 3 4 3.9 4 5v16h10v-7.5h1.5V19a2.5 2.5 0 005 0V9c0-.69-.28-1.32-.73-1.77zM12 10H6V5h6v5zm6 0a1 1 0 110-2 1 1 0 010 2z"/></svg>
+      </div>
+      <div class="dc-info">
+        <div class="dc-name">${d.name}</div>
+        <div class="dc-addr">${d.address}</div>
+        <div class="dc-price">$${d.price}/gal · Disc. $${d.discountedPrice}/gal · Sent ${d.date}</div>
+      </div>
+      <button class="dc-log-btn" onclick="openLogForDispatch('${d.id}')">Log Fueling</button>
+    </div>
+  `).join('');
+}
+
+function openLogForDispatch(dispatchId){
+  const list = getDispatchedStations();
+  const d = list.find(x=>x.id===dispatchId);
+  if(!d) return;
+  populateTruckSelect();
+  document.getElementById('mStation').value = d.name;
+  document.getElementById('mPrice').value = d.price;
+  document.getElementById('mDiscount').value = d.discountedPrice;
+  document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fuelModal').dataset.dispatchId = dispatchId;
+  document.getElementById('fuelModal').classList.add('on');
+}
+
+function renderFuelHistory(){
+  const selectedMonth = document.getElementById('flMonthSelect').value;
+  let history = getFuelLogHistory();
+  if(selectedMonth !== 'all'){
+    history = history.filter(r=>r.date && r.date.startsWith(selectedMonth));
+  }
+  const tbody = document.getElementById('flHistoryBody');
+  const empty = document.getElementById('historyEmpty');
+  if(!history.length){
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = history.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`
+    <tr>
+      <td>${r.date}</td>
+      <td class="fl-station">${r.station}</td>
+      <td>${r.truckUnit||'—'}</td>
+      <td>${r.gallons}</td>
+      <td>$${parseFloat(r.pricePerGal).toFixed(3)}</td>
+      <td>$${parseFloat(r.discountedPrice).toFixed(3)}</td>
+      <td class="fl-total">$${parseFloat(r.discountTotal).toFixed(2)}</td>
+      <td class="fl-saved">$${parseFloat(r.saved).toFixed(2)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderMonthlyReport(){
+  const selectedMonth = document.getElementById('flMonthSelect').value;
+  let history = getFuelLogHistory();
+  if(selectedMonth !== 'all'){
+    history = history.filter(r=>r.date && r.date.startsWith(selectedMonth));
+  }
+  // KPIs
+  const totalGals = history.reduce((s,r)=>s+r.gallons,0);
+  const totalSpent = history.reduce((s,r)=>s+r.discountTotal,0);
+  const totalSaved = history.reduce((s,r)=>s+r.saved,0);
+  const avgPrice = totalGals>0 ? (totalSpent/totalGals) : 0;
+  const kpiDiv = document.getElementById('monthlyKpis');
+  kpiDiv.innerHTML = `
+    <div class="monthly-kpi"><div class="mk-label">Total Gallons</div><div class="mk-value">${totalGals.toLocaleString()}</div><div class="mk-sub">${history.length} fuel stops</div></div>
+    <div class="monthly-kpi"><div class="mk-label">Total Spent</div><div class="mk-value">$${totalSpent.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div class="mk-sub">After discounts</div></div>
+    <div class="monthly-kpi"><div class="mk-label">Total Saved</div><div class="mk-value" style="color:var(--green);">$${totalSaved.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div class="mk-sub">From discounted pricing</div></div>
+    <div class="monthly-kpi"><div class="mk-label">Avg Price/Gal</div><div class="mk-value">$${avgPrice.toFixed(3)}</div><div class="mk-sub">Weighted average</div></div>
+  `;
+  // Breakdown by station
+  const byStation = {};
+  history.forEach(r=>{
+    if(!byStation[r.station]) byStation[r.station] = {visits:0,gallons:0,spent:0,saved:0};
+    byStation[r.station].visits++;
+    byStation[r.station].gallons += r.gallons;
+    byStation[r.station].spent += r.discountTotal;
+    byStation[r.station].saved += r.saved;
+  });
+  const tbody = document.getElementById('flReportBody');
+  tbody.innerHTML = Object.entries(byStation).sort((a,b)=>b[1].spent-a[1].spent).map(([name,d])=>`
+    <tr>
+      <td class="fl-station">${name}</td>
+      <td>${d.visits}</td>
+      <td>${d.gallons.toLocaleString()}</td>
+      <td>$${d.gallons>0?(d.spent/d.gallons).toFixed(3):'—'}</td>
+      <td class="fl-total">$${d.spent.toFixed(2)}</td>
+      <td class="fl-saved">$${d.saved.toFixed(2)}</td>
+    </tr>
+  `).join('');
 }
 
 function handleChainClick(event, label){
@@ -3511,6 +4219,73 @@ const CITY_COORDS = {
   'woodlawn':{ lat:39.2387, lng:-84.4625 },'woodlawn oh':{ lat:39.2387, lng:-84.4625 },
   'buckeye':{ lat:33.3703, lng:-112.5838 },'buckeye az':{ lat:33.3703, lng:-112.5838 },
   'fort worth':{ lat:32.7555, lng:-97.3308 },'fort worth tx':{ lat:32.7555, lng:-97.3308 },
+  'hot springs':{ lat:34.5037, lng:-93.0552 },'hot springs ar':{ lat:34.5037, lng:-93.0552 },
+  'hot springs village':{ lat:34.6620, lng:-92.9982 },'hot springs village ar':{ lat:34.6620, lng:-92.9982 },
+  'fairfield':{ lat:39.3460, lng:-84.5602 },'fairfield oh':{ lat:39.3460, lng:-84.5602 },
+  'fairfield township':{ lat:39.3410, lng:-84.5410 },'fairfield township oh':{ lat:39.3410, lng:-84.5410 },
+  'springfield':{ lat:39.7817, lng:-89.6501 },'springfield il':{ lat:39.7817, lng:-89.6501 },
+  'springfield mo':{ lat:37.2090, lng:-93.2923 },'springfield oh':{ lat:39.9242, lng:-83.8088 },
+  'springfield ma':{ lat:42.1015, lng:-72.5898 },
+  'chattanooga':{ lat:35.0456, lng:-85.3097 },'chattanooga tn':{ lat:35.0456, lng:-85.3097 },
+  'bowling green':{ lat:36.9685, lng:-86.4808 },'bowling green ky':{ lat:36.9685, lng:-86.4808 },
+  'lexington':{ lat:38.0406, lng:-84.5037 },'lexington ky':{ lat:38.0406, lng:-84.5037 },
+  'shreveport':{ lat:32.5252, lng:-93.7502 },'shreveport la':{ lat:32.5252, lng:-93.7502 },
+  'mobile':{ lat:30.6954, lng:-88.0399 },'mobile al':{ lat:30.6954, lng:-88.0399 },
+  'amarillo':{ lat:35.2220, lng:-101.8313 },'amarillo tx':{ lat:35.2220, lng:-101.8313 },
+  'lubbock':{ lat:33.5779, lng:-101.8552 },'lubbock tx':{ lat:33.5779, lng:-101.8552 },
+  'midland':{ lat:31.9973, lng:-102.0779 },'midland tx':{ lat:31.9973, lng:-102.0779 },
+  'odessa':{ lat:31.8457, lng:-102.3676 },'odessa tx':{ lat:31.8457, lng:-102.3676 },
+  'abilene':{ lat:32.4487, lng:-99.7331 },'abilene tx':{ lat:32.4487, lng:-99.7331 },
+  'waco':{ lat:31.5493, lng:-97.1467 },'waco tx':{ lat:31.5493, lng:-97.1467 },
+  'beaumont':{ lat:30.0802, lng:-94.1266 },'beaumont tx':{ lat:30.0802, lng:-94.1266 },
+  'tyler':{ lat:32.3513, lng:-95.3011 },'tyler tx':{ lat:32.3513, lng:-95.3011 },
+  'texarkana':{ lat:33.4418, lng:-94.0477 },'texarkana tx':{ lat:33.4418, lng:-94.0477 },
+  'jonesboro':{ lat:35.8423, lng:-90.7043 },'jonesboro ar':{ lat:35.8423, lng:-90.7043 },
+  'fayetteville':{ lat:36.0626, lng:-94.1574 },'fayetteville ar':{ lat:36.0626, lng:-94.1574 },
+  'pine bluff':{ lat:34.2284, lng:-92.0032 },'pine bluff ar':{ lat:34.2284, lng:-92.0032 },
+  'fort smith':{ lat:35.3859, lng:-94.3985 },'fort smith ar':{ lat:35.3859, lng:-94.3985 },
+  'joplin':{ lat:37.0842, lng:-94.5133 },'joplin mo':{ lat:37.0842, lng:-94.5133 },
+  'evansville':{ lat:37.9716, lng:-87.5711 },'evansville in':{ lat:37.9716, lng:-87.5711 },
+  'terre haute':{ lat:39.4667, lng:-87.4139 },'terre haute in':{ lat:39.4667, lng:-87.4139 },
+  'topeka':{ lat:39.0489, lng:-95.6780 },'topeka ks':{ lat:39.0489, lng:-95.6780 },
+  'sioux falls':{ lat:43.5446, lng:-96.7311 },'sioux falls sd':{ lat:43.5446, lng:-96.7311 },
+  'fargo':{ lat:46.8772, lng:-96.7898 },'fargo nd':{ lat:46.8772, lng:-96.7898 },
+  'cedar rapids':{ lat:41.9779, lng:-91.6656 },'cedar rapids ia':{ lat:41.9779, lng:-91.6656 },
+  'davenport':{ lat:41.5236, lng:-90.5776 },'davenport ia':{ lat:41.5236, lng:-90.5776 },
+  'peoria':{ lat:40.6936, lng:-89.5890 },'peoria il':{ lat:40.6936, lng:-89.5890 },
+  'rockford':{ lat:42.2711, lng:-89.0940 },'rockford il':{ lat:42.2711, lng:-89.0940 },
+  'harrisburg':{ lat:40.2732, lng:-76.8867 },'harrisburg pa':{ lat:40.2732, lng:-76.8867 },
+  'scranton':{ lat:41.4090, lng:-75.6624 },'scranton pa':{ lat:41.4090, lng:-75.6624 },
+  'erie':{ lat:42.1292, lng:-80.0851 },'erie pa':{ lat:42.1292, lng:-80.0851 },
+  'green bay':{ lat:44.5192, lng:-88.0198 },'green bay wi':{ lat:44.5192, lng:-88.0198 },
+  'madison':{ lat:43.0731, lng:-89.4012 },'madison wi':{ lat:43.0731, lng:-89.4012 },
+  'duluth':{ lat:46.7867, lng:-92.1005 },'duluth mn':{ lat:46.7867, lng:-92.1005 },
+  'grand rapids':{ lat:42.9634, lng:-85.6681 },'grand rapids mi':{ lat:42.9634, lng:-85.6681 },
+  'lansing':{ lat:42.7325, lng:-84.5555 },'lansing mi':{ lat:42.7325, lng:-84.5555 },
+  'charleston':{ lat:38.3498, lng:-81.6326 },'charleston wv':{ lat:38.3498, lng:-81.6326 },
+  'charleston sc':{ lat:32.7765, lng:-79.9311 },
+  'savannah':{ lat:32.0809, lng:-81.0912 },'savannah ga':{ lat:32.0809, lng:-81.0912 },
+  'macon':{ lat:32.8407, lng:-83.6324 },'macon ga':{ lat:32.8407, lng:-83.6324 },
+  'tallahassee':{ lat:30.4383, lng:-84.2807 },'tallahassee fl':{ lat:30.4383, lng:-84.2807 },
+  'pensacola':{ lat:30.4213, lng:-87.2169 },'pensacola fl':{ lat:30.4213, lng:-87.2169 },
+  'jacksonville':{ lat:30.3322, lng:-81.6557 },'jacksonville fl':{ lat:30.3322, lng:-81.6557 },
+  'orlando':{ lat:28.5383, lng:-81.3792 },'orlando fl':{ lat:28.5383, lng:-81.3792 },
+  'ocala':{ lat:29.1872, lng:-82.1401 },'ocala fl':{ lat:29.1872, lng:-82.1401 },
+  'gainesville':{ lat:29.6516, lng:-82.3248 },'gainesville fl':{ lat:29.6516, lng:-82.3248 },
+  'dothan':{ lat:31.2232, lng:-85.3905 },'dothan al':{ lat:31.2232, lng:-85.3905 },
+  'montgomery':{ lat:32.3792, lng:-86.3077 },'montgomery al':{ lat:32.3792, lng:-86.3077 },
+  'huntsville':{ lat:34.7304, lng:-86.5861 },'huntsville al':{ lat:34.7304, lng:-86.5861 },
+  'tupelo':{ lat:34.2576, lng:-88.7034 },'tupelo ms':{ lat:34.2576, lng:-88.7034 },
+  'hattiesburg':{ lat:31.3271, lng:-89.2903 },'hattiesburg ms':{ lat:31.3271, lng:-89.2903 },
+  'meridian':{ lat:32.3643, lng:-88.7037 },'meridian ms':{ lat:32.3643, lng:-88.7037 },
+  'lake charles':{ lat:30.2266, lng:-93.2174 },'lake charles la':{ lat:30.2266, lng:-93.2174 },
+  'baton rouge':{ lat:30.4515, lng:-91.1871 },'baton rouge la':{ lat:30.4515, lng:-91.1871 },
+  'monroe':{ lat:32.5093, lng:-92.1193 },'monroe la':{ lat:32.5093, lng:-92.1193 },
+  'alexandria':{ lat:31.3113, lng:-92.4451 },'alexandria la':{ lat:31.3113, lng:-92.4451 },
+  'corinth':{ lat:34.9343, lng:-88.5223 },'corinth ms':{ lat:34.9343, lng:-88.5223 },
+  'clarksville':{ lat:36.5298, lng:-87.3595 },'clarksville tn':{ lat:36.5298, lng:-87.3595 },
+  'cookeville':{ lat:36.1628, lng:-85.5016 },'cookeville tn':{ lat:36.1628, lng:-85.5016 },
+  'crossville':{ lat:35.9489, lng:-85.0269 },'crossville tn':{ lat:35.9489, lng:-85.0269 },
 };
 
 function lookupCity(q){
@@ -3896,10 +4671,11 @@ function goPage(p,btn){
   document.querySelectorAll('.sbn').forEach(b=>b.classList.remove('on'));
   document.getElementById(`page-${p}`).classList.add('on');
   if(btn) btn.classList.add('on');
-  const titles={dashboard:'Dashboard',finder:'Fuel Finder',mapReport:'Map Intelligence',analytics:'Analytics & Reports'};
+  const titles={dashboard:'Dashboard',finder:'Fuel Finder',mapReport:'Map Intelligence',analytics:'Analytics & Reports',fuelLog:'Fuel Log'};
   document.getElementById('pgTitle').textContent=titles[p]||p;
   document.getElementById('coTabs').style.display=p==='dashboard'?'flex':'none';
   if(p==='analytics') renderAnalytics();
+  if(p==='fuelLog') renderFuelLog();
   // Show/hide the finder map panel
   const mapPanel = document.getElementById('finderMapPanel');
   const wasFinderVisible = mapPanel && mapPanel.classList.contains('visible');

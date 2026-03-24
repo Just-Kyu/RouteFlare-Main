@@ -207,8 +207,9 @@ body {
 #setup {
   position: fixed; inset: 0;
   background: var(--bg);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: flex-start; justify-content: center;
   z-index: 1000; padding: 20px;
+  overflow-y: auto;
   transition: background .3s;
 }
 .setup-card {
@@ -217,6 +218,7 @@ body {
   border-radius: 20px;
   padding: 44px 40px;
   width: 100%; max-width: 480px;
+  margin: auto 0;
   position: relative; overflow: hidden;
   box-shadow: var(--shadow);
 }

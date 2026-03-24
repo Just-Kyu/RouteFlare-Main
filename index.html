@@ -309,6 +309,9 @@ body {
 /* ═══════════ APP SHELL ═══════════ */
 #app { display: none; height: 100vh; flex-direction: row; }
 #app.on { display: flex; }
+/* Instantly hide setup & show app when saved session exists (prevents login flash on refresh) */
+.has-session #setup { display: none !important; }
+.has-session #app { display: flex; }
 
 /* ── Sidebar ── */
 .sidebar {
@@ -1090,6 +1093,21 @@ body {
 </style>
 </head>
 <body>
+<script>
+// Instantly hide setup & show app if a saved session exists, preventing login flash on refresh
+(function(){
+  try {
+    var c = localStorage.getItem('ff_companies');
+    var g = localStorage.getItem('ff_globalKey');
+    var k = localStorage.getItem('ff_apiKeys');
+    var companies = c ? JSON.parse(c) : [];
+    var keys = k ? JSON.parse(k) : [];
+    if(companies.length && (g || keys.some(function(x){return x;}))){
+      document.documentElement.classList.add('has-session');
+    }
+  } catch(e){}
+})();
+</script>
 
 <!-- ══ SETUP ══ -->
 <div id="setup">

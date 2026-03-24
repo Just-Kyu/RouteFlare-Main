@@ -309,6 +309,9 @@ body {
 /* ═══════════ APP SHELL ═══════════ */
 #app { display: none; height: 100vh; flex-direction: row; }
 #app.on { display: flex; }
+/* Instantly hide setup & show app when saved session exists (prevents login flash on refresh) */
+.has-session #setup { display: none !important; }
+.has-session #app { display: flex; }
 
 /* ── Sidebar ── */
 .sidebar {
@@ -1090,6 +1093,21 @@ body {
 </style>
 </head>
 <body>
+<script>
+// Instantly hide setup & show app if a saved session exists, preventing login flash on refresh
+(function(){
+  try {
+    var c = localStorage.getItem('ff_companies');
+    var g = localStorage.getItem('ff_globalKey');
+    var k = localStorage.getItem('ff_apiKeys');
+    var companies = c ? JSON.parse(c) : [];
+    var keys = k ? JSON.parse(k) : [];
+    if(companies.length && (g || keys.some(function(x){return x;}))){
+      document.documentElement.classList.add('has-session');
+    }
+  } catch(e){}
+})();
+</script>
 
 <!-- ══ SETUP ══ -->
 <div id="setup">
@@ -4299,6 +4317,17 @@ function lookupCity(q){
   return null;
 }
 
+function cleanAddress(addr){
+  // Strip suite/unit/apt numbers (#6001, Suite 200, Unit B, Apt 3, etc.)
+  let cleaned = addr.replace(/\s*#\s*\w+/g, '');
+  cleaned = cleaned.replace(/\s*\b(suite|ste|unit|apt|bldg|building|room|rm|fl|floor)\s*\.?\s*\w+/gi, '');
+  // Strip zip codes (5-digit or 5+4)
+  cleaned = cleaned.replace(/\s*\b\d{5}(-\d{4})?\b/g, '');
+  // Clean up extra commas and spaces
+  cleaned = cleaned.replace(/,\s*,/g, ',').replace(/,\s*$/, '').replace(/^\s*,/, '').trim();
+  return cleaned;
+}
+
 async function geocodeCity(city){
   const stateMap = {pa:'Pennsylvania',oh:'Ohio',in:'Indiana',ky:'Kentucky',il:'Illinois',
     wi:'Wisconsin',mi:'Michigan',mn:'Minnesota',mo:'Missouri',ia:'Iowa',ne:'Nebraska',
@@ -4311,16 +4340,18 @@ async function geocodeCity(city){
     de:'Delaware',ct:'Connecticut',ri:'Rhode Island',ma:'Massachusetts',
     vt:'Vermont',nh:'New Hampshire',me:'Maine'};
   const trimmed = city.trim();
+  // Clean address: strip suite/unit numbers and zip codes that confuse geocoders
+  const cleaned = cleanAddress(trimmed);
   // Expand state abbreviation within "City, ST" format (e.g. "Fairfield Township, OH" → "Fairfield Township, Ohio")
-  const stateAbbrMatch = trimmed.match(/,\s*([A-Za-z]{2})$/);
-  let expanded = trimmed;
+  const stateAbbrMatch = cleaned.match(/,\s*([A-Za-z]{2})$/);
+  let expanded = cleaned;
   if(stateAbbrMatch){
     const abbr = stateAbbrMatch[1].toLowerCase();
     if(stateMap[abbr]){
-      expanded = trimmed.replace(/,\s*[A-Za-z]{2}$/, ', ' + stateMap[abbr]);
+      expanded = cleaned.replace(/,\s*[A-Za-z]{2}$/, ', ' + stateMap[abbr]);
     }
-  } else if(stateMap[trimmed.toLowerCase()]){
-    expanded = stateMap[trimmed.toLowerCase()];
+  } else if(stateMap[cleaned.toLowerCase()]){
+    expanded = stateMap[cleaned.toLowerCase()];
   }
 
   // ── Method 1: Hardcoded city lookup (instant, 100% reliable) ──
@@ -4330,7 +4361,30 @@ async function geocodeCity(city){
     return hardcoded;
   }
 
-  // ── Method 2: Nominatim (free, no key) with timeout ──
+  // ── Method 2: Google Maps HTTP Geocoding API (most reliable for full addresses) ──
+  try {
+    const gmKey = localStorage.getItem('gm_api_key') || '';
+    if(gmKey){
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const r = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(trimmed)}&key=${encodeURIComponent(gmKey)}`,
+        { signal: controller.signal }
+      );
+      clearTimeout(timeout);
+      if(r.ok){
+        const d = await r.json();
+        if(d.status === 'OK' && d.results && d.results.length){
+          const loc = d.results[0].geometry.location;
+          const result = {lat: loc.lat, lng: loc.lng};
+          console.log(`[FuelPro] Google HTTP geocoded "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
+          return result;
+        }
+      }
+    }
+  } catch(e){ console.warn('[FuelPro] Google HTTP geocode error:', e.message); }
+
+  // ── Method 3: Nominatim with cleaned address (free, no key) ──
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
@@ -4349,7 +4403,7 @@ async function geocodeCity(city){
     }
   } catch(e){ console.warn('[FuelPro] Nominatim error:', e.message); }
 
-  // ── Method 3: Nominatim broader search ──
+  // ── Method 4: Nominatim broader search ──
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
@@ -4368,13 +4422,13 @@ async function geocodeCity(city){
     }
   } catch(e){ console.warn('[FuelPro] Nominatim broad error:', e.message); }
 
-  // ── Method 4: Google Maps JS Geocoder ──
+  // ── Method 5: Google Maps JS Geocoder ──
   try {
     if(typeof google !== 'undefined' && google.maps && google.maps.Geocoder){
       const geocoder = new google.maps.Geocoder();
       const result = await new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error('timeout')), 8000);
-        geocoder.geocode({address: expanded}, (results, status) => {
+        geocoder.geocode({address: trimmed}, (results, status) => {
           clearTimeout(timer);
           if(status === 'OK' && results && results.length > 0){
             resolve({ lat: results[0].geometry.location.lat(), lng: results[0].geometry.location.lng() });
@@ -4383,10 +4437,10 @@ async function geocodeCity(city){
           }
         });
       });
-      console.log(`[FuelPro] Google geocoded "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
+      console.log(`[FuelPro] Google JS geocoded "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
       return result;
     }
-  } catch(e){ console.warn('[FuelPro] Google error:', e.message); }
+  } catch(e){ console.warn('[FuelPro] Google JS error:', e.message); }
 
   console.error(`[FuelPro] All geocoding failed for "${city}"`);
   return null;

@@ -377,6 +377,10 @@ body {
   width: 55%;
   border-left-width: 1px;
 }
+.finder-map-panel.fullwidth {
+  width: 100%;
+  border-left-width: 0;
+}
 /* Leaflet map fills its container */
 .finder-map-panel .leaflet-container {
   font-family: var(--font);
@@ -429,10 +433,29 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Pages ── */
-.pages { flex: 1; overflow: hidden; position: relative; }
+.pages { flex: 1; overflow: hidden; position: relative; transition: flex .3s ease; }
+.pages.collapsed { flex: 0 0 0px; width: 0; min-width: 0; overflow: hidden; }
 .page { display: none; height: 100%; overflow-y: auto; padding: 18px 20px; }
 #page-finder { padding: 0; }
 #page-finder.on { display: flex; flex-direction: column; overflow-y: auto; }
+/* Toggle arrow button overlaid on top-left of map */
+.finder-toggle-btn {
+  position: absolute; top: 12px; left: 12px; z-index: 1001;
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border2);
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .2s; color: var(--text); font-size: 16px;
+}
+.finder-toggle-btn:hover { background: var(--surface2); border-color: var(--purple); }
+/* Station detail on LEFT side of map */
+.station-detail-panel {
+  position: absolute; top: 0; left: 0; width: 360px; height: 100%; z-index: 1000;
+  background: var(--surface); border-right: 1px solid var(--border2);
+  box-shadow: 4px 0 24px rgba(0,0,0,.3); overflow-y: auto;
+  animation: slideInLeft .25s ease; font-family: var(--font);
+}
+@keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 .page.on { display: block; }
 .page::-webkit-scrollbar { width: 4px; }
 .page::-webkit-scrollbar-track { background: transparent; }
@@ -868,13 +891,7 @@ body {
 .scard-fuel-label { font-size: 8px; text-transform: uppercase; font-weight: 700; letter-spacing: .5px; color: var(--text3); }
 .scard-fuel-price { font-size: 12px; font-weight: 800; color: var(--text); margin-top: 1px; }
 /* ── Relay-style station detail panel on map ── */
-.station-detail-panel {
-  position: absolute; top: 0; right: 0; width: 340px; height: 100%; z-index: 1000;
-  background: var(--surface); border-left: 1px solid var(--border2);
-  box-shadow: -4px 0 24px rgba(0,0,0,.3); overflow-y: auto;
-  animation: slideInRight .25s ease; font-family: var(--font);
-}
-@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+/* station-detail-panel styles moved to top with left-side layout */
 .sdp-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; }
 .sdp-back { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer; flex-shrink: 0; transition: all .2s; }
 .sdp-back:hover { border-color: var(--purple); color: var(--text); }
@@ -1646,6 +1663,9 @@ body {
         </div>
       </div>
       <div id="finderMapContainer" style="flex:1;position:relative;overflow:hidden;">
+        <button class="finder-toggle-btn" id="finderToggleBtn" onclick="toggleFinderPanel()" style="display:none;" title="Show search panel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
         <div id="leafletMap" style="position:absolute;inset:0;"></div>
         <div class="finder-map-placeholder" id="finderMapPlaceholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);pointer-events:none;z-index:1;">
           <div style="margin-bottom:12px;opacity:.4"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
@@ -3130,6 +3150,7 @@ async function findStops(){
     document.getElementById('fBtn').disabled = false;
     document.querySelector('#fLoad p').textContent = 'Scanning route for cheapest diesel...';
     renderFinderMap();
+    collapseFinderPanel();
     const firstCard = document.querySelector('.stop-card');
     if(firstCard) selectStop(stops[0], firstCard);
 
@@ -3584,6 +3605,8 @@ async function findNearbyStops(){
     document.getElementById('fBtn').disabled = false;
     document.querySelector('#fLoad p').textContent = 'Scanning for fuel stations...';
     renderNearbyMap(coords, stops);
+    // Collapse left panel, expand map full width
+    collapseFinderPanel();
   } catch(e){
     console.error('findNearbyStops error:', e);
     showFindError('Error fetching stations. Check your connection and try again.');
@@ -3647,7 +3670,7 @@ function renderNearbyMap(coords, stops){
     const ratio = maxP>minP ? (p-minP)/(maxP-minP) : 0.5;
     const color = ratio<0.33?'#22C55E':ratio<0.66?'#F59E0B':'#EF4444';
     const sz = i===0?30:22;
-    const icon = makeStationIcon(st.price, color, sz);
+    const icon = makeStationIcon(st.price, color, sz, st.name);
     const m = L.marker([st.lat, st.lng], {icon}).addTo(lmap);
     m.on('click', () => openStationDetailPanel(st, i));
     S.finderMarkers.push(m);
@@ -3776,6 +3799,42 @@ function openStationDetailPanel(st, idx){
 function closeStationDetailPanel(){
   const panel = document.getElementById('stationDetailPanel');
   if(panel) panel.remove();
+}
+
+function collapseFinderPanel(){
+  const pagesEl = document.querySelector('.pages');
+  const mapPanel = document.getElementById('finderMapPanel');
+  const toggleBtn = document.getElementById('finderToggleBtn');
+  if(pagesEl) pagesEl.classList.add('collapsed');
+  if(mapPanel){ mapPanel.classList.remove('visible'); mapPanel.classList.add('fullwidth'); }
+  if(toggleBtn){
+    toggleBtn.style.display = 'flex';
+    toggleBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>';
+  }
+  S._finderCollapsed = true;
+  [100,350,700].forEach(t=>setTimeout(()=>{ if(S.leafletMap) S.leafletMap.invalidateSize(); },t));
+}
+
+function expandFinderPanel(){
+  const pagesEl = document.querySelector('.pages');
+  const mapPanel = document.getElementById('finderMapPanel');
+  const toggleBtn = document.getElementById('finderToggleBtn');
+  closeStationDetailPanel();
+  if(pagesEl) pagesEl.classList.remove('collapsed');
+  if(mapPanel){ mapPanel.classList.remove('fullwidth'); mapPanel.classList.add('visible'); }
+  if(toggleBtn){
+    toggleBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>';
+  }
+  S._finderCollapsed = false;
+  [100,350,700].forEach(t=>setTimeout(()=>{ if(S.leafletMap) S.leafletMap.invalidateSize(); },t));
+}
+
+function toggleFinderPanel(){
+  if(S._finderCollapsed){
+    expandFinderPanel();
+  } else {
+    collapseFinderPanel();
+  }
 }
 
 function selectStopFromPanel(idx){
@@ -4406,6 +4465,7 @@ function closeMapExpand(){
 S.finderStops = [];
 S.finderMarkers = [];
 S.leafletMap = null;
+S._finderCollapsed = false;
 
 // Hardcoded coords for 100 most common US cities — ultimate fallback if APIs fail
 const CITY_COORDS = {
@@ -4762,13 +4822,16 @@ function pinColorHex(price, minP, maxP){
   return t<0.4?'#22C55E':t<0.7?'#F59E0B':'#EF4444';
 }
 
-function makeStationIcon(price, color, sz){
-  const fs = sz > 26 ? 11 : 9;
-  const border = sz > 26 ? '3px solid #fff' : '2px solid rgba(0,0,0,.18)';
-  const shadow = sz > 26 ? `0 0 0 3px ${color}44,0 4px 14px rgba(0,0,0,.4)` : '0 2px 8px rgba(0,0,0,.28)';
+function makeStationIcon(price, color, sz, stName){
+  const shortName = (stName||'').length > 14 ? (stName||'').substring(0,13)+'…' : (stName||'');
+  const w = Math.max(80, shortName.length * 7 + 20);
+  const h = 42;
   return L.divIcon({
-    html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${color};border:${border};display:flex;align-items:center;justify-content:center;font-size:${fs}px;font-weight:800;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:${shadow};">$${price}</div>`,
-    className:'', iconSize:[sz,sz], iconAnchor:[sz/2,sz/2], popupAnchor:[0,-sz/2]
+    html:`<div style="min-width:${w}px;height:${h}px;border-radius:10px;background:#7C3AED;border:2px solid #fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 8px;box-shadow:0 3px 12px rgba(124,58,237,.4);cursor:pointer;">
+      <div style="font-size:9px;font-weight:600;color:rgba(255,255,255,.85);font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;line-height:1.1;">${shortName}</div>
+      <div style="font-size:13px;font-weight:800;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;line-height:1.1;">$${price}</div>
+    </div>`,
+    className:'', iconSize:[w,h], iconAnchor:[w/2,h], popupAnchor:[0,-h]
   });
 }
 
@@ -5008,9 +5071,15 @@ function showToast(lvl,ico,title,desc){
 // ═══════════════════════════════════════════════════════
 function goPage(p,btn){
   closeTbAlerts();
-  document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(pg=>{ pg.classList.remove('on'); });
   document.querySelectorAll('.sbn').forEach(b=>b.classList.remove('on'));
-  document.getElementById(`page-${p}`).classList.add('on');
+  const pageEl = document.getElementById(`page-${p}`);
+  pageEl.classList.add('on');
+  const pagesEl = document.querySelector('.pages');
+  // If not finder page, ensure pages wrapper is visible
+  if(p !== 'finder'){
+    if(pagesEl) pagesEl.classList.remove('collapsed');
+  }
   if(btn) btn.classList.add('on');
   const titles={dashboard:'Dashboard',finder:'Fuel Finder',mapReport:'Map Intelligence',analytics:'Analytics & Reports',fuelLog:'Fuel Log'};
   document.getElementById('pgTitle').textContent=titles[p]||p;
@@ -5019,11 +5088,20 @@ function goPage(p,btn){
   if(p==='fuelLog') renderFuelLog();
   // Show/hide the finder map panel
   const mapPanel = document.getElementById('finderMapPanel');
-  const wasFinderVisible = mapPanel && mapPanel.classList.contains('visible');
-  if(mapPanel) mapPanel.classList.toggle('visible', p==='finder');
+  const wasFinderVisible = mapPanel && (mapPanel.classList.contains('visible') || mapPanel.classList.contains('fullwidth'));
   if(p==='finder'){
-    // Re-measure Leaflet after transition finishes
+    if(S._finderCollapsed){
+      // Map fullwidth, pages collapsed
+      if(pagesEl) pagesEl.classList.add('collapsed');
+      mapPanel.classList.remove('visible');
+      mapPanel.classList.add('fullwidth');
+    } else {
+      mapPanel.classList.add('visible');
+      mapPanel.classList.remove('fullwidth');
+    }
     [100,350,700].forEach(t=>setTimeout(()=>{ if(S.leafletMap) S.leafletMap.invalidateSize(); },t));
+  } else {
+    if(mapPanel){ mapPanel.classList.remove('visible'); mapPanel.classList.remove('fullwidth'); }
   }
   // For mapReport: if finder panel was open, wait for its collapse transition (300ms) before rendering maps
   if(p==='mapReport'){

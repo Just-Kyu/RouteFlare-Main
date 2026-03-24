@@ -3396,6 +3396,8 @@ async function findNearbyStops(){
   document.getElementById('fLoad').classList.add('on');
   document.getElementById('fResults').classList.remove('on');
   document.getElementById('fBtn').disabled = true;
+  const fErrEl = document.getElementById('fErr');
+  fErrEl.style.display = 'none'; fErrEl.textContent = '';
 
   const fType = document.getElementById('fType').value;
   const fSort = document.getElementById('fSort').value;
@@ -4535,6 +4537,16 @@ function pinColorHex(price, minP, maxP){
   if(maxP===minP) return '#22C55E';
   const t=(parseFloat(price)-minP)/(maxP-minP);
   return t<0.4?'#22C55E':t<0.7?'#F59E0B':'#EF4444';
+}
+
+function makeStationIcon(price, color, sz){
+  const fs = sz > 26 ? 11 : 9;
+  const border = sz > 26 ? '3px solid #fff' : '2px solid rgba(0,0,0,.18)';
+  const shadow = sz > 26 ? `0 0 0 3px ${color}44,0 4px 14px rgba(0,0,0,.4)` : '0 2px 8px rgba(0,0,0,.28)';
+  return L.divIcon({
+    html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${color};border:${border};display:flex;align-items:center;justify-content:center;font-size:${fs}px;font-weight:800;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:${shadow};">$${price}</div>`,
+    className:'', iconSize:[sz,sz], iconAnchor:[sz/2,sz/2], popupAnchor:[0,-sz/2]
+  });
 }
 
 function makeDivIcon(label, color, selected){

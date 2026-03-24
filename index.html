@@ -823,18 +823,18 @@ body {
 .stops-list { display: flex; flex-direction: column; gap: 7px; }
 .stop-card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 12px 15px;
-  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  border-radius: 12px; padding: 14px 16px;
+  display: flex; align-items: flex-start; gap: 12px; cursor: pointer;
   transition: border-color .2s, transform .15s; animation: fadeUp .3s ease both;
   box-shadow: var(--shadow-sm);
 }
 .stop-card:hover { border-color: rgba(124,58,237,.3); transform: translateX(2px); }
 .stop-card.sel { border-color: var(--purple); background: var(--purple-dim); }
-.srank { font-size: 18px; font-weight: 800; color: var(--text3); width: 28px; text-align: center; flex-shrink: 0; margin-right: 2px; }
+.srank { font-size: 18px; font-weight: 800; color: var(--text3); width: 28px; text-align: center; flex-shrink: 0; margin-right: 2px; padding-top: 2px; }
 .stop-card:nth-child(1) .srank { color: var(--purple-lt); }
 .stop-card:nth-child(2) .srank { color: var(--blue-lt); }
 .stop-card:nth-child(3) .srank { color: var(--green); }
-.sico { width: 34px; height: 34px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.sico { width: 38px; height: 38px; border-radius: 10px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
 /* Inline Telegram send button below selected card */
 .stop-tg-btn {
   width: 100%; margin-top: 6px; padding: 10px;
@@ -849,14 +849,76 @@ body {
 .sinfo { flex: 1; min-width: 0; }
 .sname { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .saddr { font-size: 11px; color: var(--text2); margin-top: 2px; }
-.stags { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+.stags { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
 .stag { font-size: 9px; padding: 2px 6px; border-radius: 3px; background: var(--surface2); border: 1px solid var(--border); color: var(--text3); text-transform: uppercase; font-weight: 600; letter-spacing: .5px; }
 .stag.relay { border-color: rgba(34,197,94,.4); color: var(--green); }
-.smeta { text-align: right; flex-shrink: 0; }
-.sprice { font-size: 21px; font-weight: 800; color: var(--text); }
-.stop-card:nth-child(1) .sprice { color: var(--purple-lt); }
-.sdist { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.stag.has-def { border-color: rgba(59,130,246,.35); color: var(--blue-lt); }
+.stag.has-shower { border-color: rgba(168,85,247,.35); color: #A855F7; }
+.stag.has-scale { border-color: rgba(245,158,11,.35); color: #F59E0B; }
+.smeta { text-align: right; flex-shrink: 0; min-width: 90px; }
+.sprice { font-size: 20px; font-weight: 800; color: var(--green); line-height: 1.1; }
+.stop-card:nth-child(1) .sprice { color: var(--green); }
+.sprice-retail { font-size: 10px; color: var(--text3); text-decoration: line-through; margin-top: 1px; }
+.sprice-save { font-size: 10px; color: var(--green); font-weight: 700; margin-top: 1px; }
+.sdist { font-size: 10px; color: var(--text3); margin-top: 3px; }
 .save-badge { font-size: 9px; background: var(--green-dim); border: 1px solid rgba(34,197,94,.25); color: var(--green); padding: 2px 6px; border-radius: 3px; font-weight: 700; margin-top: 3px; display: inline-block; }
+/* Fuel type pills row on card */
+.scard-fuels { display: flex; gap: 6px; margin-top: 6px; }
+.scard-fuel { display: flex; flex-direction: column; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; min-width: 52px; }
+.scard-fuel-label { font-size: 8px; text-transform: uppercase; font-weight: 700; letter-spacing: .5px; color: var(--text3); }
+.scard-fuel-price { font-size: 12px; font-weight: 800; color: var(--text); margin-top: 1px; }
+/* ── Relay-style station detail panel on map ── */
+.station-detail-panel {
+  position: absolute; top: 0; right: 0; width: 340px; height: 100%; z-index: 1000;
+  background: var(--surface); border-left: 1px solid var(--border2);
+  box-shadow: -4px 0 24px rgba(0,0,0,.3); overflow-y: auto;
+  animation: slideInRight .25s ease; font-family: var(--font);
+}
+@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.sdp-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; }
+.sdp-back { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer; flex-shrink: 0; transition: all .2s; }
+.sdp-back:hover { border-color: var(--purple); color: var(--text); }
+.sdp-station-info { flex: 1; min-width: 0; }
+.sdp-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; margin-bottom: 10px; }
+.sdp-name { font-size: 18px; font-weight: 800; color: var(--text); line-height: 1.2; }
+.sdp-badges { display: flex; gap: 6px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
+.sdp-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 700; }
+.sdp-badge.in-network { background: var(--green-dim); border: 1px solid rgba(34,197,94,.3); color: var(--green); }
+.sdp-badge.location { font-weight: 500; color: var(--text2); padding: 0; }
+.sdp-fuels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 16px; }
+.sdp-fuel-card {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 10px; text-align: center; transition: border-color .2s;
+}
+.sdp-fuel-card:hover { border-color: var(--purple); }
+.sdp-fuel-icon { font-size: 24px; margin-bottom: 6px; }
+.sdp-fuel-type { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+.sdp-fuel-price { font-size: 22px; font-weight: 800; color: var(--text); margin-top: 4px; }
+.sdp-fuel-retail { font-size: 10px; color: var(--text3); text-decoration: line-through; margin-top: 2px; }
+.sdp-fuel-save { font-size: 10px; color: var(--green); font-weight: 700; }
+.sdp-amenities { padding: 0 16px 16px; }
+.sdp-section-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+.sdp-amenity-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.sdp-amenity { font-size: 10px; padding: 5px 10px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.sdp-amenity .ami { font-size: 13px; }
+.sdp-address { padding: 0 16px 16px; }
+.sdp-addr-row { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--text2); }
+.sdp-addr-row svg { flex-shrink: 0; margin-top: 1px; }
+.sdp-actions { padding: 16px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); }
+.sdp-select-btn {
+  width: 100%; padding: 12px; border: none; border-radius: 10px;
+  background: var(--purple); color: #fff; font-family: var(--font);
+  font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity .2s;
+  box-shadow: 0 3px 12px rgba(124,58,237,.3);
+}
+.sdp-select-btn:hover { opacity: .9; }
+.sdp-tg-btn {
+  width: 100%; padding: 10px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg,#229ED9,#1A7DAF); color: #fff;
+  font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: opacity .2s; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.sdp-tg-btn:hover { opacity: .9; }
 .pay-box { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 15px 18px; margin-top: 14px; box-shadow: var(--shadow-sm); }
 .pay-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 .pay-title::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 2s ease infinite; }
@@ -3021,21 +3083,33 @@ async function findStops(){
       // Deterministic price based on station coordinates
       const h = coordHash(st.lat, st.lng);
       const basePrice = hasRealPrices ? eiaData.national : 3.45;
-      const price = Math.max(3.05, basePrice + (h * 0.20 - 0.08));
+      const retailPrice = Math.max(3.05, basePrice + (h * 0.20 - 0.08));
+      const discount = chain.relay ? 0.15 : 0.05;
+      const discountPrice = retailPrice - discount;
+      const h2 = coordHash(st.lat+0.001, st.lng+0.001);
+      const defPrice = Math.max(2.80, basePrice - 0.35 + (h2*0.15-0.05));
+      const reeferPrice = Math.max(3.20, retailPrice + 0.10 + (h2*0.08));
+      const hasDEF = (chain.amenities||[]).some(a=>a.toUpperCase()==='DEF');
 
       // Address
       const addr = st.address && st.address.trim() && !st.address.match(/^-?\d+\.\d{3,},\s*-?\d+\.\d{3,}$/)
-        ? st.address.trim() 
+        ? st.address.trim()
         : `${st.lat.toFixed(4)}, ${st.lng.toFixed(4)}`;
       const needsGeocode = !st.address || st.address.match(/^-?\d+\.\d{3,}/);
 
       // Preserve REAL station name from Google Places (e.g. "Pilot Travel Centers")
-      // Chain name is used for classification, but display name stays original
-      const displayName = (st.name && st.name.trim()) ? st.name.trim() : chain.name;
+      const rawName = (st.name && st.name.trim()) ? st.name.trim() : '';
+      const displayName = rawName || chain.name;
+      const stCity = st.city || '';
+      const stState = st.state || '';
 
       return { ...chain, name: displayName, chainName: chain.name,
                lat: st.lat, lng: st.lng, address: addr, needsGeocode,
-               price: price.toFixed(3), detour: detour.toFixed(1), priceEst: !hasRealPrices };
+               city: stCity, state: stState,
+               price: discountPrice.toFixed(3), retailPrice: retailPrice.toFixed(3),
+               savings: discount.toFixed(2), defPrice: hasDEF ? defPrice.toFixed(3) : null,
+               reeferPrice: chain.relay ? reeferPrice.toFixed(3) : null,
+               detour: detour.toFixed(1), priceEst: !hasRealPrices };
     }).filter(Boolean);
 
     // Sort (no cap — show ALL stations)
@@ -3121,33 +3195,44 @@ function renderStopsList(stops, orig, dest, hasRealPrices){
   const eiaStatus = document.getElementById('eiaStatus');
   if(eiaStatus) eiaStatus.textContent = hasRealPrices ? 'Real EIA prices loaded' : 'Prices shown as est. without key';
 
-  const avg  = (stops.reduce((s,x) => s + parseFloat(x.price), 0) / stops.length).toFixed(3);
   const list = document.getElementById('stopsList');
   list.innerHTML = '';
   stops.forEach((st, i) => {
-    const save = (parseFloat(avg) - parseFloat(st.price)).toFixed(2);
     const card = document.createElement('div');
     card.className = 'stop-card' + (i === 0 ? ' sel' : '');
     card.style.animationDelay = `${i * 0.04}s`;
     card.onclick = () => selectStop(st, card);
-    const priceDisp = st.priceEst
-      ? `$${st.price}<span style="font-size:9px;color:#aaa;font-weight:500;margin-left:2px;">est.</span>`
-      : `$${st.price}`;
+    const estBadge = st.priceEst ? '<span style="font-size:8px;color:#aaa;font-weight:500;margin-left:2px;">est.</span>' : '';
+
+    // Amenity tag helpers
+    const amenities = st.amenities || [];
+    const amenityTags = amenities.slice(0,4).map(a => {
+      const cls = a.toUpperCase()==='DEF' ? ' has-def' : a.toLowerCase().includes('shower') ? ' has-shower' : (a.toLowerCase().includes('scale')||a.toLowerCase().includes('cat')) ? ' has-scale' : '';
+      return `<span class="stag${cls}">${a}</span>`;
+    }).join('');
+
+    // Fuel type pills
+    let fuelPills = `<div class="scard-fuel"><span class="scard-fuel-label">Diesel</span><span class="scard-fuel-price">$${st.price}</span></div>`;
+    if(st.defPrice) fuelPills += `<div class="scard-fuel"><span class="scard-fuel-label">DEF</span><span class="scard-fuel-price">$${st.defPrice}</span></div>`;
+    if(st.reeferPrice) fuelPills += `<div class="scard-fuel"><span class="scard-fuel-label">Reefer</span><span class="scard-fuel-price">$${st.reeferPrice}</span></div>`;
+
     card.innerHTML = `
       <div class="srank">#${i+1}</div>
-      <div class="sico"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--purple-lt)" stroke="none"><path d="M3 22V6a2 2 0 012-2h6a2 2 0 012 2v16H3zm3-12h4v4H6v-4zm12.5-4l2 2-1.5 1.5L21 11v6a1 1 0 01-2 0v-4h-2V6l3.5-2z"/></svg></div>
+      <div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--purple-lt)" stroke="none"><path d="M3 22V6a2 2 0 012-2h6a2 2 0 012 2v16H3zm3-12h4v4H6v-4zm12.5-4l2 2-1.5 1.5L21 11v6a1 1 0 01-2 0v-4h-2V6l3.5-2z"/></svg></div>
       <div class="sinfo">
         <div class="sname">${st.name}</div>
         <div class="saddr">${st.address}</div>
         <div class="stags">
-          ${st.relay ? '<span class="stag relay">Relay Pay</span>' : ''}
-          ${(st.amenities||[]).slice(0,3).map(a=>`<span class="stag">${a}</span>`).join('')}
+          ${st.relay ? '<span class="stag relay">In-network</span>' : ''}
+          ${amenityTags}
         </div>
+        <div class="scard-fuels">${fuelPills}</div>
       </div>
       <div class="smeta">
-        <div class="sprice">${priceDisp}</div>
+        <div class="sprice">$${st.price}${estBadge}</div>
+        <div class="sprice-retail">$${st.retailPrice}</div>
+        <div class="sprice-save">Save $${st.savings}/gal</div>
         <div class="sdist">${st.detour} ${distLabel}</div>
-        ${parseFloat(save) > 0 ? `<div class="save-badge">Save $${save}/gal</div>` : ''}
       </div>`;
     list.appendChild(card);
   });
@@ -3170,15 +3255,11 @@ function selectStop(st, card){
   document.getElementById('bestPrice').textContent = `$${st.price}`;
   S.selectedStop = st;
 
-  // ── Map sync: pan, zoom, and open popup ──
+  // ── Map sync: pan, zoom, and open detail panel ──
   if(S.leafletMap && S.finderStops.length){
     const idx = S.finderStops.findIndex(s=>s.lat===st.lat && s.lng===st.lng);
     if(idx>=0){
-      S.leafletMap.setView([st.lat, st.lng], 10, {animate:true});
-      // Open the marker popup
-      if(S.finderMarkers && S.finderMarkers[idx]){
-        S.finderMarkers[idx].openPopup();
-      }
+      openStationDetailPanel(st, idx);
     }
   }
 
@@ -3208,15 +3289,17 @@ function openTgModal(st){
   const mapsLink = (st.lat && st.lng)
     ? `https://www.google.com/maps/dir/?api=1&destination=${st.lat},${st.lng}`
     : `https://maps.google.com/?q=${encodeURIComponent(st.address)}`;
-  const discPrice = (parseFloat(st.price)-0.15).toFixed(3);
+  const discPrice = st.price;
+  const retailP = st.retailPrice || (parseFloat(st.price)+0.15).toFixed(3);
   const msg = `FUEL STOP ASSIGNMENT
 ━━━━━━━━━━━━━━━━━━━━━
 Station: ${st.name}
 Address: ${st.address}
 Map: ${mapsLink}
 
-Market Price: $${st.price}/gal
+Retail Price: $${retailP}/gal
 Discounted Price: $${discPrice}/gal
+Savings: $${st.savings || '0.15'}/gal${st.defPrice ? `\nDEF: $${st.defPrice}/gal` : ''}${st.reeferPrice ? `\nReefer: $${st.reeferPrice}/gal` : ''}
 ${truck?`Truck: ${truck.unitNumber} — ${truck.fuelPercent}% fuel`:''}
 
 Route: ${orig} → ${dest}
@@ -3463,13 +3546,25 @@ async function findNearbyStops(){
       if(st.distMi > searchRadius) return null;
       const h = coordHash(st.lat, st.lng);
       const basePrice = hasRealPrices ? eiaData.national : 3.45;
-      const price = Math.max(3.05, basePrice + (h*0.20-0.08));
+      const retailPrice = Math.max(3.05, basePrice + (h*0.20-0.08));
+      const discount = chain.relay ? 0.15 : 0.05;
+      const discountPrice = retailPrice - discount;
+      const h2 = coordHash(st.lat+0.001, st.lng+0.001);
+      const defPrice = Math.max(2.80, basePrice - 0.35 + (h2*0.15-0.05));
+      const reeferPrice = Math.max(3.20, retailPrice + 0.10 + (h2*0.08));
+      const hasDEF = (chain.amenities||[]).some(a=>a.toUpperCase()==='DEF');
       const addr = st.address && st.address.trim() && !st.address.match(/^-?\d+\.\d{3,},\s*-?\d+\.\d{3,}$/)
         ? st.address.trim() : `${st.lat.toFixed(4)}, ${st.lng.toFixed(4)}`;
-      const displayName = (st.name && st.name.trim()) ? st.name.trim() : chain.name;
+      const rawName = (st.name && st.name.trim()) ? st.name.trim() : '';
+      const displayName = rawName || chain.name;
+      const stCity = st.city || '';
+      const stState = st.state || '';
       return {...chain, name:displayName, chainName:chain.name,
-        lat:st.lat, lng:st.lng, address:addr,
-        price:price.toFixed(3), detour:st.distMi.toFixed(1), priceEst:!hasRealPrices};
+        lat:st.lat, lng:st.lng, address:addr, city:stCity, state:stState,
+        price:discountPrice.toFixed(3), retailPrice:retailPrice.toFixed(3),
+        savings:discount.toFixed(2), defPrice:hasDEF?defPrice.toFixed(3):null,
+        reeferPrice:chain.relay?reeferPrice.toFixed(3):null,
+        detour:st.distMi.toFixed(1), priceEst:!hasRealPrices};
     }).filter(Boolean);
 
     stops.sort((a,b)=> fSort==='distance'
@@ -3521,6 +3616,9 @@ function renderNearbyMap(coords, stops){
   const placeholder = document.getElementById('finderMapPlaceholder');
   if(placeholder) placeholder.style.display = 'none';
   if(S.leafletMap){ S.leafletMap.remove(); S.leafletMap = null; }
+  // Remove any existing detail panel
+  const oldPanel = document.getElementById('stationDetailPanel');
+  if(oldPanel) oldPanel.remove();
 
   const dark = S.theme === 'dark';
   const lmap = L.map(mapDiv, {zoomControl:true, attributionControl:true});
@@ -3539,11 +3637,10 @@ function renderNearbyMap(coords, stops){
       className:'', iconSize:[32,32], iconAnchor:[16,16]
     });
     L.marker([c.lat, c.lng], {icon}).addTo(lmap).bindPopup(`<b>${c.label}</b>`);
-    // Draw radius circle
     L.circle([c.lat, c.lng], {radius:searchRadius*1609.34, color:dark?'#7C3AED':'#6D28D9', weight:2, opacity:.4, fillOpacity:.05}).addTo(lmap);
   });
 
-  // Station markers
+  // Station markers — click opens Relay-style detail panel
   S.finderMarkers = [];
   stops.forEach((st,i)=>{
     const p = parseFloat(st.price);
@@ -3552,7 +3649,7 @@ function renderNearbyMap(coords, stops){
     const sz = i===0?30:22;
     const icon = makeStationIcon(st.price, color, sz);
     const m = L.marker([st.lat, st.lng], {icon}).addTo(lmap);
-    m.bindPopup(`<b>${st.name}</b><br>$${st.price}/gal<br>${st.detour} mi away`);
+    m.on('click', () => openStationDetailPanel(st, i));
     S.finderMarkers.push(m);
   });
 
@@ -3568,6 +3665,130 @@ function renderNearbyMap(coords, stops){
   [100,350,700].forEach(t=>setTimeout(()=>lmap.invalidateSize(),t));
 }
 
+function getAmenityIcon(name){
+  const n = name.toLowerCase();
+  if(n.includes('shower')) return '🚿';
+  if(n.includes('scale') || n.includes('cat')) return '⚖️';
+  if(n.includes('def')) return '💧';
+  if(n.includes('restaurant') || n.includes('food') || n.includes('denny') || n.includes('iron skillet') || n.includes('bbq')) return '🍽️';
+  if(n.includes('subway') || n.includes('hoagie') || n.includes('pizza')) return '🥪';
+  if(n.includes('repair')) return '🔧';
+  if(n.includes('wi-fi') || n.includes('wifi')) return '📶';
+  if(n.includes('coffee')) return '☕';
+  if(n.includes('snack')) return '🛒';
+  if(n.includes('parking')) return '🅿️';
+  if(n.includes('car wash')) return '🚗';
+  if(n.includes('restroom') || n.includes('clean')) return '🚻';
+  if(n.includes('bulk')) return '⛽';
+  return '✓';
+}
+
+function openStationDetailPanel(st, idx){
+  // Remove existing
+  const old = document.getElementById('stationDetailPanel');
+  if(old) old.remove();
+
+  const container = document.getElementById('finderMapContainer');
+  const panel = document.createElement('div');
+  panel.id = 'stationDetailPanel';
+  panel.className = 'station-detail-panel';
+
+  const locationStr = [st.city, st.state].filter(Boolean).join(', ') || st.address;
+
+  // Fuel cards
+  let fuelCardsHTML = `
+    <div class="sdp-fuel-card">
+      <div class="sdp-fuel-icon">⛽</div>
+      <div class="sdp-fuel-type">Diesel</div>
+      <div class="sdp-fuel-price">$${st.price}</div>
+      <div class="sdp-fuel-retail">$${st.retailPrice}</div>
+      <div class="sdp-fuel-save">Save $${st.savings}</div>
+    </div>`;
+  if(st.reeferPrice){
+    fuelCardsHTML += `
+    <div class="sdp-fuel-card">
+      <div class="sdp-fuel-icon">❄️</div>
+      <div class="sdp-fuel-type">Reefer</div>
+      <div class="sdp-fuel-price">$${st.reeferPrice}</div>
+    </div>`;
+  }
+  if(st.defPrice){
+    fuelCardsHTML += `
+    <div class="sdp-fuel-card">
+      <div class="sdp-fuel-icon">💧</div>
+      <div class="sdp-fuel-type">DEF</div>
+      <div class="sdp-fuel-price">$${st.defPrice}</div>
+    </div>`;
+  }
+  // If only diesel, span wider
+  const fuelCount = 1 + (st.reeferPrice?1:0) + (st.defPrice?1:0);
+  const gridCols = fuelCount >= 3 ? 'repeat(3,1fr)' : fuelCount === 2 ? 'repeat(2,1fr)' : '1fr';
+
+  // Amenities
+  const amenities = st.amenities || [];
+  const amenityHTML = amenities.length ? amenities.map(a =>
+    `<div class="sdp-amenity"><span class="ami">${getAmenityIcon(a)}</span>${a}</div>`
+  ).join('') : '<div style="font-size:11px;color:var(--text3);">No amenity info available</div>';
+
+  const distLabel = finderMode === 'nearby' ? 'mi away' : 'mi off route';
+
+  panel.innerHTML = `
+    <div class="sdp-header">
+      <button class="sdp-back" onclick="closeStationDetailPanel()">‹ Back</button>
+      <div class="sdp-station-info">
+        <div class="sdp-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="var(--purple-lt)" stroke="none"><path d="M3 22V6a2 2 0 012-2h6a2 2 0 012 2v16H3zm3-12h4v4H6v-4zm12.5-4l2 2-1.5 1.5L21 11v6a1 1 0 01-2 0v-4h-2V6l3.5-2z"/></svg></div>
+        <div class="sdp-name">${st.name}</div>
+        <div class="sdp-badges">
+          ${st.relay ? '<span class="sdp-badge in-network">In-network</span>' : ''}
+          <span class="sdp-badge location">${locationStr}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">${st.detour} ${distLabel}</div>
+      </div>
+    </div>
+    <div class="sdp-fuels" style="grid-template-columns:${gridCols}">
+      ${fuelCardsHTML}
+    </div>
+    <div class="sdp-amenities">
+      <div class="sdp-section-title">Amenities</div>
+      <div class="sdp-amenity-grid">${amenityHTML}</div>
+    </div>
+    <div class="sdp-address">
+      <div class="sdp-section-title">Address</div>
+      <div class="sdp-addr-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>${st.address}</span>
+      </div>
+    </div>
+    <div class="sdp-actions">
+      <button class="sdp-select-btn" onclick="selectStopFromPanel(${idx})">Select This Stop</button>
+      <button class="sdp-tg-btn" onclick="openTgModal(S.finderStops[${idx}])">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701h-.002l.002.001-.314 4.692c.46 0 .663-.211.921-.46l2.211-2.15 4.599 3.397c.848.467 1.457.227 1.668-.785l3.019-14.228c.309-1.239-.473-1.8-1.282-1.434z"/></svg>
+        Send to Driver via Telegram
+      </button>
+    </div>`;
+
+  container.appendChild(panel);
+
+  // Pan map to this station
+  if(S.leafletMap) S.leafletMap.setView([st.lat, st.lng], 12, {animate:true});
+}
+
+function closeStationDetailPanel(){
+  const panel = document.getElementById('stationDetailPanel');
+  if(panel) panel.remove();
+}
+
+function selectStopFromPanel(idx){
+  const st = S.finderStops[idx];
+  if(!st) return;
+  const cards = document.querySelectorAll('.stop-card');
+  if(cards[idx]){
+    selectStop(st, cards[idx]);
+    cards[idx].scrollIntoView({behavior:'smooth', block:'center'});
+  }
+  closeStationDetailPanel();
+}
+
 // ═══════════════════════════════════════════════════════
 // DISPATCHED STATIONS & FUEL LOG
 // ═══════════════════════════════════════════════════════
@@ -3579,7 +3800,7 @@ function saveDispatchedStations(list){
 }
 function addDispatchedStation(st){
   const list = getDispatchedStations();
-  const discPrice = (parseFloat(st.price)-0.15).toFixed(3);
+  const discPrice = st.price;
   list.unshift({
     id: 'ds_'+Date.now(),
     name: st.name||st.chainName||'Fuel Station',
@@ -4005,7 +4226,9 @@ async function fetchOverpassStations(bbox, fuelType){
       address: [el.tags?.['addr:housenumber'], el.tags?.['addr:street'],
                 el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean).join(' ') || '',
       city:    el.tags?.['addr:city']  || '',
-      state:   el.tags?.['addr:state'] || ''
+      state:   el.tags?.['addr:state'] || '',
+      hasDEF:  el.tags?.['fuel:diesel:class2'] === 'yes' || el.tags?.['fuel:adblue'] === 'yes',
+      hasHGV:  el.tags?.['hgv'] === 'yes' || el.tags?.['hgv'] === 'designated'
     })).filter(el => el.lat && el.lng);
   } catch(e) {
     console.warn('Overpass segment error:', e.message || e);

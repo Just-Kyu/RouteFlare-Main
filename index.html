@@ -3810,9 +3810,14 @@ function getGooglePlaces(){
 function googleNearbySearch(lat, lng, radius, keyword, retries){
   retries = retries || 0;
   return new Promise((resolve) => {
+    // Timeout: if Google Places doesn't respond in 12s, skip to Overpass
+    const timer = setTimeout(() => {
+      console.warn(`[FuelPro] Google Places timeout at ${lat.toFixed(2)},${lng.toFixed(2)} — falling back to Overpass`);
+      resolve([]);
+    }, 12000);
     try {
       const svc = getGooglePlaces();
-      if(!svc){ resolve([]); return; }
+      if(!svc){ clearTimeout(timer); resolve([]); return; }
       const request = {
         location: new google.maps.LatLng(lat, lng),
         radius: radius,
@@ -3820,6 +3825,7 @@ function googleNearbySearch(lat, lng, radius, keyword, retries){
       };
       if(keyword) request.keyword = keyword;
       svc.nearbySearch(request, (results, status) => {
+        clearTimeout(timer);
         if(status === google.maps.places.PlacesServiceStatus.OK && results){
           resolve(results.map(p => ({
             lat:     p.geometry.location.lat(),
@@ -3831,7 +3837,6 @@ function googleNearbySearch(lat, lng, radius, keyword, retries){
             source:  'google'
           })));
         } else if(status === 'OVER_QUERY_LIMIT' && retries < 3){
-          // Rate limited — wait and retry with exponential backoff
           const wait = (retries + 1) * 2000;
           console.warn(`[FuelPro] Rate limited at ${lat.toFixed(2)},${lng.toFixed(2)} — retrying in ${wait}ms (attempt ${retries+1})`);
           setTimeout(() => {
@@ -3845,6 +3850,7 @@ function googleNearbySearch(lat, lng, radius, keyword, retries){
         }
       });
     } catch(e){
+      clearTimeout(timer);
       console.warn('[FuelPro] nearbySearch error:', e);
       resolve([]);
     }
@@ -4323,8 +4329,22 @@ function cleanAddress(addr){
   cleaned = cleaned.replace(/\s*\b(suite|ste|unit|apt|bldg|building|room|rm|fl|floor)\s*\.?\s*\w+/gi, '');
   // Strip zip codes (5-digit or 5+4)
   cleaned = cleaned.replace(/\s*\b\d{5}(-\d{4})?\b/g, '');
+  // Strip country suffixes (United States, USA, US)
+  cleaned = cleaned.replace(/,\s*(United States|USA|US)\s*$/i, '');
   // Clean up extra commas and spaces
   cleaned = cleaned.replace(/,\s*,/g, ',').replace(/,\s*$/, '').replace(/^\s*,/, '').trim();
+  return cleaned;
+}
+
+// Extract just "City, ST" from a complex address for fallback geocoding
+function extractCityState(addr){
+  const cleaned = cleanAddress(addr);
+  // Match patterns like "..., City Name, ST" or "..., City Name, State"
+  const parts = cleaned.split(',').map(p => p.trim()).filter(Boolean);
+  if(parts.length >= 2){
+    // Last part should be state, second-to-last should be city
+    return parts.slice(-2).join(', ');
+  }
   return cleaned;
 }
 
@@ -4379,6 +4399,8 @@ async function geocodeCity(city){
           const result = {lat: loc.lat, lng: loc.lng};
           console.log(`[FuelPro] Google HTTP geocoded "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
           return result;
+        } else {
+          console.warn(`[FuelPro] Google HTTP status: ${d.status}`, d.error_message || '');
         }
       }
     }
@@ -4403,7 +4425,35 @@ async function geocodeCity(city){
     }
   } catch(e){ console.warn('[FuelPro] Nominatim error:', e.message); }
 
-  // ── Method 4: Nominatim broader search ──
+  // ── Method 4: Nominatim with simplified city+state only ──
+  try {
+    const cityState = extractCityState(trimmed);
+    if(cityState !== expanded){
+      // Expand state abbreviation in the simplified version too
+      const csMatch = cityState.match(/,\s*([A-Za-z]{2})$/);
+      let csExpanded = cityState;
+      if(csMatch && stateMap[csMatch[1].toLowerCase()]){
+        csExpanded = cityState.replace(/,\s*[A-Za-z]{2}$/, ', ' + stateMap[csMatch[1].toLowerCase()]);
+      }
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(csExpanded)}&format=json&limit=1&countrycodes=us`,
+        { headers:{'Accept-Language':'en','User-Agent':'FuelPro/1.0'}, signal: controller.signal }
+      );
+      clearTimeout(timeout);
+      if(r.ok){
+        const d = await r.json();
+        if(d && d.length){
+          const result = {lat:parseFloat(d[0].lat), lng:parseFloat(d[0].lon)};
+          console.log(`[FuelPro] Nominatim city+state "${cityState}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
+          return result;
+        }
+      }
+    }
+  } catch(e){ console.warn('[FuelPro] Nominatim city+state error:', e.message); }
+
+  // ── Method 5: Nominatim broader search ──
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
@@ -4422,7 +4472,7 @@ async function geocodeCity(city){
     }
   } catch(e){ console.warn('[FuelPro] Nominatim broad error:', e.message); }
 
-  // ── Method 5: Google Maps JS Geocoder ──
+  // ── Method 6: Google Maps JS Geocoder ──
   try {
     if(typeof google !== 'undefined' && google.maps && google.maps.Geocoder){
       const geocoder = new google.maps.Geocoder();

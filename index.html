@@ -3033,38 +3033,36 @@ async function findStops(){
   const eiaKey     = localStorage.getItem('eia_api_key') || '';
 
   try {
-    // ── 1. Geocode origin & destination (sequential to avoid Nominatim rate-limit) ──
-    setFindStatus('Locating origin...');
-    const oc = await geocodeCity(orig);
+    // ── 1. Geocode origin & destination IN PARALLEL ──────────────────────
+    setFindStatus('Locating origin & destination...');
+    const [oc, dc] = await Promise.all([geocodeCity(orig), geocodeCity(dest)]);
     if(!oc){
       showFindError(`Could not locate "${orig}". Try a simpler format like "Dallas, TX" or "Nashville, TN".`); return;
     }
-    setFindStatus('Locating destination...');
-    const dc = await geocodeCity(dest);
     if(!dc){
       showFindError(`Could not locate "${dest}". Try a simpler format like "Dallas, TX" or "Nashville, TN".`); return;
     }
 
-    // ── 2. Get OSRM route geometry ────────────────────────────────────────
+    // ── 2. Get OSRM route + EIA prices IN PARALLEL ───────────────────────
     setFindStatus('Fetching route...');
     let routePoints = null;
-    try {
-      const res  = await fetch(`https://router.project-osrm.org/route/v1/driving/${oc.lng},${oc.lat};${dc.lng},${dc.lat}?overview=full&geometries=geojson`);
-      const data = await res.json();
-      if(data.code === 'Ok' && data.routes.length) routePoints = data.routes[0].geometry.coordinates;
-    } catch(e){ console.warn('OSRM error:', e); }
+    const [routeResult, eiaData] = await Promise.all([
+      fetch(`https://router.project-osrm.org/route/v1/driving/${oc.lng},${oc.lat};${dc.lng},${dc.lat}?overview=full&geometries=geojson`)
+        .then(r => r.json()).catch(e => { console.warn('OSRM error:', e); return null; }),
+      eiaKey ? fetchEIAPrices(eiaKey) : Promise.resolve(null)
+    ]);
+    if(routeResult && routeResult.code === 'Ok' && routeResult.routes.length)
+      routePoints = routeResult.routes[0].geometry.coordinates;
 
     // Fallback: simple line between origin and dest
     if(!routePoints) routePoints = [[oc.lng, oc.lat], [dc.lng, dc.lat]];
 
-    // ── 3. Google Places fuel station search (FAST) ─────────────────────
+    // ── 3. Search fuel stations (local DB instant + Google Places background) ──
     setFindStatus('Scanning route for fuel stations...');
     const allRaw = await fetchStationsAlongRoute(routePoints, fType, setFindStatus);
-    console.log(`[FuelPro] Total unique stations from Google Places: ${allRaw.length}`);
+    console.log(`[FuelPro] Total unique stations: ${allRaw.length}`);
 
-    // ── 4. EIA prices ─────────────────────────────────────────────────────
-    setFindStatus('Loading diesel prices...');
-    const eiaData      = eiaKey ? await fetchEIAPrices(eiaKey) : null;
+    // ── 4. EIA prices (already fetched above in parallel) ─────────────────
     const hasRealPrices = !!(eiaData && eiaData.national);
 
     // ── 5. Match chains + detour filter ──────────────────────────────────
@@ -3518,25 +3516,29 @@ async function findNearbyStops(){
   const eiaKey = localStorage.getItem('eia_api_key') || '';
 
   try {
-    // Geocode all locations
+    // Geocode all locations IN PARALLEL
     setFindStatus('Locating...');
+    const geoResults = await Promise.all(locations.map(loc => geocodeCity(loc)));
     const coords = [];
-    for(const loc of locations){
-      const c = await geocodeCity(loc);
-      if(!c){
-        showFindError(`Could not locate "${loc}". Try a format like "Dallas, TX".`);
+    for(let i = 0; i < locations.length; i++){
+      if(!geoResults[i]){
+        showFindError(`Could not locate "${locations[i]}". Try a format like "Dallas, TX".`);
         return;
       }
-      coords.push({...c, label: loc});
+      coords.push({...geoResults[i], label: locations[i]});
     }
 
-    // Search around each location
+    // Search around each location + fetch EIA prices IN PARALLEL
     setFindStatus('Scanning for fuel stations...');
     const radiusMeters = searchRadius * 1609.34;
+    const [stationResults, eiaData] = await Promise.all([
+      Promise.all(coords.map(coord => fetchStationsNearby(coord.lat, coord.lng, radiusMeters, fType)
+        .then(stations => ({coord, stations})))),
+      eiaKey ? fetchEIAPrices(eiaKey) : Promise.resolve(null)
+    ]);
     let allRaw = [];
     const seenIds = new Set();
-    for(const coord of coords){
-      const stations = await fetchStationsNearby(coord.lat, coord.lng, radiusMeters, fType);
+    for(const {coord, stations} of stationResults){
       stations.forEach(st=>{
         const key = `${st.lat.toFixed(4)},${st.lng.toFixed(4)}`;
         if(!seenIds.has(key)){
@@ -3547,9 +3549,6 @@ async function findNearbyStops(){
       });
     }
 
-    // EIA prices
-    setFindStatus('Loading diesel prices...');
-    const eiaData = eiaKey ? await fetchEIAPrices(eiaKey) : null;
     const hasRealPrices = !!(eiaData && eiaData.national);
 
     // Chain filter
@@ -3634,23 +3633,24 @@ async function fetchStationsNearby(lat, lng, radiusMeters, fuelType){
   const seenIds = new Set();
   function addSt(st){ const key=st.placeId||`${st.lat.toFixed(4)},${st.lng.toFixed(4)}`; if(!seenIds.has(key)){seenIds.add(key);stations.push(st);} }
 
-  // ── 1. Search local Pilot/Flying J database FIRST ──
+  // ── 1. Search local Pilot/Flying J database FIRST (instant) ──
   const localStations = searchLocalStations(lat, lng, radiusMeters);
   localStations.forEach(addSt);
   console.log(`[FuelPro] Local DB nearby: ${localStations.length} Pilot/FJ stations`);
 
-  // ── 2. Google Places for additional chains ──
+  // ── 2. Google Places + Overpass in parallel for additional chains ──
   const placesAvailable = !!(typeof google!=='undefined'&&google.maps&&google.maps.places);
-  if(placesAvailable){
-    const results = await googleNearbySearch(lat, lng, Math.min(radiusMeters, 50000), null);
-    results.forEach(addSt);
-  }
-  if(stations.length - localStations.length < 5){
-    const PAD = (radiusMeters/1609.34) * 0.0145;
-    const bbox = {south:lat-PAD, north:lat+PAD, west:lng-PAD, east:lng+PAD};
-    const osm = await fetchOverpassStations(bbox, fuelType);
-    osm.forEach(st=>addSt({...st, source:'overpass'}));
-  }
+  const googlePromise = placesAvailable
+    ? googleNearbySearch(lat, lng, Math.min(radiusMeters, 50000), null)
+    : Promise.resolve([]);
+  const PAD = (radiusMeters/1609.34) * 0.0145;
+  const bbox = {south:lat-PAD, north:lat+PAD, west:lng-PAD, east:lng+PAD};
+  const osmPromise = stations.length < 5
+    ? fetchOverpassStations(bbox, fuelType)
+    : Promise.resolve([]);
+  const [googleResults, osmResults] = await Promise.all([googlePromise, osmPromise]);
+  googleResults.forEach(addSt);
+  osmResults.forEach(st=>addSt({...st, source:'overpass'}));
   return deduplicateStations(stations);
 }
 
@@ -4139,7 +4139,7 @@ function googleNearbySearch(lat, lng, radius, keyword, retries){
     const timer = setTimeout(() => {
       console.warn(`[FuelPro] Google Places timeout at ${lat.toFixed(2)},${lng.toFixed(2)} — falling back to Overpass`);
       resolve([]);
-    }, 12000);
+    }, 6000);
     try {
       const svc = getGooglePlaces();
       if(!svc){ clearTimeout(timer); resolve([]); return; }
@@ -4340,30 +4340,29 @@ async function fetchStationsAlongRoute(routePoints, fuelType, statusCb){
   localStations.forEach(addStation);
   console.log(`[FuelPro] Local DB found: ${localStations.length} Pilot/FJ stations along route`);
 
-  // ── 2. Google Places for additional chains ──
-  const samplePts = sampleRoutePoints(routePoints, 30);
-  const searchRadius = 16000;
+  // ── 2. Google Places for additional chains (optimized: 60mi intervals, batch of 5) ──
+  const samplePts = sampleRoutePoints(routePoints, 60);  // 60mi intervals (was 30)
+  const searchRadius = 24000;  // 24km (~15mi) to compensate for wider spacing
   const placesAvailable = !!(typeof google !== 'undefined' && google.maps && google.maps.places);
 
   if(placesAvailable){
-    const BATCH = 3;
+    const BATCH = 5;  // 5 concurrent (was 3)
     for(let i = 0; i < samplePts.length; i += BATCH){
       const batch = samplePts.slice(i, i + BATCH);
-      if(statusCb) statusCb(`Scanning mile ${Math.min((i+BATCH)*50, samplePts.length*50)} of ~${samplePts.length*50}...`);
+      if(statusCb) statusCb(`Scanning for other chains... (${Math.min(i+BATCH, samplePts.length)}/${samplePts.length})`);
       const results = await Promise.all(batch.map(pt =>
         googleNearbySearch(pt.lat, pt.lng, searchRadius, null)
       ));
       results.forEach(list => list.forEach(addStation));
-      if(i + BATCH < samplePts.length) await new Promise(r => setTimeout(r, 500));
+      if(i + BATCH < samplePts.length) await new Promise(r => setTimeout(r, 200));  // 200ms (was 500)
     }
     console.log(`[FuelPro] Google Places found: ${allStations.length - localStations.length} additional (before dedup)`);
   } else {
     console.warn('[FuelPro] Google Places API not available');
   }
 
-  // ── 3. Overpass fallback if still few non-local results ──
-  const nonLocalCount = allStations.length - localStations.length;
-  if(nonLocalCount < 10){
+  // ── 3. Overpass fallback ONLY if total stations are very low (local DB usually covers it) ──
+  if(allStations.length < 5){
     if(statusCb) statusCb('Expanding search with OpenStreetMap...');
     const PAD = 0.28;
     const points = routePoints;

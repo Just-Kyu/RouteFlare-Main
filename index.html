@@ -2197,24 +2197,8 @@ async function fetchVehicles(ci){
     }
   }
 
-  // ── DEMO FALLBACK ──
-  const demoTrucks=[
-    {name:'Freightliner Cascadia',unit:'UNIT-101'},{name:'Kenworth W900',unit:'UNIT-102'},
-    {name:'Peterbilt 389',unit:'UNIT-103'},{name:'Volvo VNL 860',unit:'UNIT-104'},
-    {name:'Mack Anthem',unit:'UNIT-105'},{name:'International LT',unit:'UNIT-106'},
-  ];
-  const locs=['Chicago, IL','Dallas, TX','Atlanta, GA','Phoenix, AZ','Denver, CO','Memphis, TN'];
-  return Array.from({length:5+Math.floor(Math.random()*3)},(_,i)=>{
-    const t=demoTrucks[i%demoTrucks.length];
-    return {
-      id:`v_${ci}_${i}`, name:t.name, unitNumber:`${t.unit}-${ci+1}`,
-      vin:`1HM${Math.random().toString(36).substr(2,9).toUpperCase()}`,
-      fuelPercent:Math.floor(Math.random()*90)+5, fuelEst:true,
-      location:locs[(ci+i)%locs.length],
-      odometer:`${(120000+Math.floor(Math.random()*80000)).toLocaleString()} mi`,
-      engineState:'Off', updatedAt:new Date().toISOString(), lat:null, lng:null,
-    };
-  });
+  // No API connection — return empty fleet
+  return [];
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2251,45 +2235,8 @@ async function testCompanyKey(btn){
 }
 
 function seedFuelRecords(){
-  // Build truck pool from real vehicles if available, else use placeholders
-  const allVehicles = Object.entries(S.vehicles).flatMap(([ci, vehs]) =>
-    (vehs||[]).map(v => ({ ...v, companyIndex: parseInt(ci) }))
-  );
-  const hasTrucks = allVehicles.length > 0;
-
-  const chains=['Pilot Flying J','Loves Travel Stop','TA Petro','Flying J','One9 Fuel Network','Speedway'];
-  const states=['IL','TX','TN','GA','OH','KY','IN','MO','PA','NC'];
-  const now=new Date();
-  S.fuelRecords = []; // reset before re-seeding
-  for(let i=0;i<60;i++){
-    const d=new Date(now); d.setDate(d.getDate()-Math.floor(Math.random()*30));
-    const gals=80+Math.floor(Math.random()*120);
-    const price=3.20+Math.random()*.8;
-    const disc=Math.random()>.3?price-(Math.random()*.25):price;
-    let truckUnit, truckName, companyIndex;
-    if(hasTrucks){
-      const v = allVehicles[i % allVehicles.length];
-      truckUnit = v.unitNumber;
-      truckName = v.name;
-      companyIndex = v.companyIndex;
-    } else {
-      companyIndex = Math.floor(Math.random()*2);
-      truckUnit = `UNIT-${101+Math.floor(Math.random()*8)}-${companyIndex+1}`;
-      truckName = ['Freightliner Cascadia','Kenworth W900','Peterbilt 389','Volvo VNL 860','Mack Anthem'][Math.floor(Math.random()*5)];
-    }
-    S.fuelRecords.push({
-      id:`fr_${i}`, companyIndex,
-      truckUnit, truckName,
-      station:chains[Math.floor(Math.random()*chains.length)],
-      gallons:gals, pricePerGal:parseFloat(price.toFixed(3)),
-      discountedPrice:parseFloat(disc.toFixed(3)),
-      state:states[Math.floor(Math.random()*states.length)],
-      date:d.toISOString().split('T')[0],
-      total:parseFloat((gals*price).toFixed(2)),
-      discountTotal:parseFloat((gals*disc).toFixed(2)),
-      saved:parseFloat((gals*(price-disc)).toFixed(2)),
-    });
-  }
+  // Initialize empty — fuel records come from manual logging only
+  if(!S.fuelRecords) S.fuelRecords = [];
 }
 
 function saveFueling(){
@@ -2535,7 +2482,12 @@ function buildSpendChart(period){
   const labels = period==='week'?['Mon','Tue','Wed','Thu','Fri','Sat','Sun']:
                   period==='month'?['Wk1','Wk2','Wk3','Wk4']:
                   ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const data=labels.map(()=>Math.floor(800+Math.random()*2800));
+  // Use real fuel records if available, else show zeros
+  const recs = S.fuelRecords || [];
+  const data = labels.map(() => {
+    if(!recs.length) return 0;
+    return Math.floor(recs.reduce((s,r) => s + r.total, 0) / labels.length);
+  });
   const g=ctx.createLinearGradient(0,0,0,155);
   g.addColorStop(0,'rgba(124,58,237,.35)'); g.addColorStop(1,'rgba(124,58,237,0)');
   S.charts.spend=new Chart(ctx,{
@@ -2553,14 +2505,21 @@ function setSpendTab(p,btn){
 function buildDonutChart(){
   const ctx=document.getElementById('donutChart').getContext('2d');
   if(S.charts.donut) S.charts.donut.destroy();
-  const data=[62,22,16]; const labels=['Pilot Flying J',"Love's",'TA/Petro'];
-  const colors=['#7C3AED','#3B82F6','#22C55E'];
+  // Calculate from real fuel records, or show empty state
+  const recs = S.fuelRecords || [];
+  const chainCounts = {};
+  recs.forEach(r => { chainCounts[r.station] = (chainCounts[r.station]||0) + 1; });
+  const sorted = Object.entries(chainCounts).sort((a,b) => b[1]-a[1]);
+  const total = recs.length || 1;
+  const labels = sorted.length ? sorted.slice(0,3).map(e=>e[0]) : ['No data yet'];
+  const data = sorted.length ? sorted.slice(0,3).map(e=>Math.round(e[1]/total*100)) : [100];
+  const colors = sorted.length ? ['#7C3AED','#3B82F6','#22C55E'].slice(0,labels.length) : ['#333'];
   S.charts.donut=new Chart(ctx,{
     type:'doughnut',
     data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,borderRadius:4,hoverOffset:4}]},
     options:{responsive:false,cutout:'72%',plugins:{legend:{display:false},tooltip:{...baseOpts().plugins.tooltip}}},
   });
-  document.getElementById('donutPct').textContent='62%';
+  document.getElementById('donutPct').textContent=sorted.length ? data[0]+'%' : '—';
   const legend=document.getElementById('donutLegend');
   legend.innerHTML=labels.map((l,i)=>`<div class="legend-item"><div class="legend-dot-name"><div class="legend-dot" style="background:${colors[i]}"></div>${l}</div><div class="legend-val">${data[i]}%</div></div>`).join('');
 }
@@ -2569,7 +2528,9 @@ function buildSavingsChart(){
   const ctx=document.getElementById('savingsChart').getContext('2d');
   if(S.charts.savings) S.charts.savings.destroy();
   const labels=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const data=labels.map(()=>Math.floor(40+Math.random()*130));
+  // Use real savings from fuel records, or show zeros
+  const recs = S.fuelRecords || [];
+  const data = labels.map(() => recs.length ? Math.floor(recs.reduce((s,r) => s + r.saved, 0) / 7) : 0);
   S.charts.savings=new Chart(ctx,{
     type:'bar',
     data:{labels,datasets:[{data,backgroundColor:'rgba(34,197,94,.7)',borderRadius:5,borderSkipped:false}]},
@@ -2943,7 +2904,8 @@ function renderAnalytics(){
 
   const days=new Date(year,month+1,0).getDate();
   const dLabels=Array.from({length:Math.ceil(days/3)},(_,i)=>`${i*3+1}`);
-  const dData=dLabels.map(()=>Math.floor(200+Math.random()*800));
+  // Use real fuel record totals, or zeros
+  const dData=dLabels.map(()=> recs.length ? Math.floor(recs.reduce((s,r)=>s+r.total,0)/dLabels.length) : 0);
 
   const mCtx=document.getElementById('monthlyChart').getContext('2d');
   if(S.charts.monthly) S.charts.monthly.destroy();
@@ -2961,8 +2923,8 @@ function renderAnalytics(){
   S.charts.savingsMonth=new Chart(smCtx,{
     type:'bar',
     data:{labels:['Wk 1','Wk 2','Wk 3','Wk 4'],datasets:[
-      {label:'Spent',data:[1,2,3,4].map(()=>Math.floor(1500+Math.random()*2000)),backgroundColor:'rgba(124,58,237,.7)',borderRadius:6},
-      {label:'Saved',data:[1,2,3,4].map(()=>Math.floor(80+Math.random()*200)),backgroundColor:'rgba(34,197,94,.7)',borderRadius:6},
+      {label:'Spent',data:[1,2,3,4].map(()=> recs.length ? Math.floor(totalSpend/4) : 0),backgroundColor:'rgba(124,58,237,.7)',borderRadius:6},
+      {label:'Saved',data:[1,2,3,4].map(()=> recs.length ? Math.floor(totalSave/4) : 0),backgroundColor:'rgba(34,197,94,.7)',borderRadius:6},
     ]},
     options:t,
   });

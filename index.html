@@ -157,7 +157,7 @@ body {
   transition: all .2s; position: relative;
 }
 .tb-alert-btn:hover { border-color: var(--purple-lt); color: var(--purple-lt); }
-.tb-alert-btn.has-alerts { border-color: var(--orange); color: var(--orange); }
+.tb-alert-btn.has-alerts { border-color: var(--red); color: var(--red); }
 .tb-alert-badge {
   background: var(--red); color: #fff; font-size: 9px; font-weight: 800;
   min-width: 16px; height: 16px; border-radius: 8px;
@@ -196,7 +196,7 @@ body {
   font-size: 14px; font-weight: 800; flex-shrink: 0;
 }
 .tb-alert-item .tai-fuel.crit { background: rgba(239,68,68,.12); color: var(--red); }
-.tb-alert-item .tai-fuel.low { background: rgba(249,115,22,.12); color: var(--orange); }
+.tb-alert-item .tai-fuel.low { background: rgba(239,68,68,.12); color: var(--red); }
 .tb-alert-item .tai-info { flex: 1; min-width: 0; }
 .tb-alert-item .tai-name { font-size: 12px; font-weight: 700; color: var(--text); }
 .tb-alert-item .tai-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
@@ -493,19 +493,19 @@ body {
   content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
 }
 .kp-cr::after  { background: var(--red); }
-.kp-wa::after  { background: var(--orange); }
+.kp-wa::after  { background: var(--red); }
 .kp-ok::after  { background: var(--green); }
 .kp-tot::after { background: var(--purple); }
-.kp-spend::after { background: var(--blue-lt); }
+.kp-spend::after { background: var(--purple-lt); }
 .kp-save::after  { background: var(--green); }
 .kpi-lbl { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
 .kpi-val { font-size: 36px; font-weight: 800; line-height: 1; color: var(--text); }
 .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
 .kp-cr  .kpi-val { color: var(--red); }
-.kp-wa  .kpi-val { color: var(--orange); }
+.kp-wa  .kpi-val { color: var(--red); }
 .kp-ok  .kpi-val { color: var(--green); }
 .kp-tot .kpi-val { color: var(--purple-lt); }
-.kp-spend .kpi-val { color: var(--blue-lt); }
+.kp-spend .kpi-val { color: var(--purple-lt); }
 .kp-save  .kpi-val { color: var(--green); }
 
 /* ── Dashboard layout ── */
@@ -526,7 +526,7 @@ body {
 }
 .vcard:hover { transform: translateX(2px); box-shadow: var(--shadow); }
 .vcard.vcr { border-left-color: var(--red); }
-.vcard.vwa { border-left-color: var(--orange); }
+.vcard.vwa { border-left-color: var(--red); }
 .vcard.vok { border-left-color: var(--green); }
 .vcard-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 9px; }
 .vname { font-size: 14px; font-weight: 700; color: var(--text); }
@@ -538,7 +538,7 @@ body {
 }
 .vstatus.vcr { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,.25); animation: flash 1.5s ease infinite; }
 @keyframes flash { 0%,100% { opacity:1; } 50% { opacity:.5; } }
-.vstatus.vwa { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(249,115,22,.25); }
+.vstatus.vwa { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,.25); }
 .vstatus.vok { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
 .vbar-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
 .vbar-lbl { font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
@@ -546,7 +546,7 @@ body {
 .vbar-track { height: 5px; background: var(--surface3); border-radius: 3px; overflow: hidden; margin-bottom: 9px; }
 .vbar-fill { height: 100%; border-radius: 3px; transition: width .8s cubic-bezier(.4,0,.2,1); }
 .vbar-fill.vcr { background: linear-gradient(90deg, #7f1d1d, var(--red)); }
-.vbar-fill.vwa { background: linear-gradient(90deg, #7c2d12, var(--orange)); }
+.vbar-fill.vwa { background: linear-gradient(90deg, #7f1d1d, var(--red)); }
 .vbar-fill.vok { background: linear-gradient(90deg, #14532d, var(--green)); }
 .vmeta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 .vmi { font-size: 11px; color: var(--text3); }
@@ -786,7 +786,7 @@ body {
 }
 .finder-card::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, var(--purple), var(--cyan), transparent);
+  background: linear-gradient(90deg, var(--purple), var(--purple-lt), transparent);
 }
 .finder-h { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
 .finder-sub { font-size: 12px; color: var(--text2); margin-bottom: 18px; }
@@ -826,7 +826,7 @@ body {
 }
 .qp-chip:hover { border-color: var(--purple-lt); color: var(--purple-lt); }
 .qp-chip.vcr { border-color: rgba(239,68,68,.4); color: var(--red); }
-.qp-chip.vwa { border-color: rgba(249,115,22,.4); color: var(--orange); }
+.qp-chip.vwa { border-color: rgba(239,68,68,.4); color: var(--red); }
 
 /* Results */
 .finder-results { display: none; }
@@ -878,7 +878,7 @@ body {
 .stag.relay { border-color: rgba(34,197,94,.4); color: var(--green); }
 .stag.has-def { border-color: rgba(59,130,246,.35); color: var(--blue-lt); }
 .stag.has-shower { border-color: rgba(168,85,247,.35); color: #A855F7; }
-.stag.has-scale { border-color: rgba(245,158,11,.35); color: #F59E0B; }
+.stag.has-scale { border-color: rgba(124,58,237,.35); color: var(--purple-lt); }
 .smeta { text-align: right; flex-shrink: 0; min-width: 90px; }
 .sprice { font-size: 20px; font-weight: 800; color: var(--green); line-height: 1.1; }
 .stop-card:nth-child(1) .sprice { color: var(--green); }
@@ -993,7 +993,7 @@ body {
 .ni { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 11px; margin-bottom: 7px; animation: slideIn .3s ease; }
 @keyframes slideIn { from { opacity:0; transform:translateX(12px); } to { opacity:1; transform:translateX(0); } }
 .ni.vcr { border-left: 3px solid var(--red); }
-.ni.vwa { border-left: 3px solid var(--orange); }
+.ni.vwa { border-left: 3px solid var(--red); }
 .ni-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
 .ni-name { font-size: 13px; font-weight: 700; color: var(--text); }
 .ni-time { font-size: 10px; color: var(--text3); }
@@ -1006,7 +1006,7 @@ body {
 .toast { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; min-width: 270px; max-width: 340px; box-shadow: var(--shadow); pointer-events: all; animation: toastIn .3s ease; }
 @keyframes toastIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 .toast.vcr { border-left: 3px solid var(--red); }
-.toast.vwa { border-left: 3px solid var(--orange); }
+.toast.vwa { border-left: 3px solid var(--red); }
 .toast.ok  { border-left: 3px solid var(--green); }
 .toast.info{ border-left: 3px solid var(--purple); }
 .tico { font-size: 17px; flex-shrink: 0; }
@@ -1134,6 +1134,12 @@ body {
 .fl-table .fl-station { font-weight: 600; color: var(--text); }
 .fl-table .fl-saved { font-weight: 700; color: var(--green); }
 .fl-table .fl-total { font-weight: 700; color: var(--text); }
+.fl-del-btn {
+  background: none; border: none; color: var(--text3); cursor: pointer;
+  font-size: 13px; padding: 4px 8px; border-radius: 6px; transition: all .15s;
+  font-family: var(--font); line-height: 1;
+}
+.fl-del-btn:hover { background: var(--red-dim); color: var(--red); }
 
 /* Monthly report cards */
 .monthly-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
@@ -1611,7 +1617,7 @@ body {
             <table class="fl-table">
               <thead><tr>
                 <th>Date</th><th>Station</th><th>Truck</th><th>Gallons</th>
-                <th>Price/Gal</th><th>Disc. Price</th><th>Total</th><th>Saved</th>
+                <th>Price/Gal</th><th>Disc. Price</th><th>Total</th><th>Saved</th><th style="width:40px;"></th>
               </tr></thead>
               <tbody id="flHistoryBody"></tbody>
             </table>
@@ -1720,26 +1726,10 @@ body {
       <div><div class="modal-h" style="margin-bottom:0">Send to Telegram</div><div class="modal-sub" style="margin-bottom:0">Dispatch fuel stop info to driver</div></div>
     </div>
     <div style="margin:18px 0 10px;">
-      <!-- Setup guide -->
-      <details id="tgSetupGuide" style="margin-bottom:14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
-        <summary style="font-size:11px;font-weight:700;color:var(--purple-lt);cursor:pointer;letter-spacing:.5px;list-style:none;display:flex;align-items:center;gap:6px;">
-          How to create a Telegram Bot (first time setup)
-        </summary>
-        <div style="margin-top:10px;font-size:11px;color:var(--text2);line-height:1.7;">
-          <div style="font-weight:700;color:var(--text);margin-bottom:4px;">Step 1 — Create your bot:</div>
-          <div>1. Open Telegram and search <strong style="color:var(--purple-lt)">@BotFather</strong></div>
-          <div>2. Send the message: <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;">/newbot</code></div>
-          <div>3. Choose a name (e.g. <em>Fuel Dispatch Bot</em>)</div>
-          <div>4. Choose a username ending in <em>bot</em> (e.g. <em>myfleet_fuel_bot</em>)</div>
-          <div>5. BotFather gives you a token like <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;">123456:ABCdef...</code> — copy it below</div>
-          <div style="margin-top:8px;font-weight:700;color:var(--text);">Step 2 — Get your Chat ID:</div>
-          <div>1. Send any message to your new bot from your driver's phone</div>
-          <div>2. Open this URL in a browser (replace TOKEN): <br/><code style="background:var(--surface3);padding:2px 6px;border-radius:4px;word-break:break-all;">https://api.telegram.org/botTOKEN/getUpdates</code></div>
-          <div>3. Copy the <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;">"id"</code> number from <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;">chat</code> object — that's your Chat ID</div>
-          <div>4. For a group: add the bot to the group, then get the group's negative ID</div>
-          <div style="margin-top:8px;color:var(--text3);font-size:10px;">Token and Chat ID are saved in your browser — you only set this up once per device.</div>
-        </div>
-      </details>
+      <div class="flabel">Assign to Unit</div>
+      <select class="finput" id="tgUnitSelect" style="margin-bottom:12px;appearance:none;cursor:pointer;">
+        <option value="">Select truck...</option>
+      </select>
       <div class="flabel">Telegram Bot Token</div>
       <input class="finput" type="text" id="tgBotToken" placeholder="123456:ABCdefGHI..." style="margin-bottom:12px;"/>
       <div class="flabel">Chat ID (Driver, Group, or @username)</div>
@@ -2316,7 +2306,7 @@ function renderVehicles(veh){
   list.forEach((v,i)=>{
     const lvl=v.fuelPercent<10?'vcr':v.fuelPercent<S.threshold?'vwa':'vok';
     const badge=lvl==='vcr'?'CRITICAL':lvl==='vwa'?'LOW':'OK';
-    const col=lvl==='vcr'?'var(--red)':lvl==='vwa'?'var(--orange)':'var(--green)';
+    const col=lvl==='vcr'?'var(--red)':lvl==='vwa'?'var(--red)':'var(--green)';
     const upd=new Date(v.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
     const engineBadge = v.engineState==='On'
       ? `<span style="background:#22C55E22;color:#22C55E;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:6px;">ON</span>`
@@ -2507,7 +2497,7 @@ function buildDonutChart(){
   const total = recs.length || 1;
   const labels = sorted.length ? sorted.slice(0,3).map(e=>e[0]) : ['No data yet'];
   const data = sorted.length ? sorted.slice(0,3).map(e=>Math.round(e[1]/total*100)) : [100];
-  const colors = sorted.length ? ['#7C3AED','#3B82F6','#22C55E'].slice(0,labels.length) : ['#333'];
+  const colors = sorted.length ? ['#7C3AED','#8B5CF6','#22C55E'].slice(0,labels.length) : ['#333'];
   S.charts.donut=new Chart(ctx,{
     type:'doughnut',
     data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,borderRadius:4,hoverOffset:4}]},
@@ -2599,12 +2589,15 @@ async function fetchUsMap(){
 }
 
 function buildMaps(){
-  buildStateMap('fuelByStateMap','fueling');
-  buildStateMap('priceByStateMap','price');
-  const dark=S.theme==='dark';
-  document.getElementById('fuelMapLegend').style.background = dark
-    ? 'linear-gradient(90deg,#1A2030,#7C3AED)'
-    : 'linear-gradient(90deg,#E8EEF6,#7C3AED)';
+  // Use rAF to ensure DOM layout is settled before measuring
+  requestAnimationFrame(()=>{
+    buildStateMap('fuelByStateMap','fueling');
+    buildStateMap('priceByStateMap','price');
+    const dark=S.theme==='dark';
+    document.getElementById('fuelMapLegend').style.background = dark
+      ? 'linear-gradient(90deg,#1A2030,#7C3AED)'
+      : 'linear-gradient(90deg,#E8EEF6,#7C3AED)';
+  });
 }
 
 function buildStateMap(containerId, type){
@@ -2653,8 +2646,12 @@ function buildStateMap(containerId, type){
     const w = container.clientWidth || container.offsetWidth || 560;
     const h = container.clientHeight || container.offsetHeight || svgHeight;
 
+    // Use a virtual canvas with US-friendly aspect ratio (960x600)
+    // then use viewBox so the SVG scales to fill the container
+    const vw = 960, vh = 600;
+
     const projection = d3.geoAlbersUsa()
-      .fitSize([w, h], topojson.feature(topo, topo.objects.states));
+      .fitSize([vw, vh], topojson.feature(topo, topo.objects.states));
     const path = d3.geoPath().projection(projection);
 
     const strokeColor = dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.6)';
@@ -2680,15 +2677,15 @@ function buildStateMap(containerId, type){
     }
 
     const svg = d3.create('svg')
-      .attr('width', w)
-      .attr('height', h)
+      .attr('viewBox', `0 0 ${vw} ${vh}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet')
       .style('width','100%')
       .style('height','100%')
       .style('border-radius','12px')
       .style('display','block');
 
     // Background
-    svg.append('rect').attr('width',w).attr('height',h).attr('fill',bgColor).attr('rx',10);
+    svg.append('rect').attr('width',vw).attr('height',vh).attr('fill',bgColor).attr('rx',10);
 
     const states = topojson.feature(topo, topo.objects.states);
 
@@ -2747,15 +2744,15 @@ function buildStateMap(containerId, type){
         labelGroup.append('text')
           .attr('x',px).attr('y',py)
           .attr('text-anchor','middle').attr('dominant-baseline','middle')
-          .attr('font-size',isBig?7:5.5).attr('font-family','Plus Jakarta Sans, sans-serif')
+          .attr('font-size',isBig?11:9).attr('font-family','Plus Jakarta Sans, sans-serif')
           .attr('font-weight','600').attr('fill',textCol)
           .text(abbr);
 
         if(display){
           labelGroup.append('text')
-            .attr('x',px).attr('y',py+8)
+            .attr('x',px).attr('y',py+(isBig?13:11))
             .attr('text-anchor','middle').attr('dominant-baseline','middle')
-            .attr('font-size',isBig?6:4.5).attr('font-family','Plus Jakarta Sans, sans-serif')
+            .attr('font-size',isBig?9:7).attr('font-family','Plus Jakarta Sans, sans-serif')
             .attr('font-weight','700').attr('fill',isActive?'rgba(255,255,255,.9)':textCol)
             .text(display);
         }
@@ -2775,7 +2772,7 @@ function buildStateMap(containerId, type){
         labelGroup.append('text')
           .attr('x',px).attr('y',py)
           .attr('text-anchor','middle').attr('dominant-baseline','middle')
-          .attr('font-size',5).attr('font-family','Plus Jakarta Sans, sans-serif')
+          .attr('font-size',9).attr('font-family','Plus Jakarta Sans, sans-serif')
           .attr('font-weight','600').attr('fill',textCol)
           .text(abbr);
       });
@@ -2818,7 +2815,7 @@ function renderMapReport(){
     <div class="kpi-card kp-tot"><div class="kpi-lbl">States Active</div><div class="kpi-val" style="font-size:30px">${states.length}</div><div class="kpi-sub">states with fuel stops</div></div>
     <div class="kpi-card kp-spend"><div class="kpi-lbl">Top State</div><div class="kpi-val" style="font-size:30px">${topState}</div><div class="kpi-sub">${states[0]?.stops||0} stops, $${(states[0]?.total||0).toFixed(0)}</div></div>
     <div class="kpi-card kp-save"><div class="kpi-lbl">Avg $/Gal</div><div class="kpi-val" style="font-size:30px">$${avgPrice}</div><div class="kpi-sub">blended rate</div></div>
-    <div class="kpi-card kp-cr"><div class="kpi-lbl">Total Spend</div><div class="kpi-val" style="font-size:28px">$${totalSpend.toFixed(0)}</div><div class="kpi-sub">${totalStops} stops across US</div></div>`;
+    <div class="kpi-card kp-tot"><div class="kpi-lbl">Total Spend</div><div class="kpi-val" style="font-size:28px">$${totalSpend.toFixed(0)}</div><div class="kpi-sub">${totalStops} stops across US</div></div>`;
 
   // Top states list for fueling map
   const topFuel=states.slice(0,5);
@@ -2894,7 +2891,7 @@ function renderAnalytics(){
     <div class="kpi-card kp-spend" style="animation-delay:.00s"><div class="kpi-lbl">Month Spent</div><div class="kpi-val">$${totalSpend.toFixed(0)}</div><div class="kpi-sub">${recs.length} stops</div></div>
     <div class="kpi-card kp-save"  style="animation-delay:.05s"><div class="kpi-lbl">Month Saved</div><div class="kpi-val">$${totalSave.toFixed(0)}</div><div class="kpi-sub">via discounts</div></div>
     <div class="kpi-card kp-tot"  style="animation-delay:.10s"><div class="kpi-lbl">Total Gallons</div><div class="kpi-val">${totalGals.toLocaleString()}</div><div class="kpi-sub">gallons fueled</div></div>
-    <div class="kpi-card kp-wa"   style="animation-delay:.15s"><div class="kpi-lbl">Avg $/Gallon</div><div class="kpi-val">$${avgPrice}</div><div class="kpi-sub">effective rate</div></div>`;
+    <div class="kpi-card kp-tot"   style="animation-delay:.15s"><div class="kpi-lbl">Avg $/Gallon</div><div class="kpi-val">$${avgPrice}</div><div class="kpi-sub">effective rate</div></div>`;
 
   const days=new Date(year,month+1,0).getDate();
   const dLabels=Array.from({length:Math.ceil(days/3)},(_,i)=>`${i*3+1}`);
@@ -2904,10 +2901,10 @@ function renderAnalytics(){
   const mCtx=document.getElementById('monthlyChart').getContext('2d');
   if(S.charts.monthly) S.charts.monthly.destroy();
   const mg=mCtx.createLinearGradient(0,0,0,200);
-  mg.addColorStop(0,'rgba(59,130,246,.35)'); mg.addColorStop(1,'rgba(59,130,246,0)');
+  mg.addColorStop(0,'rgba(124,58,237,.35)'); mg.addColorStop(1,'rgba(124,58,237,0)');
   S.charts.monthly=new Chart(mCtx,{
     type:'line',
-    data:{labels:dLabels,datasets:[{data:dData,borderColor:'#3B82F6',backgroundColor:mg,borderWidth:2.5,fill:true,tension:.4,pointRadius:2,pointHoverRadius:4}]},
+    data:{labels:dLabels,datasets:[{data:dData,borderColor:'#7C3AED',backgroundColor:mg,borderWidth:2.5,fill:true,tension:.4,pointRadius:2,pointHoverRadius:4}]},
     options:baseOpts(),
   });
 
@@ -3274,10 +3271,39 @@ function selectStop(st, card){
 S.selectedStop = null;
 
 function openTgModal(st){
-  const veh = S.vehicles[S.activeCompany]||[];
+  S._tgStation = st;
   const orig = document.getElementById('fOrig').value||'—';
   const dest = document.getElementById('fDest').value||'—';
-  const truck = veh.find(v=>v.location===orig)||veh[0]||null;
+  S._tgOrig = orig; S._tgDest = dest;
+
+  // Populate unit selector
+  const sel = document.getElementById('tgUnitSelect');
+  sel.innerHTML = '<option value="">Select truck...</option>';
+  Object.values(S.vehicles).flat().forEach(v=>{
+    const o = document.createElement('option');
+    o.value = v.unitNumber;
+    o.textContent = `${v.unitNumber} — ${v.name} (${v.fuelPercent}% fuel)`;
+    o.dataset.fuel = v.fuelPercent;
+    sel.appendChild(o);
+  });
+  sel.onchange = () => updateTgPreview();
+
+  const savedToken = localStorage.getItem('tg_bot_token')||'';
+  const savedChat  = localStorage.getItem('tg_chat_id')||'';
+  if(savedToken) document.getElementById('tgBotToken').value = savedToken;
+  if(savedChat)  document.getElementById('tgChatId').value  = savedChat;
+  document.getElementById('tgStatus').style.display = 'none';
+  document.getElementById('tgModal').classList.add('on');
+  updateTgPreview();
+}
+
+function updateTgPreview(){
+  const st = S._tgStation; if(!st) return;
+  const orig = S._tgOrig||'—', dest = S._tgDest||'—';
+  const sel = document.getElementById('tgUnitSelect');
+  const selectedOpt = sel.options[sel.selectedIndex];
+  const unitNum = sel.value;
+  const fuelPct = unitNum && selectedOpt.dataset.fuel ? selectedOpt.dataset.fuel+'%' : '';
   const mapsLink = (st.lat && st.lng)
     ? `https://www.google.com/maps/dir/?api=1&destination=${st.lat},${st.lng}`
     : `https://maps.google.com/?q=${encodeURIComponent(st.address)}`;
@@ -3292,7 +3318,7 @@ Map: ${mapsLink}
 Retail Price: $${retailP}/gal
 Discounted Price: $${discPrice}/gal
 Savings: $${st.savings || '0.15'}/gal${st.defPrice ? `\nDEF: $${st.defPrice}/gal` : ''}${st.reeferPrice ? `\nReefer: $${st.reeferPrice}/gal` : ''}
-${truck?`Truck: ${truck.unitNumber} — ${truck.fuelPercent}% fuel`:''}
+${unitNum ? `Truck: ${unitNum} — ${fuelPct} fuel` : ''}
 
 Route: ${orig} → ${dest}
 Detour: ${st.detour} mi off route
@@ -3300,12 +3326,6 @@ Detour: ${st.detour} mi off route
 Please fuel up at this stop. Safe travels.`;
   document.getElementById('tgPreview').textContent = msg;
   S.tgMsg = msg;
-  const savedToken = localStorage.getItem('tg_bot_token')||'';
-  const savedChat  = localStorage.getItem('tg_chat_id')||'';
-  if(savedToken) document.getElementById('tgBotToken').value = savedToken;
-  if(savedChat)  document.getElementById('tgChatId').value  = savedChat;
-  document.getElementById('tgStatus').style.display = 'none';
-  document.getElementById('tgModal').classList.add('on');
 }
 
 function closeTgModal(){
@@ -3338,7 +3358,8 @@ async function sendToTelegram(){
       localStorage.setItem('tg_bot_token', token);
       localStorage.setItem('tg_chat_id', chatId);
       // Save dispatched station to fuel log queue
-      if(S.selectedStop) addDispatchedStation(S.selectedStop);
+      const tgUnit = document.getElementById('tgUnitSelect').value;
+      if(S.selectedStop) addDispatchedStation(S.selectedStop, tgUnit);
       statusEl.className='tg-status ok';
       statusEl.textContent='Message sent to driver successfully!';
       statusEl.style.display='block';
@@ -3863,7 +3884,7 @@ function getDispatchedStations(){
 function saveDispatchedStations(list){
   localStorage.setItem('ff_dispatched', JSON.stringify(list));
 }
-function addDispatchedStation(st){
+function addDispatchedStation(st, unitNum){
   const list = getDispatchedStations();
   list.unshift({
     id: 'ds_'+Date.now(),
@@ -3882,6 +3903,7 @@ function addDispatchedStation(st){
     distFromB: st.distFromB||'',
     phone: st.phone||'',
     relay: !!st.relay,
+    truckUnit: unitNum||'',
     date: new Date().toISOString().split('T')[0],
     logged: false
   });
@@ -3958,6 +3980,7 @@ function openLogForDispatch(dispatchId){
   document.getElementById('mStation').value = d.name;
   document.getElementById('mPrice').value = d.price;
   document.getElementById('mDiscount').value = d.discountedPrice;
+  if(d.truckUnit) document.getElementById('mUnit').value = d.truckUnit;
   if(d.state){
     const sel = document.getElementById('mState');
     // Match state abbreviation or full name
@@ -3996,6 +4019,7 @@ function renderFuelHistory(){
       <td>$${parseFloat(r.discountedPrice).toFixed(3)}</td>
       <td class="fl-total">$${parseFloat(r.discountTotal).toFixed(2)}</td>
       <td class="fl-saved">$${parseFloat(r.saved).toFixed(2)}</td>
+      <td><button class="fl-del-btn" onclick="deleteFuelLog('${r.id}')" title="Delete entry">✕</button></td>
     </tr>
   `).join('');
 }
@@ -4038,6 +4062,18 @@ function renderMonthlyReport(){
       <td class="fl-saved">$${d.saved.toFixed(2)}</td>
     </tr>
   `).join('');
+}
+
+function deleteFuelLog(id){
+  if(!confirm('Delete this fueling record?')) return;
+  let history = getFuelLogHistory();
+  history = history.filter(r=>r.id!==id);
+  saveFuelLogHistory(history);
+  // Also remove from in-memory records
+  S.fuelRecords = S.fuelRecords.filter(r=>r.id!==id);
+  renderFuelLog();
+  renderDashboard(); refreshCharts();
+  showToast('ok','ok','Deleted','Fueling record removed');
 }
 
 function handleChainClick(event, label){
@@ -5003,7 +5039,7 @@ async function buildLeafletRouteMap(mapDiv, orig, dest, stops, dark, isFullscree
   const oc = await geocodeCity(orig);
   const dc = await geocodeCity(dest);
   if(!oc||!dc){
-    mapDiv.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;color:#777;font-size:12px;"><div style="font-size:28px;color:var(--orange);">!</div><div>Could not locate "${!oc?orig:dest}"</div><div style="font-size:10px;opacity:.6;">Try "Chicago, IL" format</div></div>`;
+    mapDiv.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;color:#777;font-size:12px;"><div style="font-size:28px;color:var(--red);">!</div><div>Could not locate "${!oc?orig:dest}"</div><div style="font-size:10px;opacity:.6;">Try "Chicago, IL" format</div></div>`;
     return null;
   }
 
@@ -5184,7 +5220,7 @@ function renderNotifs(){
   list.innerHTML=S.notifications.slice(0,30).map(n=>`
     <div class="ni ${n.lvl}">
       <div class="ni-top"><div class="ni-name">${n.v.unitNumber} — ${n.v.name}</div><div class="ni-time">${n.time.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div></div>
-      <div class="ni-msg"><strong>${n.co}</strong> · ${n.v.location}<br>Fuel at <strong style="color:${n.lvl==='vcr'?'var(--red)':'var(--orange)'}">${n.v.fuelPercent}%</strong></div>
+      <div class="ni-msg"><strong>${n.co}</strong> · ${n.v.location}<br>Fuel at <strong style="color:var(--red)">${n.v.fuelPercent}%</strong></div>
     </div>`).join('');
 }
 
@@ -5200,7 +5236,7 @@ function showToast(lvl,ico,title,desc){
   const t=document.createElement('div'); t.className=`toast ${lvl}`;
   const svgIco = lvl==='ok'
     ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>'
-    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2.5" stroke-linecap="round"><path d="M12 9v4"/><circle cx="12" cy="16" r=".5" fill="var(--orange)"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round"><path d="M12 9v4"/><circle cx="12" cy="16" r=".5" fill="var(--red)"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
   t.innerHTML=`<div class="tico">${svgIco}</div><div class="tbody"><div class="tttl">${title}</div><div class="tdesc">${desc}</div></div><button class="tx" onclick="this.parentElement.remove()">✕</button>`;
   wrap.appendChild(t); setTimeout(()=>t.remove(),5000);
 }

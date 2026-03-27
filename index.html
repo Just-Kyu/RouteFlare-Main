@@ -1201,8 +1201,8 @@ body {
       </div>
     </div>
     <div class="setup-logo">
-      <div class="slogo-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M3 22V8l4-2v16H3zm6 0V4h6v18H9zm8 0V6l4 2v14h-4z"/></svg></div>
-      <div class="slogo-txt">Fuel<span>Pro</span></div>
+      <img src="logo.png" alt="R" width="44" height="44" style="border-radius:10px;object-fit:contain;">
+      <div class="slogo-txt">Route<span>Flare</span></div>
     </div>
     <div class="setup-h">Connect to Samsara</div>
     <div class="setup-sub">Monitor fuel levels, find cheapest truck stops, and track spending & savings across all your vehicles.</div>
@@ -1582,9 +1582,12 @@ body {
       <!-- FUEL LOG -->
       <div class="page" id="page-fuelLog">
         <div class="fl-header">
-          <div>
-            <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:2px;">Fuel Log</div>
-            <div style="font-size:12px;color:var(--text2);">Track fueling history, savings, and monthly reports</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img src="logo.png" alt="R" width="36" height="36" style="border-radius:8px;object-fit:contain;">
+            <div>
+              <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:2px;">Fuel Log</div>
+              <div style="font-size:12px;color:var(--text2);">Track fueling history, savings, and monthly reports</div>
+            </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
             <select class="month-select" id="flMonthSelect" onchange="renderFuelLog()">
@@ -1683,8 +1686,13 @@ body {
 <!-- ADD FUELING MODAL -->
 <div class="modal-overlay" id="fuelModal">
   <div class="modal">
-    <div class="modal-h">Log Fueling Stop</div>
-    <div class="modal-sub">Record fuel purchase — savings calculated automatically</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <img src="logo.png" alt="R" width="32" height="32" style="border-radius:8px;object-fit:contain;">
+      <div>
+        <div class="modal-h" style="margin-bottom:0">Log Fueling Stop</div>
+        <div class="modal-sub" style="margin-bottom:0">Record fuel purchase — savings calculated automatically</div>
+      </div>
+    </div>
     <button class="modal-close" onclick="closeFuelModal()">✕</button>
     <div class="modal-grid">
       <div class="ig"><label>Truck Unit #</label>
@@ -2329,7 +2337,7 @@ function renderVehicles(veh){
         <div class="vmi"><span>${S.companies[S.activeCompany]}</span></div>
         <div class="vmi"><span>${upd}</span></div>
       </div>
-      ${lvl!=='vok'?`<button class="vfind-btn" onclick="goFindForTruck('${v.location.replace(/'/g,"\\'")}',${v.lat||'null'},${v.lng||'null'})">Find Nearest Fuel Stop</button>`:''}`;
+      ${lvl!=='vok'?`<button class="vfind-btn" onclick="goFindForTruck('${v.location.replace(/'/g,"\\'")}',${v.lat!=null?v.lat:'null'},${v.lng!=null?v.lng:'null'})">Find Nearest Fuel Stop</button>`:''}`;
     grid.appendChild(card);
   });
 }
@@ -2951,13 +2959,22 @@ function renderAnalytics(){
 // Cache for exact truck GPS coords keyed by location string
 if(!S._truckCoords) S._truckCoords = {};
 
+function cacheTruckCoords(){
+  Object.values(S.vehicles).flat().forEach(v=>{
+    if(v.lat!=null && v.lng!=null && v.location){
+      S._truckCoords[v.location.trim().toLowerCase()] = {lat:v.lat, lng:v.lng};
+    }
+  });
+}
+
 function buildQuickPick(){
+  cacheTruckCoords();
   const all=Object.values(S.vehicles).flat();
   const low=all.filter(v=>v.fuelPercent<S.threshold).sort((a,b)=>a.fuelPercent-b.fuelPercent).slice(0,8);
   document.getElementById('qpLbl').style.display=low.length?'block':'none';
   document.getElementById('qpList').innerHTML=low.map(v=>`
     <span class="qp-chip ${v.fuelPercent<10?'vcr':'vwa'}"
-      onclick="selectTruckOrigin('${v.location.replace(/'/g,"\\'")}',${v.lat||'null'},${v.lng||'null'})"
+      onclick="selectTruckOrigin('${v.location.replace(/'/g,"\\'")}',${v.lat!=null?v.lat:'null'},${v.lng!=null?v.lng:'null'})"
       title="${v.unitNumber} — ${v.fuelPercent}% fuel">
       ${v.unitNumber} · ${v.fuelPercent}%
     </span>`).join('');
@@ -2966,8 +2983,8 @@ function buildQuickPick(){
 function selectTruckOrigin(loc, lat, lng){
   document.getElementById('fOrig').value = loc;
   if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value = loc;
-  if(lat && lng){
-    S._truckCoords[loc.trim().toLowerCase()] = {lat, lng};
+  if(lat!=null && lng!=null){
+    S._truckCoords[loc.trim().toLowerCase()] = {lat:parseFloat(lat), lng:parseFloat(lng)};
   }
 }
 
@@ -5187,7 +5204,7 @@ function exportPDF(){
   .unit{font-weight:700;color:#7C3AED;} .spend{font-weight:700;color:#0891B2;} .save{font-weight:700;color:#16A34A;}
   h2{font-size:17px;font-weight:700;margin:28px 0 12px;} .footer{margin-top:40px;padding-top:16px;border-top:1px solid #E5E7EB;font-size:11px;color:#9CA3AF;text-align:center;}
   </style></head><body>
-  <h1>RouteFlare</h1>
+  <div style="display:flex;align-items:center;gap:12px;"><img src="logo.png" width="40" height="40" style="border-radius:8px;"><h1 style="margin:0;">RouteFlare</h1></div>
   <div class="sub">Monthly Fuel Report — ${month} ${new Date().getFullYear()} · Generated ${new Date().toLocaleDateString()}</div>
   <div class="kpi-row">
     <div class="kpi"><div class="val">$${totalSpend}</div><div class="lbl">Total Spent</div></div>

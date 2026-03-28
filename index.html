@@ -2960,11 +2960,17 @@ function renderAnalytics(){
 if(!S._truckCoords) S._truckCoords = {};
 
 function cacheTruckCoords(){
+  let count=0;
   Object.values(S.vehicles).flat().forEach(v=>{
-    if(v.lat!=null && v.lng!=null && v.location){
-      S._truckCoords[v.location.trim().toLowerCase()] = {lat:v.lat, lng:v.lng};
+    if(v.lat!=null && v.lng!=null && v.location && v.location!=='Unknown'){
+      const exact = {lat:v.lat, lng:v.lng};
+      S._truckCoords[v.location.trim().toLowerCase()] = exact;
+      // Also cache by unit number for secondary lookup
+      if(v.unitNumber) S._truckCoords[('unit_'+v.unitNumber).toLowerCase()] = exact;
+      count++;
     }
   });
+  if(count) console.log(`[RouteFlare] Cached GPS coords for ${count} trucks`);
 }
 
 function buildQuickPick(){
@@ -2981,10 +2987,20 @@ function buildQuickPick(){
 }
 
 function selectTruckOrigin(loc, lat, lng){
-  document.getElementById('fOrig').value = loc;
-  if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value = loc;
-  if(lat!=null && lng!=null){
-    S._truckCoords[loc.trim().toLowerCase()] = {lat:parseFloat(lat), lng:parseFloat(lng)};
+  // Use exact coordinates as origin if available
+  if(lat!=null && lng!=null && !isNaN(lat) && !isNaN(lng)){
+    const coordStr = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`;
+    // Set origin to "Location (lat, lng)" for precise routing
+    document.getElementById('fOrig').value = loc + ' (' + coordStr + ')';
+    if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value = loc;
+    // Cache under multiple keys so geocodeCity always finds it
+    const exact = {lat:parseFloat(lat), lng:parseFloat(lng)};
+    S._truckCoords[loc.trim().toLowerCase()] = exact;
+    S._truckCoords[(loc + ' (' + coordStr + ')').trim().toLowerCase()] = exact;
+    S._truckCoords[coordStr] = exact;
+  } else {
+    document.getElementById('fOrig').value = loc;
+    if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value = loc;
   }
 }
 
@@ -4825,12 +4841,21 @@ function extractCityState(addr){
 }
 
 async function geocodeCity(city){
-  // ── Method 0: Check truck GPS cache for exact Samsara coordinates ──
+  // ── Method 0a: Check truck GPS cache for exact Samsara coordinates ──
   const cacheKey = city.trim().toLowerCase();
   if(S._truckCoords && S._truckCoords[cacheKey]){
     const cached = S._truckCoords[cacheKey];
     console.log(`[RouteFlare] Truck GPS cache hit "${city}" → ${cached.lat.toFixed(4)}, ${cached.lng.toFixed(4)}`);
     return cached;
+  }
+  // ── Method 0b: Parse raw coordinates from string like "40.7128, -74.0060" or "City (40.7128, -74.0060)" ──
+  const coordMatch = city.match(/([-]?\d+\.\d+)\s*,\s*([-]?\d+\.\d+)/);
+  if(coordMatch){
+    const lat=parseFloat(coordMatch[1]), lng=parseFloat(coordMatch[2]);
+    if(Math.abs(lat)<=90 && Math.abs(lng)<=180){
+      console.log(`[RouteFlare] Parsed coordinates from "${city}" → ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+      return {lat, lng};
+    }
   }
   const stateMap = {pa:'Pennsylvania',oh:'Ohio',in:'Indiana',ky:'Kentucky',il:'Illinois',
     wi:'Wisconsin',mi:'Michigan',mn:'Minnesota',mo:'Missouri',ia:'Iowa',ne:'Nebraska',

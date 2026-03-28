@@ -324,10 +324,9 @@ body {
 }
 .sb-logo {
   width: 38px; height: 38px; border-radius: 11px;
-  background: linear-gradient(135deg, var(--purple-lt), var(--purple));
+  background: transparent;
   display: flex; align-items: center; justify-content: center;
   font-size: 18px; margin-bottom: 20px; cursor: pointer;
-  box-shadow: 0 4px 12px var(--purple-glow);
 }
 .sb-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; width: 100%; padding: 0 8px; }
 .sbn {
@@ -496,7 +495,7 @@ body {
 .kp-wa::after  { background: var(--red); }
 .kp-ok::after  { background: var(--green); }
 .kp-tot::after { background: var(--purple); }
-.kp-spend::after { background: var(--purple-lt); }
+.kp-spend::after { background: var(--purple); }
 .kp-save::after  { background: var(--green); }
 .kpi-lbl { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
 .kpi-val { font-size: 36px; font-weight: 800; line-height: 1; color: var(--text); }
@@ -856,7 +855,7 @@ body {
 .stop-card.sel { border-color: var(--purple); background: var(--purple-dim); }
 .srank { font-size: 18px; font-weight: 800; color: var(--text3); width: 28px; text-align: center; flex-shrink: 0; margin-right: 2px; padding-top: 2px; }
 .stop-card:nth-child(1) .srank { color: var(--purple-lt); }
-.stop-card:nth-child(2) .srank { color: var(--blue-lt); }
+.stop-card:nth-child(2) .srank { color: var(--purple-lt); }
 .stop-card:nth-child(3) .srank { color: var(--green); }
 .sico { width: 38px; height: 38px; border-radius: 10px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
 /* Inline Telegram send button below selected card */
@@ -876,7 +875,7 @@ body {
 .stags { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
 .stag { font-size: 9px; padding: 2px 6px; border-radius: 3px; background: var(--surface2); border: 1px solid var(--border); color: var(--text3); text-transform: uppercase; font-weight: 600; letter-spacing: .5px; }
 .stag.relay { border-color: rgba(34,197,94,.4); color: var(--green); }
-.stag.has-def { border-color: rgba(59,130,246,.35); color: var(--blue-lt); }
+.stag.has-def { border-color: rgba(124,58,237,.35); color: var(--purple-lt); }
 .stag.has-shower { border-color: rgba(168,85,247,.35); color: #A855F7; }
 .stag.has-scale { border-color: rgba(124,58,237,.35); color: var(--purple-lt); }
 .smeta { text-align: right; flex-shrink: 0; min-width: 90px; }
@@ -962,7 +961,7 @@ body {
 .truck-table tr:hover td { background: var(--surface2); }
 .truck-table .tunit { font-weight: 700; color: var(--purple-lt); font-size: 12px; }
 .truck-table .tname { color: var(--text); font-weight: 500; }
-.truck-table .tspend { font-weight: 700; color: var(--blue-lt); font-size: 13px; }
+.truck-table .tspend { font-weight: 700; color: var(--purple-lt); font-size: 13px; }
 .truck-table .tsave { font-weight: 700; color: var(--green); font-size: 12px; }
 .tbar-mini { height: 4px; background: var(--surface3); border-radius: 2px; margin-top: 3px; overflow: hidden; }
 .tbar-mini-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--purple), var(--purple-lt)); }
@@ -1136,10 +1135,9 @@ body {
 .fl-table .fl-total { font-weight: 700; color: var(--text); }
 .fl-del-btn {
   background: none; border: none; color: var(--text3); cursor: pointer;
-  font-size: 13px; padding: 4px 8px; border-radius: 6px; transition: all .15s;
-  font-family: var(--font); line-height: 1;
+  padding: 4px; border-radius: 6px; transition: all .2s; display: flex; align-items: center; justify-content: center;
 }
-.fl-del-btn:hover { background: var(--red-dim); color: var(--red); }
+.fl-del-btn:hover { color: var(--red); background: var(--red-dim); }
 
 /* Monthly report cards */
 .monthly-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
@@ -1201,8 +1199,8 @@ body {
       </div>
     </div>
     <div class="setup-logo">
-      <img src="logo.png" alt="R" width="44" height="44" style="border-radius:10px;object-fit:contain;">
-      <div class="slogo-txt">Route<span>Flare</span></div>
+      <img src="image 49.png" alt="FuelPro" style="width:44px;height:44px;border-radius:12px;object-fit:contain;">
+      <div class="slogo-txt">Fuel<span>Pro</span></div>
     </div>
     <div class="setup-h">Connect to Samsara</div>
     <div class="setup-sub">Monitor fuel levels, find cheapest truck stops, and track spending & savings across all your vehicles.</div>
@@ -1240,7 +1238,7 @@ body {
 <!-- ══ APP ══ -->
 <div id="app">
   <div class="sidebar">
-    <div class="sb-logo"><img src="logo.png" alt="RF" width="30" height="30" style="border-radius:6px;object-fit:contain;" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=font-size:14px;font-weight:800;color:#fff;letter-spacing:-1px>RF</span>'"></div>
+    <div class="sb-logo"><img src="image 49.png" alt="FuelPro" style="width:28px;height:28px;object-fit:contain;border-radius:4px;"></div>
     <div class="sb-nav">
       <button class="sbn on" data-p="dashboard" onclick="goPage('dashboard',this)"><span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="lbl">Dash</span></button>
       <button class="sbn" data-p="finder" onclick="goPage('finder',this)"><span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19.77 7.23l.01-.01-3.72-3.72L15 4.56l2.11 2.11c-.94.36-1.61 1.26-1.61 2.33a2.5 2.5 0 002.5 2.5c.36 0 .69-.08 1-.21V19c0 .55-.45 1-1 1s-1-.45-1-1v-3c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H6C4.9 3 4 3.9 4 5v16h10v-7.5h1.5V19a2.5 2.5 0 005 0V9c0-.69-.28-1.32-.73-1.77zM12 10H6V5h6v5zm6 0a1 1 0 110-2 1 1 0 010 2z"/></svg></span><span class="lbl">Finder</span></button>
@@ -1552,7 +1550,7 @@ body {
                 <div class="card" style="padding:20px;">
                   <div class="card-title" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
                     <span style="display:flex;align-items:center;gap:8px;">
-                      <span style="width:10px;height:10px;border-radius:3px;background:var(--blue-lt);display:inline-block;box-shadow:0 0 8px rgba(59,130,246,.3)"></span>
+                      <span style="width:10px;height:10px;border-radius:3px;background:var(--purple);display:inline-block;box-shadow:0 0 8px rgba(124,58,237,.3)"></span>
                       Avg Diesel Price by State
                     </span>
                     <button class="map-expand-btn" onclick="toggleMapExpand('bigPriceMap')" title="Fullscreen">⛶</button>
@@ -1560,7 +1558,7 @@ body {
                   <div class="map-container" id="bigPriceMap" style="height:340px;"></div>
                   <div class="map-legend-row" style="margin-top:12px;">
                     <span class="map-legend-lbl">$3.20 cheap</span>
-                    <div class="map-legend-bar" style="background:linear-gradient(90deg,var(--green),var(--blue-lt),var(--red));"></div>
+                    <div class="map-legend-bar" style="background:linear-gradient(90deg,var(--green),var(--red));"></div>
                     <span class="map-legend-lbl">$4.20+ expensive</span>
                   </div>
                   <div id="mapPriceTable" style="margin-top:14px;display:flex;flex-direction:column;gap:7px;"></div>
@@ -1735,7 +1733,7 @@ body {
     </div>
     <div style="margin:18px 0 10px;">
       <div class="flabel">Assign to Unit</div>
-      <select class="finput" id="tgUnitSelect" style="margin-bottom:12px;appearance:none;cursor:pointer;">
+      <select class="finput" id="tgUnitSelect" style="margin-bottom:12px;cursor:pointer;" onchange="updateTgPreview()">
         <option value="">Select truck...</option>
       </select>
       <div class="flabel">Telegram Bot Token</div>
@@ -2597,15 +2595,16 @@ async function fetchUsMap(){
 }
 
 function buildMaps(){
-  // Use rAF to ensure DOM layout is settled before measuring
-  requestAnimationFrame(()=>{
+  // Double rAF ensures browser has completed layout before measuring containers
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
     buildStateMap('fuelByStateMap','fueling');
     buildStateMap('priceByStateMap','price');
     const dark=S.theme==='dark';
-    document.getElementById('fuelMapLegend').style.background = dark
+    const legend = document.getElementById('fuelMapLegend');
+    if(legend) legend.style.background = dark
       ? 'linear-gradient(90deg,#1A2030,#7C3AED)'
       : 'linear-gradient(90deg,#E8EEF6,#7C3AED)';
-  });
+  }));
 }
 
 function buildStateMap(containerId, type){
@@ -2651,7 +2650,7 @@ function buildStateMap(containerId, type){
     if(!topo){ container.innerHTML=`<div style="height:${svgHeight}px;border-radius:12px;background:${bgColor};display:flex;align-items:center;justify-content:center;color:var(--red);font-size:12px">Map data unavailable</div>`; return; }
 
     container.innerHTML='';
-    const w = container.clientWidth || container.offsetWidth || 560;
+    const w = container.clientWidth || container.offsetWidth || container.parentElement?.clientWidth || 280;
     const h = container.clientHeight || container.offsetHeight || svgHeight;
 
     // Use a virtual canvas with US-friendly aspect ratio (960x600)
@@ -3314,23 +3313,20 @@ function selectStop(st, card){
 S.selectedStop = null;
 
 function openTgModal(st){
-  S._tgStation = st;
+  S.selectedStop = st;
   const orig = document.getElementById('fOrig').value||'—';
   const dest = document.getElementById('fDest').value||'—';
-  S._tgOrig = orig; S._tgDest = dest;
-
   // Populate unit selector
-  const sel = document.getElementById('tgUnitSelect');
-  sel.innerHTML = '<option value="">Select truck...</option>';
+  const unitSel = document.getElementById('tgUnitSelect');
+  unitSel.innerHTML = '<option value="">Select truck...</option>';
   Object.values(S.vehicles).flat().forEach(v=>{
     const o = document.createElement('option');
     o.value = v.unitNumber;
-    o.textContent = `${v.unitNumber} — ${v.name} (${v.fuelPercent}% fuel)`;
-    o.dataset.fuel = v.fuelPercent;
-    sel.appendChild(o);
+    o.textContent = `${v.unitNumber} — ${v.name} (${v.fuelPercent??'—'}% fuel)`;
+    o.dataset.fuel = v.fuelPercent||'';
+    unitSel.appendChild(o);
   });
-  sel.onchange = () => updateTgPreview();
-
+  buildTgMessage(st, orig, dest);
   const savedToken = localStorage.getItem('tg_bot_token')||'';
   const savedChat  = localStorage.getItem('tg_chat_id')||'';
   if(savedToken) document.getElementById('tgBotToken').value = savedToken;
@@ -3340,18 +3336,17 @@ function openTgModal(st){
   updateTgPreview();
 }
 
-function updateTgPreview(){
-  const st = S._tgStation; if(!st) return;
-  const orig = S._tgOrig||'—', dest = S._tgDest||'—';
-  const sel = document.getElementById('tgUnitSelect');
-  const selectedOpt = sel.options[sel.selectedIndex];
-  const unitNum = sel.value;
-  const fuelPct = unitNum && selectedOpt.dataset.fuel ? selectedOpt.dataset.fuel+'%' : '';
+function buildTgMessage(st, orig, dest){
   const mapsLink = (st.lat && st.lng)
     ? `https://www.google.com/maps/dir/?api=1&destination=${st.lat},${st.lng}`
     : `https://maps.google.com/?q=${encodeURIComponent(st.address)}`;
   const discPrice = st.price;
   const retailP = st.retailPrice || (parseFloat(st.price)+0.15).toFixed(3);
+  const unitSel = document.getElementById('tgUnitSelect');
+  const selOpt = unitSel.options[unitSel.selectedIndex];
+  const unitNum = unitSel.value;
+  const fuelPct = selOpt && selOpt.dataset.fuel ? selOpt.dataset.fuel : '';
+  const truckLine = unitNum ? `\nTruck: ${unitNum}${fuelPct ? ` — ${fuelPct}% fuel` : ''}` : '';
   const msg = `FUEL STOP ASSIGNMENT
 ━━━━━━━━━━━━━━━━━━━━━
 Station: ${st.name}
@@ -3360,8 +3355,7 @@ Map: ${mapsLink}
 
 Retail Price: $${retailP}/gal
 Discounted Price: $${discPrice}/gal
-Savings: $${st.savings || '0.15'}/gal${st.defPrice ? `\nDEF: $${st.defPrice}/gal` : ''}${st.reeferPrice ? `\nReefer: $${st.reeferPrice}/gal` : ''}
-${unitNum ? `Truck: ${unitNum} — ${fuelPct} fuel` : ''}
+Savings: $${st.savings || '0.15'}/gal${st.defPrice ? `\nDEF: $${st.defPrice}/gal` : ''}${st.reeferPrice ? `\nReefer: $${st.reeferPrice}/gal` : ''}${truckLine}
 
 Route: ${orig} → ${dest}
 Detour: ${st.detour} mi off route
@@ -3369,6 +3363,15 @@ Detour: ${st.detour} mi off route
 Please fuel up at this stop. Safe travels.`;
   document.getElementById('tgPreview').textContent = msg;
   S.tgMsg = msg;
+  S.tgSelectedUnit = unitNum;
+  S.tgSelectedFuel = fuelPct;
+}
+
+function updateTgPreview(){
+  if(!S.selectedStop) return;
+  const orig = document.getElementById('fOrig').value||'—';
+  const dest = document.getElementById('fDest').value||'—';
+  buildTgMessage(S.selectedStop, orig, dest);
 }
 
 function closeTgModal(){
@@ -3946,7 +3949,8 @@ function addDispatchedStation(st, unitNum){
     distFromB: st.distFromB||'',
     phone: st.phone||'',
     relay: !!st.relay,
-    truckUnit: unitNum||'',
+    assignedUnit: S.tgSelectedUnit||'',
+    assignedFuel: S.tgSelectedFuel||'',
     date: new Date().toISOString().split('T')[0],
     logged: false
   });
@@ -4023,10 +4027,11 @@ function openLogForDispatch(dispatchId){
   document.getElementById('mStation').value = d.name;
   document.getElementById('mPrice').value = d.price;
   document.getElementById('mDiscount').value = d.discountedPrice;
-  if(d.truckUnit) document.getElementById('mUnit').value = d.truckUnit;
+  if(d.assignedUnit){
+    document.getElementById('mUnit').value = d.assignedUnit;
+  }
   if(d.state){
     const sel = document.getElementById('mState');
-    // Match state abbreviation or full name
     for(let i=0;i<sel.options.length;i++){
       if(sel.options[i].value===d.state || sel.options[i].textContent.toLowerCase()===d.state.toLowerCase()){
         sel.selectedIndex = i; break;
@@ -4052,7 +4057,7 @@ function renderFuelHistory(){
     return;
   }
   empty.style.display = 'none';
-  tbody.innerHTML = history.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`
+  tbody.innerHTML = history.sort((a,b)=>b.date.localeCompare(a.date)).map((r,i)=>`
     <tr>
       <td>${r.date}</td>
       <td class="fl-station">${r.station}</td>
@@ -4062,9 +4067,20 @@ function renderFuelHistory(){
       <td>$${parseFloat(r.discountedPrice).toFixed(3)}</td>
       <td class="fl-total">$${parseFloat(r.discountTotal).toFixed(2)}</td>
       <td class="fl-saved">$${parseFloat(r.saved).toFixed(2)}</td>
-      <td><button class="fl-del-btn" onclick="deleteFuelLog('${r.id}')" title="Delete entry">✕</button></td>
+      <td><button class="fl-del-btn" onclick="deleteFuelRecord('${r.id||i}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></td>
     </tr>
   `).join('');
+}
+
+function deleteFuelRecord(recordId){
+  if(!confirm('Delete this fueling record?')) return;
+  let history = getFuelLogHistory();
+  history = history.filter(r=>(r.id||'')!==recordId);
+  saveFuelLogHistory(history);
+  S.fuelRecords = (S.fuelRecords||[]).filter(r=>(r.id||'')!==recordId);
+  renderFuelLog();
+  renderDashboard(); refreshCharts();
+  showToast('ok','ok','Deleted','Fueling record removed');
 }
 
 function renderMonthlyReport(){

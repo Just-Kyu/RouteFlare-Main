@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FuelPro</title>
+<title>RouteFlare</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -157,7 +157,7 @@ body {
   transition: all .2s; position: relative;
 }
 .tb-alert-btn:hover { border-color: var(--purple-lt); color: var(--purple-lt); }
-.tb-alert-btn.has-alerts { border-color: var(--orange); color: var(--orange); }
+.tb-alert-btn.has-alerts { border-color: var(--red); color: var(--red); }
 .tb-alert-badge {
   background: var(--red); color: #fff; font-size: 9px; font-weight: 800;
   min-width: 16px; height: 16px; border-radius: 8px;
@@ -196,7 +196,7 @@ body {
   font-size: 14px; font-weight: 800; flex-shrink: 0;
 }
 .tb-alert-item .tai-fuel.crit { background: rgba(239,68,68,.12); color: var(--red); }
-.tb-alert-item .tai-fuel.low { background: rgba(249,115,22,.12); color: var(--orange); }
+.tb-alert-item .tai-fuel.low { background: rgba(239,68,68,.12); color: var(--red); }
 .tb-alert-item .tai-info { flex: 1; min-width: 0; }
 .tb-alert-item .tai-name { font-size: 12px; font-weight: 700; color: var(--text); }
 .tb-alert-item .tai-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
@@ -492,7 +492,7 @@ body {
   content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
 }
 .kp-cr::after  { background: var(--red); }
-.kp-wa::after  { background: var(--orange); }
+.kp-wa::after  { background: var(--red); }
 .kp-ok::after  { background: var(--green); }
 .kp-tot::after { background: var(--purple); }
 .kp-spend::after { background: var(--purple); }
@@ -501,7 +501,7 @@ body {
 .kpi-val { font-size: 36px; font-weight: 800; line-height: 1; color: var(--text); }
 .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
 .kp-cr  .kpi-val { color: var(--red); }
-.kp-wa  .kpi-val { color: var(--orange); }
+.kp-wa  .kpi-val { color: var(--red); }
 .kp-ok  .kpi-val { color: var(--green); }
 .kp-tot .kpi-val { color: var(--purple-lt); }
 .kp-spend .kpi-val { color: var(--purple-lt); }
@@ -525,7 +525,7 @@ body {
 }
 .vcard:hover { transform: translateX(2px); box-shadow: var(--shadow); }
 .vcard.vcr { border-left-color: var(--red); }
-.vcard.vwa { border-left-color: var(--orange); }
+.vcard.vwa { border-left-color: var(--red); }
 .vcard.vok { border-left-color: var(--green); }
 .vcard-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 9px; }
 .vname { font-size: 14px; font-weight: 700; color: var(--text); }
@@ -537,7 +537,7 @@ body {
 }
 .vstatus.vcr { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,.25); animation: flash 1.5s ease infinite; }
 @keyframes flash { 0%,100% { opacity:1; } 50% { opacity:.5; } }
-.vstatus.vwa { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(249,115,22,.25); }
+.vstatus.vwa { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,.25); }
 .vstatus.vok { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
 .vbar-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
 .vbar-lbl { font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
@@ -545,7 +545,7 @@ body {
 .vbar-track { height: 5px; background: var(--surface3); border-radius: 3px; overflow: hidden; margin-bottom: 9px; }
 .vbar-fill { height: 100%; border-radius: 3px; transition: width .8s cubic-bezier(.4,0,.2,1); }
 .vbar-fill.vcr { background: linear-gradient(90deg, #7f1d1d, var(--red)); }
-.vbar-fill.vwa { background: linear-gradient(90deg, #7c2d12, var(--orange)); }
+.vbar-fill.vwa { background: linear-gradient(90deg, #7f1d1d, var(--red)); }
 .vbar-fill.vok { background: linear-gradient(90deg, #14532d, var(--green)); }
 .vmeta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 .vmi { font-size: 11px; color: var(--text3); }
@@ -825,7 +825,7 @@ body {
 }
 .qp-chip:hover { border-color: var(--purple-lt); color: var(--purple-lt); }
 .qp-chip.vcr { border-color: rgba(239,68,68,.4); color: var(--red); }
-.qp-chip.vwa { border-color: rgba(249,115,22,.4); color: var(--orange); }
+.qp-chip.vwa { border-color: rgba(239,68,68,.4); color: var(--red); }
 
 /* Results */
 .finder-results { display: none; }
@@ -877,7 +877,7 @@ body {
 .stag.relay { border-color: rgba(34,197,94,.4); color: var(--green); }
 .stag.has-def { border-color: rgba(124,58,237,.35); color: var(--purple-lt); }
 .stag.has-shower { border-color: rgba(168,85,247,.35); color: #A855F7; }
-.stag.has-scale { border-color: rgba(245,158,11,.35); color: #F59E0B; }
+.stag.has-scale { border-color: rgba(124,58,237,.35); color: var(--purple-lt); }
 .smeta { text-align: right; flex-shrink: 0; min-width: 90px; }
 .sprice { font-size: 20px; font-weight: 800; color: var(--green); line-height: 1.1; }
 .stop-card:nth-child(1) .sprice { color: var(--green); }
@@ -992,7 +992,7 @@ body {
 .ni { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 11px; margin-bottom: 7px; animation: slideIn .3s ease; }
 @keyframes slideIn { from { opacity:0; transform:translateX(12px); } to { opacity:1; transform:translateX(0); } }
 .ni.vcr { border-left: 3px solid var(--red); }
-.ni.vwa { border-left: 3px solid var(--orange); }
+.ni.vwa { border-left: 3px solid var(--red); }
 .ni-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
 .ni-name { font-size: 13px; font-weight: 700; color: var(--text); }
 .ni-time { font-size: 10px; color: var(--text3); }
@@ -1005,7 +1005,7 @@ body {
 .toast { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; min-width: 270px; max-width: 340px; box-shadow: var(--shadow); pointer-events: all; animation: toastIn .3s ease; }
 @keyframes toastIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 .toast.vcr { border-left: 3px solid var(--red); }
-.toast.vwa { border-left: 3px solid var(--orange); }
+.toast.vwa { border-left: 3px solid var(--red); }
 .toast.ok  { border-left: 3px solid var(--green); }
 .toast.info{ border-left: 3px solid var(--purple); }
 .tico { font-size: 17px; flex-shrink: 0; }
@@ -1580,9 +1580,12 @@ body {
       <!-- FUEL LOG -->
       <div class="page" id="page-fuelLog">
         <div class="fl-header">
-          <div>
-            <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:2px;">Fuel Log</div>
-            <div style="font-size:12px;color:var(--text2);">Track fueling history, savings, and monthly reports</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img src="logo.png" alt="R" width="36" height="36" style="border-radius:8px;object-fit:contain;">
+            <div>
+              <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:2px;">Fuel Log</div>
+              <div style="font-size:12px;color:var(--text2);">Track fueling history, savings, and monthly reports</div>
+            </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
             <select class="month-select" id="flMonthSelect" onchange="renderFuelLog()">
@@ -1654,9 +1657,9 @@ body {
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <span id="mapLegend" style="display:none;gap:8px;align-items:center;font-size:10px;color:var(--text3);">
-            <span style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#22C55E;display:inline-block;"></span>Cheap</span>
-            <span style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>Mid</span>
-            <span style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#EF4444;display:inline-block;"></span>Pricey</span>
+            <span style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#7C3AED;display:inline-block;"></span>Fuel Station</span>
+            <span style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#7C3AED;border:2px solid #fff;display:inline-block;"></span>A Origin</span>
+            <span style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#22C55E;display:inline-block;"></span>B Destination</span>
           </span>
           <button class="map-expand-btn" onclick="toggleMapExpand('leafletMap')" title="Fullscreen map">⛶</button>
         </div>
@@ -1681,8 +1684,13 @@ body {
 <!-- ADD FUELING MODAL -->
 <div class="modal-overlay" id="fuelModal">
   <div class="modal">
-    <div class="modal-h">Log Fueling Stop</div>
-    <div class="modal-sub">Record fuel purchase — savings calculated automatically</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <img src="logo.png" alt="R" width="32" height="32" style="border-radius:8px;object-fit:contain;">
+      <div>
+        <div class="modal-h" style="margin-bottom:0">Log Fueling Stop</div>
+        <div class="modal-sub" style="margin-bottom:0">Record fuel purchase — savings calculated automatically</div>
+      </div>
+    </div>
     <button class="modal-close" onclick="closeFuelModal()">✕</button>
     <div class="modal-grid">
       <div class="ig"><label>Truck Unit #</label>
@@ -1725,7 +1733,7 @@ body {
     </div>
     <div style="margin:18px 0 10px;">
       <div class="flabel">Assign to Unit</div>
-      <select class="finput" id="tgUnitSelect" style="margin-bottom:12px;" onchange="updateTgPreview()">
+      <select class="finput" id="tgUnitSelect" style="margin-bottom:12px;cursor:pointer;" onchange="updateTgPreview()">
         <option value="">Select truck...</option>
       </select>
       <div class="flabel">Telegram Bot Token</div>
@@ -2304,7 +2312,7 @@ function renderVehicles(veh){
   list.forEach((v,i)=>{
     const lvl=v.fuelPercent<10?'vcr':v.fuelPercent<S.threshold?'vwa':'vok';
     const badge=lvl==='vcr'?'CRITICAL':lvl==='vwa'?'LOW':'OK';
-    const col=lvl==='vcr'?'var(--red)':lvl==='vwa'?'var(--orange)':'var(--green)';
+    const col=lvl==='vcr'?'var(--red)':lvl==='vwa'?'var(--red)':'var(--green)';
     const upd=new Date(v.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
     const engineBadge = v.engineState==='On'
       ? `<span style="background:#22C55E22;color:#22C55E;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:6px;">ON</span>`
@@ -2327,7 +2335,7 @@ function renderVehicles(veh){
         <div class="vmi"><span>${S.companies[S.activeCompany]}</span></div>
         <div class="vmi"><span>${upd}</span></div>
       </div>
-      ${lvl!=='vok'?`<button class="vfind-btn" onclick="goFindForTruck('${v.location}')">Find Nearest Fuel Stop</button>`:''}`;
+      ${lvl!=='vok'?`<button class="vfind-btn" onclick="goFindForTruck('${v.location.replace(/'/g,"\\'")}',${v.lat!=null?v.lat:'null'},${v.lng!=null?v.lng:'null'})">Find Nearest Fuel Stop</button>`:''}`;
     grid.appendChild(card);
   });
 }
@@ -2645,8 +2653,12 @@ function buildStateMap(containerId, type){
     const w = container.clientWidth || container.offsetWidth || container.parentElement?.clientWidth || 280;
     const h = container.clientHeight || container.offsetHeight || svgHeight;
 
+    // Use a virtual canvas with US-friendly aspect ratio (960x600)
+    // then use viewBox so the SVG scales to fill the container
+    const vw = 960, vh = 600;
+
     const projection = d3.geoAlbersUsa()
-      .fitSize([w, h], topojson.feature(topo, topo.objects.states));
+      .fitSize([vw, vh], topojson.feature(topo, topo.objects.states));
     const path = d3.geoPath().projection(projection);
 
     const strokeColor = dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.6)';
@@ -2672,15 +2684,15 @@ function buildStateMap(containerId, type){
     }
 
     const svg = d3.create('svg')
-      .attr('width', w)
-      .attr('height', h)
+      .attr('viewBox', `0 0 ${vw} ${vh}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet')
       .style('width','100%')
       .style('height','100%')
       .style('border-radius','12px')
       .style('display','block');
 
     // Background
-    svg.append('rect').attr('width',w).attr('height',h).attr('fill',bgColor).attr('rx',10);
+    svg.append('rect').attr('width',vw).attr('height',vh).attr('fill',bgColor).attr('rx',10);
 
     const states = topojson.feature(topo, topo.objects.states);
 
@@ -2739,15 +2751,15 @@ function buildStateMap(containerId, type){
         labelGroup.append('text')
           .attr('x',px).attr('y',py)
           .attr('text-anchor','middle').attr('dominant-baseline','middle')
-          .attr('font-size',isBig?7:5.5).attr('font-family','Plus Jakarta Sans, sans-serif')
+          .attr('font-size',isBig?11:9).attr('font-family','Plus Jakarta Sans, sans-serif')
           .attr('font-weight','600').attr('fill',textCol)
           .text(abbr);
 
         if(display){
           labelGroup.append('text')
-            .attr('x',px).attr('y',py+8)
+            .attr('x',px).attr('y',py+(isBig?13:11))
             .attr('text-anchor','middle').attr('dominant-baseline','middle')
-            .attr('font-size',isBig?6:4.5).attr('font-family','Plus Jakarta Sans, sans-serif')
+            .attr('font-size',isBig?9:7).attr('font-family','Plus Jakarta Sans, sans-serif')
             .attr('font-weight','700').attr('fill',isActive?'rgba(255,255,255,.9)':textCol)
             .text(display);
         }
@@ -2767,7 +2779,7 @@ function buildStateMap(containerId, type){
         labelGroup.append('text')
           .attr('x',px).attr('y',py)
           .attr('text-anchor','middle').attr('dominant-baseline','middle')
-          .attr('font-size',5).attr('font-family','Plus Jakarta Sans, sans-serif')
+          .attr('font-size',9).attr('font-family','Plus Jakarta Sans, sans-serif')
           .attr('font-weight','600').attr('fill',textCol)
           .text(abbr);
       });
@@ -2810,7 +2822,7 @@ function renderMapReport(){
     <div class="kpi-card kp-tot"><div class="kpi-lbl">States Active</div><div class="kpi-val" style="font-size:30px">${states.length}</div><div class="kpi-sub">states with fuel stops</div></div>
     <div class="kpi-card kp-spend"><div class="kpi-lbl">Top State</div><div class="kpi-val" style="font-size:30px">${topState}</div><div class="kpi-sub">${states[0]?.stops||0} stops, $${(states[0]?.total||0).toFixed(0)}</div></div>
     <div class="kpi-card kp-save"><div class="kpi-lbl">Avg $/Gal</div><div class="kpi-val" style="font-size:30px">$${avgPrice}</div><div class="kpi-sub">blended rate</div></div>
-    <div class="kpi-card kp-cr"><div class="kpi-lbl">Total Spend</div><div class="kpi-val" style="font-size:28px">$${totalSpend.toFixed(0)}</div><div class="kpi-sub">${totalStops} stops across US</div></div>`;
+    <div class="kpi-card kp-tot"><div class="kpi-lbl">Total Spend</div><div class="kpi-val" style="font-size:28px">$${totalSpend.toFixed(0)}</div><div class="kpi-sub">${totalStops} stops across US</div></div>`;
 
   // Top states list for fueling map
   const topFuel=states.slice(0,5);
@@ -2886,7 +2898,7 @@ function renderAnalytics(){
     <div class="kpi-card kp-spend" style="animation-delay:.00s"><div class="kpi-lbl">Month Spent</div><div class="kpi-val">$${totalSpend.toFixed(0)}</div><div class="kpi-sub">${recs.length} stops</div></div>
     <div class="kpi-card kp-save"  style="animation-delay:.05s"><div class="kpi-lbl">Month Saved</div><div class="kpi-val">$${totalSave.toFixed(0)}</div><div class="kpi-sub">via discounts</div></div>
     <div class="kpi-card kp-tot"  style="animation-delay:.10s"><div class="kpi-lbl">Total Gallons</div><div class="kpi-val">${totalGals.toLocaleString()}</div><div class="kpi-sub">gallons fueled</div></div>
-    <div class="kpi-card kp-wa"   style="animation-delay:.15s"><div class="kpi-lbl">Avg $/Gallon</div><div class="kpi-val">$${avgPrice}</div><div class="kpi-sub">effective rate</div></div>`;
+    <div class="kpi-card kp-tot"   style="animation-delay:.15s"><div class="kpi-lbl">Avg $/Gallon</div><div class="kpi-val">$${avgPrice}</div><div class="kpi-sub">effective rate</div></div>`;
 
   const days=new Date(year,month+1,0).getDate();
   const dLabels=Array.from({length:Math.ceil(days/3)},(_,i)=>`${i*3+1}`);
@@ -2943,21 +2955,56 @@ function renderAnalytics(){
 // ═══════════════════════════════════════════════════════
 // FUEL FINDER
 // ═══════════════════════════════════════════════════════
+// Cache for exact truck GPS coords keyed by location string
+if(!S._truckCoords) S._truckCoords = {};
+
+function cacheTruckCoords(){
+  let count=0;
+  Object.values(S.vehicles).flat().forEach(v=>{
+    if(v.lat!=null && v.lng!=null && v.location && v.location!=='Unknown'){
+      const exact = {lat:v.lat, lng:v.lng};
+      S._truckCoords[v.location.trim().toLowerCase()] = exact;
+      // Also cache by unit number for secondary lookup
+      if(v.unitNumber) S._truckCoords[('unit_'+v.unitNumber).toLowerCase()] = exact;
+      count++;
+    }
+  });
+  if(count) console.log(`[RouteFlare] Cached GPS coords for ${count} trucks`);
+}
+
 function buildQuickPick(){
+  cacheTruckCoords();
   const all=Object.values(S.vehicles).flat();
   const low=all.filter(v=>v.fuelPercent<S.threshold).sort((a,b)=>a.fuelPercent-b.fuelPercent).slice(0,8);
   document.getElementById('qpLbl').style.display=low.length?'block':'none';
   document.getElementById('qpList').innerHTML=low.map(v=>`
     <span class="qp-chip ${v.fuelPercent<10?'vcr':'vwa'}"
-      onclick="document.getElementById('fOrig').value='${v.location}';if(document.getElementById('fLoc0'))document.getElementById('fLoc0').value='${v.location}'"
+      onclick="selectTruckOrigin('${v.location.replace(/'/g,"\\'")}',${v.lat!=null?v.lat:'null'},${v.lng!=null?v.lng:'null'})"
       title="${v.unitNumber} — ${v.fuelPercent}% fuel">
       ${v.unitNumber} · ${v.fuelPercent}%
     </span>`).join('');
 }
 
-function goFindForTruck(loc){
-  document.getElementById('fOrig').value=loc;
-  if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value=loc;
+function selectTruckOrigin(loc, lat, lng){
+  // Use exact coordinates as origin if available
+  if(lat!=null && lng!=null && !isNaN(lat) && !isNaN(lng)){
+    const coordStr = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`;
+    // Set origin to "Location (lat, lng)" for precise routing
+    document.getElementById('fOrig').value = loc + ' (' + coordStr + ')';
+    if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value = loc;
+    // Cache under multiple keys so geocodeCity always finds it
+    const exact = {lat:parseFloat(lat), lng:parseFloat(lng)};
+    S._truckCoords[loc.trim().toLowerCase()] = exact;
+    S._truckCoords[(loc + ' (' + coordStr + ')').trim().toLowerCase()] = exact;
+    S._truckCoords[coordStr] = exact;
+  } else {
+    document.getElementById('fOrig').value = loc;
+    if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value = loc;
+  }
+}
+
+function goFindForTruck(loc, lat, lng){
+  selectTruckOrigin(loc, lat, lng);
   goPage('finder',document.querySelector('[data-p="finder"]'));
 }
 
@@ -3008,7 +3055,7 @@ async function findStops(){
     // ── 3. Search fuel stations (local DB instant + Google Places background) ──
     setFindStatus('Scanning route for fuel stations...');
     const allRaw = await fetchStationsAlongRoute(routePoints, fType, setFindStatus);
-    console.log(`[FuelPro] Total unique stations: ${allRaw.length}`);
+    console.log(`[RouteFlare] Total unique stations: ${allRaw.length}`);
 
     // ── 4. EIA prices (already fetched above in parallel) ─────────────────
     const hasRealPrices = !!(eiaData && eiaData.national);
@@ -3155,7 +3202,7 @@ async function findStops(){
 function setFindStatus(msg){
   const el = document.querySelector('#fLoad p');
   if(el) el.textContent = msg;
-  console.log('[FuelPro]', msg);
+  console.log('[RouteFlare]', msg);
 }
 
 function showFindError(msg){
@@ -3286,6 +3333,7 @@ function openTgModal(st){
   if(savedChat)  document.getElementById('tgChatId').value  = savedChat;
   document.getElementById('tgStatus').style.display = 'none';
   document.getElementById('tgModal').classList.add('on');
+  updateTgPreview();
 }
 
 function buildTgMessage(st, orig, dest){
@@ -3356,7 +3404,8 @@ async function sendToTelegram(){
       localStorage.setItem('tg_bot_token', token);
       localStorage.setItem('tg_chat_id', chatId);
       // Save dispatched station to fuel log queue
-      if(S.selectedStop) addDispatchedStation(S.selectedStop);
+      const tgUnit = document.getElementById('tgUnitSelect').value;
+      if(S.selectedStop) addDispatchedStation(S.selectedStop, tgUnit);
       statusEl.className='tg-status ok';
       statusEl.textContent='Message sent to driver successfully!';
       statusEl.style.display='block';
@@ -3618,7 +3667,7 @@ async function fetchStationsNearby(lat, lng, radiusMeters, fuelType){
   // ── 1. Search local Pilot/Flying J database FIRST (instant) ──
   const localStations = searchLocalStations(lat, lng, radiusMeters);
   localStations.forEach(addSt);
-  console.log(`[FuelPro] Local DB nearby: ${localStations.length} stations (Pilot/FJ + Love's + TA/Petro)`);
+  console.log(`[RouteFlare] Local DB nearby: ${localStations.length} stations (Pilot/FJ + Love's + TA/Petro)`);
 
   // ── 2. Google Places + Overpass in parallel for additional chains ──
   const placesAvailable = !!(typeof google!=='undefined'&&google.maps&&google.maps.places);
@@ -3881,7 +3930,7 @@ function getDispatchedStations(){
 function saveDispatchedStations(list){
   localStorage.setItem('ff_dispatched', JSON.stringify(list));
 }
-function addDispatchedStation(st){
+function addDispatchedStation(st, unitNum){
   const list = getDispatchedStations();
   list.unshift({
     id: 'ds_'+Date.now(),
@@ -4024,13 +4073,14 @@ function renderFuelHistory(){
 }
 
 function deleteFuelRecord(recordId){
+  if(!confirm('Delete this fueling record?')) return;
   let history = getFuelLogHistory();
-  const idx = history.findIndex((r,i)=> (r.id||String(i)) === recordId);
-  if(idx===-1) return;
-  history.splice(idx, 1);
+  history = history.filter(r=>(r.id||'')!==recordId);
   saveFuelLogHistory(history);
+  S.fuelRecords = (S.fuelRecords||[]).filter(r=>(r.id||'')!==recordId);
   renderFuelLog();
-  showToast('ok','ok','Record Deleted','Fueling record removed');
+  renderDashboard(); refreshCharts();
+  showToast('ok','ok','Deleted','Fueling record removed');
 }
 
 function renderMonthlyReport(){
@@ -4071,6 +4121,18 @@ function renderMonthlyReport(){
       <td class="fl-saved">$${d.saved.toFixed(2)}</td>
     </tr>
   `).join('');
+}
+
+function deleteFuelLog(id){
+  if(!confirm('Delete this fueling record?')) return;
+  let history = getFuelLogHistory();
+  history = history.filter(r=>r.id!==id);
+  saveFuelLogHistory(history);
+  // Also remove from in-memory records
+  S.fuelRecords = S.fuelRecords.filter(r=>r.id!==id);
+  renderFuelLog();
+  renderDashboard(); refreshCharts();
+  showToast('ok','ok','Deleted','Fueling record removed');
 }
 
 function handleChainClick(event, label){
@@ -4151,7 +4213,7 @@ function googleNearbySearch(lat, lng, radius, keyword, retries){
   return new Promise((resolve) => {
     // Timeout: if Google Places doesn't respond in 12s, skip to Overpass
     const timer = setTimeout(() => {
-      console.warn(`[FuelPro] Google Places timeout at ${lat.toFixed(2)},${lng.toFixed(2)} — falling back to Overpass`);
+      console.warn(`[RouteFlare] Google Places timeout at ${lat.toFixed(2)},${lng.toFixed(2)} — falling back to Overpass`);
       resolve([]);
     }, 6000);
     try {
@@ -4177,20 +4239,20 @@ function googleNearbySearch(lat, lng, radius, keyword, retries){
           })));
         } else if(status === 'OVER_QUERY_LIMIT' && retries < 3){
           const wait = (retries + 1) * 2000;
-          console.warn(`[FuelPro] Rate limited at ${lat.toFixed(2)},${lng.toFixed(2)} — retrying in ${wait}ms (attempt ${retries+1})`);
+          console.warn(`[RouteFlare] Rate limited at ${lat.toFixed(2)},${lng.toFixed(2)} — retrying in ${wait}ms (attempt ${retries+1})`);
           setTimeout(() => {
             googleNearbySearch(lat, lng, radius, keyword, retries + 1).then(resolve);
           }, wait);
         } else if(status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS){
           resolve([]);
         } else {
-          console.warn(`[FuelPro] Places status: ${status} at ${lat.toFixed(2)},${lng.toFixed(2)}`);
+          console.warn(`[RouteFlare] Places status: ${status} at ${lat.toFixed(2)},${lng.toFixed(2)}`);
           resolve([]);
         }
       });
     } catch(e){
       clearTimeout(timer);
-      console.warn('[FuelPro] nearbySearch error:', e);
+      console.warn('[RouteFlare] nearbySearch error:', e);
       resolve([]);
     }
   });
@@ -4361,7 +4423,7 @@ async function fetchStationsAlongRoute(routePoints, fuelType, statusCb){
   if(statusCb) statusCb('Searching station database (Pilot/FJ + Love\'s + TA/Petro)...');
   const localStations = searchLocalStationsAlongRoute(routePoints, 12);
   localStations.forEach(addStation);
-  console.log(`[FuelPro] Local DB found: ${localStations.length} stations along route (Pilot/FJ + Love's + TA/Petro)`);
+  console.log(`[RouteFlare] Local DB found: ${localStations.length} stations along route (Pilot/FJ + Love's + TA/Petro)`);
 
   // ── 2. Google Places for additional chains (optimized: 60mi intervals, batch of 5) ──
   const samplePts = sampleRoutePoints(routePoints, 60);  // 60mi intervals (was 30)
@@ -4379,9 +4441,9 @@ async function fetchStationsAlongRoute(routePoints, fuelType, statusCb){
       results.forEach(list => list.forEach(addStation));
       if(i + BATCH < samplePts.length) await new Promise(r => setTimeout(r, 200));  // 200ms (was 500)
     }
-    console.log(`[FuelPro] Google Places found: ${allStations.length - localStations.length} additional (before dedup)`);
+    console.log(`[RouteFlare] Google Places found: ${allStations.length - localStations.length} additional (before dedup)`);
   } else {
-    console.warn('[FuelPro] Google Places API not available');
+    console.warn('[RouteFlare] Google Places API not available');
   }
 
   // ── 3. Overpass fallback ONLY if total stations are very low (local DB usually covers it) ──
@@ -4406,12 +4468,12 @@ async function fetchStationsAlongRoute(routePoints, fuelType, statusCb){
       const results = await Promise.all(batch.map(bbox => fetchOverpassStations(bbox, fuelType)));
       results.forEach(list => list.forEach(st => addStation({...st, source:'overpass'})));
     }
-    console.log(`[FuelPro] After Overpass fallback: ${allStations.length} total`);
+    console.log(`[RouteFlare] After Overpass fallback: ${allStations.length} total`);
   }
 
   // ── Final proximity dedup ──
   allStations = deduplicateStations(allStations);
-  console.log(`[FuelPro] After dedup: ${allStations.length} unique stations`);
+  console.log(`[RouteFlare] After dedup: ${allStations.length} unique stations`);
 
   return allStations;
 }
@@ -4795,6 +4857,22 @@ function extractCityState(addr){
 }
 
 async function geocodeCity(city){
+  // ── Method 0a: Check truck GPS cache for exact Samsara coordinates ──
+  const cacheKey = city.trim().toLowerCase();
+  if(S._truckCoords && S._truckCoords[cacheKey]){
+    const cached = S._truckCoords[cacheKey];
+    console.log(`[RouteFlare] Truck GPS cache hit "${city}" → ${cached.lat.toFixed(4)}, ${cached.lng.toFixed(4)}`);
+    return cached;
+  }
+  // ── Method 0b: Parse raw coordinates from string like "40.7128, -74.0060" or "City (40.7128, -74.0060)" ──
+  const coordMatch = city.match(/([-]?\d+\.\d+)\s*,\s*([-]?\d+\.\d+)/);
+  if(coordMatch){
+    const lat=parseFloat(coordMatch[1]), lng=parseFloat(coordMatch[2]);
+    if(Math.abs(lat)<=90 && Math.abs(lng)<=180){
+      console.log(`[RouteFlare] Parsed coordinates from "${city}" → ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+      return {lat, lng};
+    }
+  }
   const stateMap = {pa:'Pennsylvania',oh:'Ohio',in:'Indiana',ky:'Kentucky',il:'Illinois',
     wi:'Wisconsin',mi:'Michigan',mn:'Minnesota',mo:'Missouri',ia:'Iowa',ne:'Nebraska',
     ks:'Kansas',ok:'Oklahoma',tx:'Texas',ar:'Arkansas',tn:'Tennessee',al:'Alabama',
@@ -4823,7 +4901,7 @@ async function geocodeCity(city){
   // ── Method 1: Hardcoded city lookup (instant, 100% reliable) ──
   const hardcoded = lookupCity(expanded);
   if(hardcoded){
-    console.log(`[FuelPro] Hardcoded lookup "${city}" → ${hardcoded.lat.toFixed(4)}, ${hardcoded.lng.toFixed(4)}`);
+    console.log(`[RouteFlare] Hardcoded lookup "${city}" → ${hardcoded.lat.toFixed(4)}, ${hardcoded.lng.toFixed(4)}`);
     return hardcoded;
   }
 
@@ -4843,14 +4921,14 @@ async function geocodeCity(city){
         if(d.status === 'OK' && d.results && d.results.length){
           const loc = d.results[0].geometry.location;
           const result = {lat: loc.lat, lng: loc.lng};
-          console.log(`[FuelPro] Google HTTP geocoded "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
+          console.log(`[RouteFlare] Google HTTP geocoded "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
           return result;
         } else {
-          console.warn(`[FuelPro] Google HTTP status: ${d.status}`, d.error_message || '');
+          console.warn(`[RouteFlare] Google HTTP status: ${d.status}`, d.error_message || '');
         }
       }
     }
-  } catch(e){ console.warn('[FuelPro] Google HTTP geocode error:', e.message); }
+  } catch(e){ console.warn('[RouteFlare] Google HTTP geocode error:', e.message); }
 
   // ── Method 3: Nominatim with cleaned address (free, no key) ──
   try {
@@ -4858,18 +4936,18 @@ async function geocodeCity(city){
     const timeout = setTimeout(() => controller.abort(), 8000);
     const r = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(expanded)}&format=json&limit=1&countrycodes=us`,
-      { headers:{'Accept-Language':'en','User-Agent':'FuelPro/1.0'}, signal: controller.signal }
+      { headers:{'Accept-Language':'en','User-Agent':'RouteFlare/1.0'}, signal: controller.signal }
     );
     clearTimeout(timeout);
     if(r.ok){
       const d = await r.json();
       if(d && d.length){
         const result = {lat:parseFloat(d[0].lat), lng:parseFloat(d[0].lon)};
-        console.log(`[FuelPro] Nominatim geocoded "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
+        console.log(`[RouteFlare] Nominatim geocoded "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
         return result;
       }
     }
-  } catch(e){ console.warn('[FuelPro] Nominatim error:', e.message); }
+  } catch(e){ console.warn('[RouteFlare] Nominatim error:', e.message); }
 
   // ── Method 4: Nominatim with simplified city+state only ──
   try {
@@ -4885,19 +4963,19 @@ async function geocodeCity(city){
       const timeout = setTimeout(() => controller.abort(), 8000);
       const r = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(csExpanded)}&format=json&limit=1&countrycodes=us`,
-        { headers:{'Accept-Language':'en','User-Agent':'FuelPro/1.0'}, signal: controller.signal }
+        { headers:{'Accept-Language':'en','User-Agent':'RouteFlare/1.0'}, signal: controller.signal }
       );
       clearTimeout(timeout);
       if(r.ok){
         const d = await r.json();
         if(d && d.length){
           const result = {lat:parseFloat(d[0].lat), lng:parseFloat(d[0].lon)};
-          console.log(`[FuelPro] Nominatim city+state "${cityState}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
+          console.log(`[RouteFlare] Nominatim city+state "${cityState}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
           return result;
         }
       }
     }
-  } catch(e){ console.warn('[FuelPro] Nominatim city+state error:', e.message); }
+  } catch(e){ console.warn('[RouteFlare] Nominatim city+state error:', e.message); }
 
   // ── Method 5: Nominatim broader search ──
   try {
@@ -4905,18 +4983,18 @@ async function geocodeCity(city){
     const timeout = setTimeout(() => controller.abort(), 8000);
     const r = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(expanded + ', USA')}&format=json&limit=1`,
-      { headers:{'Accept-Language':'en','User-Agent':'FuelPro/1.0'}, signal: controller.signal }
+      { headers:{'Accept-Language':'en','User-Agent':'RouteFlare/1.0'}, signal: controller.signal }
     );
     clearTimeout(timeout);
     if(r.ok){
       const d = await r.json();
       if(d && d.length){
         const result = {lat:parseFloat(d[0].lat), lng:parseFloat(d[0].lon)};
-        console.log(`[FuelPro] Nominatim broad "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
+        console.log(`[RouteFlare] Nominatim broad "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
         return result;
       }
     }
-  } catch(e){ console.warn('[FuelPro] Nominatim broad error:', e.message); }
+  } catch(e){ console.warn('[RouteFlare] Nominatim broad error:', e.message); }
 
   // ── Method 6: Google Maps JS Geocoder ──
   try {
@@ -4933,12 +5011,12 @@ async function geocodeCity(city){
           }
         });
       });
-      console.log(`[FuelPro] Google JS geocoded "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
+      console.log(`[RouteFlare] Google JS geocoded "${city}" → ${result.lat.toFixed(4)}, ${result.lng.toFixed(4)}`);
       return result;
     }
-  } catch(e){ console.warn('[FuelPro] Google JS error:', e.message); }
+  } catch(e){ console.warn('[RouteFlare] Google JS error:', e.message); }
 
-  console.error(`[FuelPro] All geocoding failed for "${city}"`);
+  console.error(`[RouteFlare] All geocoding failed for "${city}"`);
   return null;
 }
 
@@ -4947,7 +5025,7 @@ async function reverseGeocode(lat, lng){
   try{
     const r = await fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
-      {headers:{'Accept-Language':'en-US,en','User-Agent':'FuelPro/1.0'}}
+      {headers:{'Accept-Language':'en-US,en','User-Agent':'RouteFlare/1.0'}}
     );
     if(r.ok){
       const d = await r.json();
@@ -4978,13 +5056,7 @@ async function reverseGeocode(lat, lng){
 }
 
 function pinColorHex(price, minP, maxP){
-  if(maxP===minP) return '#22C55E';
-  const t=Math.max(0,Math.min(1,(parseFloat(price)-minP)/(maxP-minP)));
-  // Smooth green → yellow → orange → red gradient
-  if(t<0.33) return lerpColor('#22C55E','#84CC16',t/0.33);
-  if(t<0.55) return lerpColor('#84CC16','#F59E0B',(t-0.33)/0.22);
-  if(t<0.75) return lerpColor('#F59E0B','#F97316',(t-0.55)/0.20);
-  return lerpColor('#F97316','#EF4444',(t-0.75)/0.25);
+  return '#7C3AED';
 }
 function lerpColor(a,b,t){
   const ah=parseInt(a.slice(1),16),bh=parseInt(b.slice(1),16);
@@ -5036,7 +5108,7 @@ async function buildLeafletRouteMap(mapDiv, orig, dest, stops, dark, isFullscree
   const oc = await geocodeCity(orig);
   const dc = await geocodeCity(dest);
   if(!oc||!dc){
-    mapDiv.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;color:#777;font-size:12px;"><div style="font-size:28px;color:var(--orange);">!</div><div>Could not locate "${!oc?orig:dest}"</div><div style="font-size:10px;opacity:.6;">Try "Chicago, IL" format</div></div>`;
+    mapDiv.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:8px;color:#777;font-size:12px;"><div style="font-size:28px;color:var(--red);">!</div><div>Could not locate "${!oc?orig:dest}"</div><div style="font-size:10px;opacity:.6;">Try "Chicago, IL" format</div></div>`;
     return null;
   }
 
@@ -5084,7 +5156,7 @@ async function buildLeafletRouteMap(mapDiv, orig, dest, stops, dark, isFullscree
       <div style="font-family:'Plus Jakarta Sans',sans-serif;padding:4px 2px;min-width:170px;">
         <div style="font-weight:800;font-size:13px;margin-bottom:4px;">${st.name} ${relay}</div>
         <div style="font-size:11px;color:#666;margin-bottom:6px;">${st.address}</div>
-        <div style="font-size:19px;font-weight:800;color:${col}">$${st.price}<span style="font-size:10px;color:#999;font-weight:400;">/gal</span></div>
+        <div style="font-size:19px;font-weight:800;color:#7C3AED">$${st.price}<span style="font-size:10px;color:#999;font-weight:400;">/gal</span></div>
         <div style="font-size:10px;color:#888;margin-top:2px;">${st.distFromA||'—'} mi from A · ${st.distFromB||'—'} mi from B</div>
         <div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;">${amenTags}</div>
       </div>`, {maxWidth:220});
@@ -5163,7 +5235,7 @@ function exportPDF(){
   });
   const trucks=Object.values(truckMap).sort((a,b)=>b.total-a.total);
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><title>FuelPro Report — ${month}</title>
+  w.document.write(`<!DOCTYPE html><html><head><title>RouteFlare Report — ${month}</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>body{font-family:'Plus Jakarta Sans',sans-serif;background:#fff;color:#111;padding:40px;max-width:820px;margin:0 auto;}
   h1{font-size:26px;font-weight:800;margin-bottom:4px;} .sub{color:#6B7280;font-size:13px;margin-bottom:32px;}
@@ -5173,7 +5245,7 @@ function exportPDF(){
   .unit{font-weight:700;color:#7C3AED;} .spend{font-weight:700;color:#0891B2;} .save{font-weight:700;color:#16A34A;}
   h2{font-size:17px;font-weight:700;margin:28px 0 12px;} .footer{margin-top:40px;padding-top:16px;border-top:1px solid #E5E7EB;font-size:11px;color:#9CA3AF;text-align:center;}
   </style></head><body>
-  <h1>FuelPro</h1>
+  <div style="display:flex;align-items:center;gap:12px;"><img src="logo.png" width="40" height="40" style="border-radius:8px;"><h1 style="margin:0;">RouteFlare</h1></div>
   <div class="sub">Monthly Fuel Report — ${month} ${new Date().getFullYear()} · Generated ${new Date().toLocaleDateString()}</div>
   <div class="kpi-row">
     <div class="kpi"><div class="val">$${totalSpend}</div><div class="lbl">Total Spent</div></div>
@@ -5184,7 +5256,7 @@ function exportPDF(){
   <h2>Per-Truck Breakdown</h2>
   <table><thead><tr><th>Unit #</th><th>Gallons</th><th>Total Spent</th><th>Saved</th><th>Avg $/gal</th></tr></thead>
   <tbody>${trucks.map(t=>`<tr><td class="unit">${t.unit}</td><td>${t.gallons.toLocaleString()} gal</td><td class="spend">$${t.total.toFixed(2)}</td><td class="save">$${t.saved.toFixed(2)}</td><td>$${t.gallons>0?(t.total/t.gallons).toFixed(3):'—'}</td></tr>`).join('')}</tbody></table>
-  <div class="footer">FuelPro · Powered by Samsara · ${new Date().toLocaleString()}</div>
+  <div class="footer">RouteFlare · Powered by Samsara · ${new Date().toLocaleString()}</div>
   <script>window.print();<\/script></body></html>`);
   w.document.close();
 }
@@ -5208,7 +5280,7 @@ function triggerAlert(v,lvl){
   updateNbDot(); renderNotifs();
   showToast(lvl,lvl==='vcr'?'':'',`${v.unitNumber} — ${v.fuelPercent}%`,`${S.companies[S.activeCompany]} · ${v.location}`);
   if('Notification' in window && Notification.permission==='granted')
-    new Notification(`FuelPro Alert`,{body:`${v.unitNumber} at ${v.fuelPercent}%`,tag:v.id});
+    new Notification(`RouteFlare Alert`,{body:`${v.unitNumber} at ${v.fuelPercent}%`,tag:v.id});
 }
 
 function renderNotifs(){
@@ -5217,7 +5289,7 @@ function renderNotifs(){
   list.innerHTML=S.notifications.slice(0,30).map(n=>`
     <div class="ni ${n.lvl}">
       <div class="ni-top"><div class="ni-name">${n.v.unitNumber} — ${n.v.name}</div><div class="ni-time">${n.time.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div></div>
-      <div class="ni-msg"><strong>${n.co}</strong> · ${n.v.location}<br>Fuel at <strong style="color:${n.lvl==='vcr'?'var(--red)':'var(--orange)'}">${n.v.fuelPercent}%</strong></div>
+      <div class="ni-msg"><strong>${n.co}</strong> · ${n.v.location}<br>Fuel at <strong style="color:var(--red)">${n.v.fuelPercent}%</strong></div>
     </div>`).join('');
 }
 
@@ -5233,7 +5305,7 @@ function showToast(lvl,ico,title,desc){
   const t=document.createElement('div'); t.className=`toast ${lvl}`;
   const svgIco = lvl==='ok'
     ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>'
-    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2.5" stroke-linecap="round"><path d="M12 9v4"/><circle cx="12" cy="16" r=".5" fill="var(--orange)"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round"><path d="M12 9v4"/><circle cx="12" cy="16" r=".5" fill="var(--red)"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
   t.innerHTML=`<div class="tico">${svgIco}</div><div class="tbody"><div class="tttl">${title}</div><div class="tdesc">${desc}</div></div><button class="tx" onclick="this.parentElement.remove()">✕</button>`;
   wrap.appendChild(t); setTimeout(()=>t.remove(),5000);
 }

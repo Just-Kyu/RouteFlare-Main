@@ -2403,7 +2403,7 @@ function updateTbAlerts(){
   list.innerHTML = lowTrucks.map(v => {
     const isCrit = v.fuelPercent < 10;
     return `
-    <div class="tb-alert-item" onclick="jumpToTruckAlert(${v.companyIndex},'${v.location.replace(/'/g,"\\'")}')">
+    <div class="tb-alert-item" onclick="jumpToTruckAlert(${v.companyIndex},'${v.location.replace(/'/g,"\\'")}',${v.lat!=null?v.lat:'null'},${v.lng!=null?v.lng:'null'})">
       <div class="tai-fuel ${isCrit ? 'crit' : 'low'}">${v.fuelPercent}%</div>
       <div class="tai-info">
         <div class="tai-name">${v.unitNumber} — ${v.name}</div>
@@ -2414,13 +2414,12 @@ function updateTbAlerts(){
   }).join('');
 }
 
-function jumpToTruckAlert(companyIndex, location){
+function jumpToTruckAlert(companyIndex, location, lat, lng){
   S.activeCompany = companyIndex;
   document.querySelectorAll('.ctab').forEach((t,j) => t.classList.toggle('on', j === companyIndex));
   renderDashboard(); buildQuickPick();
   closeTbAlerts();
-  document.getElementById('fOrig').value = location;
-  if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value = location;
+  selectTruckOrigin(location, lat, lng);
   goPage('finder', document.querySelector('[data-p="finder"]'));
 }
 
@@ -2986,17 +2985,21 @@ function buildQuickPick(){
 }
 
 function selectTruckOrigin(loc, lat, lng){
-  // Use exact coordinates as origin if available
+  // Use exact GPS coordinates as origin if available
   if(lat!=null && lng!=null && !isNaN(lat) && !isNaN(lng)){
-    const coordStr = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`;
+    const fLat = parseFloat(lat), fLng = parseFloat(lng);
+    const coordStr = `${fLat.toFixed(5)}, ${fLng.toFixed(5)}`;
     // Set origin to "Location (lat, lng)" for precise routing
-    document.getElementById('fOrig').value = loc + ' (' + coordStr + ')';
+    const fullStr = loc + ' (' + coordStr + ')';
+    document.getElementById('fOrig').value = fullStr;
     if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value = loc;
-    // Cache under multiple keys so geocodeCity always finds it
-    const exact = {lat:parseFloat(lat), lng:parseFloat(lng)};
+    // Cache under every possible key so geocodeCity always resolves to exact GPS
+    const exact = {lat:fLat, lng:fLng};
     S._truckCoords[loc.trim().toLowerCase()] = exact;
-    S._truckCoords[(loc + ' (' + coordStr + ')').trim().toLowerCase()] = exact;
-    S._truckCoords[coordStr] = exact;
+    S._truckCoords[fullStr.trim().toLowerCase()] = exact;
+    S._truckCoords[coordStr.trim()] = exact;
+    // Also match partial coord patterns
+    S._truckCoords[`${fLat.toFixed(4)}, ${fLng.toFixed(4)}`] = exact;
   } else {
     document.getElementById('fOrig').value = loc;
     if(document.getElementById('fLoc0')) document.getElementById('fLoc0').value = loc;

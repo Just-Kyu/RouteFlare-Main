@@ -1372,7 +1372,7 @@ body {
                     <div class="map-container" id="priceByStateMap" style="height:180px;"></div>
                     <div class="map-legend-row">
                       <span class="map-legend-lbl">$3.20</span>
-                      <div class="map-legend-bar" style="background:linear-gradient(90deg,#22C55E,#3B82F6,#EF4444)"></div>
+                      <div class="map-legend-bar" style="background:linear-gradient(90deg,#22C55E,#3B82F6,#7C3AED)"></div>
                       <span class="map-legend-lbl">$4.20</span>
                     </div>
                   </div>
@@ -1568,7 +1568,8 @@ body {
                   <div class="map-container" id="bigPriceMap" style="height:340px;"></div>
                   <div class="map-legend-row" style="margin-top:12px;">
                     <span class="map-legend-lbl">$3.20 cheap</span>
-                    <div class="map-legend-bar" style="background:linear-gradient(90deg,var(--green),#3B82F6,var(--red));"></div>
+                    <span class="map-legend-lbl" id="bigPriceLegendLive" style="font-size:9px;color:var(--green);font-weight:700;display:none;">● LIVE</span>
+                    <div class="map-legend-bar" style="background:linear-gradient(90deg,#22C55E,#3B82F6,#7C3AED);"></div>
                     <span class="map-legend-lbl">$4.20+ expensive</span>
                   </div>
                   <div id="mapPriceTable" style="margin-top:14px;display:flex;flex-direction:column;gap:7px;"></div>
@@ -6235,17 +6236,99 @@ async function fetchUsMap(){
   return usTopoData;
 }
 
+// ═══════════════════════════════════════════════════════
+// LIVE DIESEL PRICES — EIA Open Data (free, no key needed)
+// ═══════════════════════════════════════════════════════
+// PADD regions → state abbreviations mapping
+const PADD_STATE_MAP = {
+  'PADD 1A': ['CT','ME','MA','NH','RI','VT'],
+  'PADD 1B': ['DE','DC','MD','NJ','NY','PA'],
+  'PADD 1C': ['GA','NC','SC','VA','WV','FL'],
+  'PADD 2': ['IL','IN','IA','KS','KY','MI','MN','MO','NE','ND','OH','OK','SD','TN','WI'],
+  'PADD 3': ['AL','AR','LA','MS','NM','TX'],
+  'PADD 4': ['CO','ID','MT','UT','WY'],
+  'PADD 5': ['AK','AZ','CA','HI','NV','OR','WA'],
+};
+// Build reverse lookup: state → PADD region
+const STATE_TO_PADD = {};
+Object.entries(PADD_STATE_MAP).forEach(([region, states]) => {
+  states.forEach(s => STATE_TO_PADD[s] = region);
+});
+
+let S_livePrices = null;   // { 'AL': 3.45, 'CA': 4.89, ... }
+let S_livePriceDate = null; // Date string for when prices were fetched
+
+async function fetchLiveDieselPrices(){
+  if(S_livePrices) return S_livePrices;
+  try {
+    // EIA v2 API — free, no registration needed for public data
+    // We fetch "On-Highway Diesel Prices" by region (weekly)
+    const url = 'https://api.eia.gov/v2/petroleum/rdc2/?api_key=HfGRMuyMHtVRGbKJ5eK2QJWSZSUl1xCb5fSYwxJd&frequency=weekly&data[0]=value&facets[product][]=DFO&facets[area][]=PADD1A&facets[area][]=PADD1B&facets[area][]=PADD1C&facets[area][]=PADD2&facets[area][]=PADD3&facets[area][]=PADD4&facets[area][]=PADD5&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=16';
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('EIA API error: ' + r.status);
+    const json = await r.json();
+    const response = json.response || {};
+    const data = response.data || [];
+    
+    // Get the latest period
+    const latestPeriod = data.length > 0 ? data[0].period : null;
+    
+    // Extract most recent price per region (each region has its own row, sorted desc by period)
+    const regionPrices = {};
+    const seen = {};
+    data.forEach(row => {
+      const region = row.area || row['area-name'] || '';
+      // Normalize region names from EIA response
+      const normalized = region.replace(/ /g,'');
+      if(!seen[normalized] && row.value != null){
+        seen[normalized] = true;
+        const val = parseFloat(row.value);
+        if(val > 0) regionPrices[normalized] = val;
+      }
+    });
+    
+    // Map to state-level prices
+    const statePrices = {};
+    Object.entries(PADD_STATE_MAP).forEach(([region, states]) => {
+      // Try matching region key
+      let price = regionPrices[region.replace(/ /g,'')] || regionPrices[region];
+      if(!price){
+        // Try alternative formats from EIA
+        const noSpace = region.replace(/ /g,'');
+        price = regionPrices[noSpace];
+      }
+      if(price){
+        states.forEach(s => statePrices[s] = price);
+      }
+    });
+    
+    if(Object.keys(statePrices).length > 10){
+      S_livePrices = statePrices;
+      S_livePriceDate = latestPeriod;
+      console.log(`[RouteFlare] Loaded live diesel prices for ${Object.keys(statePrices).length} states, period: ${latestPeriod}`);
+    } else {
+      console.warn('[RouteFlare] EIA returned insufficient data, falling back to transaction data');
+    }
+  } catch(e){
+    console.warn('[RouteFlare] Failed to fetch live diesel prices:', e.message);
+  }
+  return S_livePrices;
+}
+
 function buildMaps(){
-  // Double rAF ensures browser has completed layout before measuring containers
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    buildStateMap('fuelByStateMap','fueling');
-    buildStateMap('priceByStateMap','price');
-    const dark=S.theme==='dark';
-    const legend = document.getElementById('fuelMapLegend');
-    if(legend) legend.style.background = dark
-      ? 'linear-gradient(90deg,#1A2030,#7C3AED)'
-      : 'linear-gradient(90deg,#E8EEF6,#7C3AED)';
-  }));
+  // Fetch live prices in the background, then render maps
+  fetchLiveDieselPrices().then(() => {
+    // Double rAF ensures browser has completed layout before measuring containers
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      buildStateMap('fuelByStateMap','fueling');
+      buildStateMap('priceByStateMap','price');
+      const dark=S.theme==='dark';
+      const legend = document.getElementById('fuelMapLegend');
+      if(legend) legend.style.background = dark
+        ? 'linear-gradient(90deg,#1A2030,#7C3AED)'
+        : 'linear-gradient(90deg,#E8EEF6,#7C3AED)';
+    }));
+  });
 }
 
 function buildStateMap(containerId, type){
@@ -6275,16 +6358,29 @@ function buildStateMap(containerId, type){
     records.forEach(r=>{ stateData[r.state]=(stateData[r.state]||0)+1; });
     Object.keys(stateData).forEach(s=>stateData[s]=((stateData[s]/total)*100));
   } else {
-    const stateGals={}, stateCost={};
-    records.forEach(r=>{
-      stateGals[r.state]=(stateGals[r.state]||0)+r.gallons;
-      stateCost[r.state]=(stateCost[r.state]||0)+r.total;
-    });
-    Object.keys(stateGals).forEach(s=>stateData[s]=stateCost[s]/stateGals[s]);
+    // Use live diesel prices from EIA when available; fall back to transaction data
+    if(S_livePrices && Object.keys(S_livePrices).length > 10){
+      Object.entries(S_livePrices).forEach(([state, price]) => {
+        stateData[state] = price;
+      });
+      console.log('[RouteFlare] Price map using LIVE diesel prices from EIA');
+    } else {
+      // Fallback: compute from transaction records
+      const stateGals={}, stateCost={};
+      records.forEach(r=>{
+        stateGals[r.state]=(stateGals[r.state]||0)+r.gallons;
+        stateCost[r.state]=(stateCost[r.state]||0)+r.total;
+      });
+      Object.keys(stateGals).forEach(s=>stateData[s]=stateCost[s]/stateGals[s]);
+    }
   }
 
-  const maxVal=type==='fueling'?Math.max(...Object.values(stateData).map(Number),1):4.20;
-  const minVal=type==='price'?3.20:0;
+  // Dynamic min/max from actual data for better color distribution
+  const allPrices = type==='price' ? Object.values(stateData).filter(v => v > 0) : [];
+  const liveMax = allPrices.length ? Math.max(...allPrices) : 4.20;
+  const liveMin = allPrices.length ? Math.min(...allPrices) : 3.20;
+  const maxVal=type==='fueling'?Math.max(...Object.values(stateData).map(Number),1):Math.ceil(liveMax*20)/20;
+  const minVal=type==='price'?Math.floor(liveMin*20)/20:0;
 
   loadD3Scripts(async ()=>{
     const topo = await fetchUsMap().catch(()=>null);
@@ -6316,10 +6412,18 @@ function buildStateMap(containerId, type){
           return `rgb(${Math.round(180+(124-180)*pct)},${Math.round(200+(58-200)*pct)},${Math.round(220+(237-220)*pct)})`;
         }
       } else {
+        // App-themed gradient: green (cheap) → blue (mid) → purple (expensive)
         const pct=Math.min(Math.max((numVal-minVal)/(maxVal-minVal),0),1);
         let r,g,b;
-        if(pct<0.5){const p2=pct*2;r=Math.round(34+(59-34)*p2);g=Math.round(197+(130-197)*p2);b=Math.round(94+(246-94)*p2);}
-        else{const p2=(pct-0.5)*2;r=Math.round(59+(239-59)*p2);g=Math.round(130+(68-130)*p2);b=Math.round(246+(68-246)*p2);}
+        if(pct<0.5){
+          // green (#22C55E) → blue (#3B82F6)
+          const p2=pct*2;
+          r=Math.round(34+(59-34)*p2);g=Math.round(197+(130-197)*p2);b=Math.round(94+(246-94)*p2);
+        } else {
+          // blue (#3B82F6) → purple (#7C3AED)
+          const p2=(pct-0.5)*2;
+          r=Math.round(59+(124-59)*p2);g=Math.round(130+(58-130)*p2);b=Math.round(246+(237-246)*p2);
+        }
         return `rgb(${r},${g},${b})`;
       }
     }
@@ -6442,7 +6546,11 @@ function renderMapReport(){
     ? 'linear-gradient(90deg,#1A2030,#7C3AED)'
     : 'linear-gradient(90deg,#E8EEF6,#7C3AED)';
 
-  // Compute state stats
+  // Show LIVE indicator if we have live prices
+  const liveTag = document.getElementById('bigPriceLegendLive');
+  if(liveTag) liveTag.style.display = S_livePrices ? 'inline' : 'none';
+
+  // Compute state stats from transactions (for fueling map & KPIs)
   const stateMap={};
   S.fuelRecords.forEach(r=>{
     if(!r.state) return;
@@ -6458,11 +6566,20 @@ function renderMapReport(){
   const avgPrice=totalGals>0?(totalSpend/totalGals).toFixed(3):0;
   const topState=states[0]?.state||'—';
 
+  // Live national avg from EIA or transaction-based
+  let nationalAvg = avgPrice;
+  let priceSourceLabel = 'blended rate';
+  if(S_livePrices && Object.keys(S_livePrices).length > 10){
+    const vals = Object.values(S_livePrices);
+    nationalAvg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(3);
+    priceSourceLabel = S_livePriceDate ? `EIA weekly (${S_livePriceDate})` : 'live EIA';
+  }
+
   // KPI row
   document.getElementById('mapKpis').innerHTML=`
     <div class="kpi-card kp-tot"><div class="kpi-lbl">States Active</div><div class="kpi-val" style="font-size:30px">${states.length}</div><div class="kpi-sub">states with fuel stops</div></div>
     <div class="kpi-card kp-spend"><div class="kpi-lbl">Top State</div><div class="kpi-val" style="font-size:30px">${topState}</div><div class="kpi-sub">${states[0]?.stops||0} stops, $${(states[0]?.total||0).toFixed(0)}</div></div>
-    <div class="kpi-card kp-save"><div class="kpi-lbl">Avg $/Gal</div><div class="kpi-val" style="font-size:30px">$${avgPrice}</div><div class="kpi-sub">blended rate</div></div>
+    <div class="kpi-card kp-save"><div class="kpi-lbl">Avg $/Gal</div><div class="kpi-val" style="font-size:30px">$${nationalAvg}</div><div class="kpi-sub">${priceSourceLabel}</div></div>
     <div class="kpi-card kp-tot"><div class="kpi-lbl">Total Spend</div><div class="kpi-val" style="font-size:28px">$${totalSpend.toFixed(0)}</div><div class="kpi-sub">${totalStops} stops across US</div></div>`;
 
   // Top states list for fueling map
@@ -6483,20 +6600,42 @@ function renderMapReport(){
     </div>`;
   }).join('');
 
-  // Price leaders list
-  const priced=states.filter(s=>s.gallons>0).map(s=>({...s,avgP:s.total/s.gallons})).sort((a,b)=>a.avgP-b.avgP);
-  const cheap=priced.slice(0,3), expensive=priced.slice(-2).reverse();
-  document.getElementById('mapPriceTable').innerHTML=`
-    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Cheapest States</div>
-    ${cheap.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
-      <span style="font-weight:700;color:var(--text)">${s.state}</span>
-      <span style="font-weight:800;color:var(--green)">$${s.avgP.toFixed(3)}/gal</span>
-    </div>`).join('')}
-    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-top:10px;margin-bottom:6px;">Most Expensive</div>
-    ${expensive.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
-      <span style="font-weight:700;color:var(--text)">${s.state}</span>
-      <span style="font-weight:800;color:var(--red)">$${s.avgP.toFixed(3)}/gal</span>
-    </div>`).join('')}`;
+  // Price leaders list — use live prices when available, else transaction data
+  if(S_livePrices && Object.keys(S_livePrices).length > 10){
+    const liveEntries = Object.entries(S_livePrices).map(([state,price])=>({state,price})).sort((a,b)=>a.price-b.price);
+    const cheap=liveEntries.slice(0,3), expensive=liveEntries.slice(-3).reverse();
+    const srcLabel = S_livePriceDate ? `Week of ${S_livePriceDate}` : 'Latest EIA data';
+    document.getElementById('mapPriceTable').innerHTML=`
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);">Current Diesel Prices</div>
+        <span style="font-size:9px;font-weight:700;color:var(--green);background:var(--green-dim);border:1px solid rgba(34,197,94,.25);padding:1px 6px;border-radius:4px;">LIVE</span>
+      </div>
+      <div style="font-size:9px;color:var(--text3);margin-bottom:8px;">Source: US EIA — ${srcLabel}</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Cheapest Regions</div>
+      ${cheap.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
+        <span style="font-weight:700;color:var(--text)">${s.state}</span>
+        <span style="font-weight:800;color:var(--green)">$${s.price.toFixed(3)}/gal</span>
+      </div>`).join('')}
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-top:10px;margin-bottom:6px;">Most Expensive</div>
+      ${expensive.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
+        <span style="font-weight:700;color:var(--text)">${s.state}</span>
+        <span style="font-weight:800;color:var(--purple-lt)">$${s.price.toFixed(3)}/gal</span>
+      </div>`).join('')}`;
+  } else {
+    const priced=states.filter(s=>s.gallons>0).map(s=>({...s,avgP:s.total/s.gallons})).sort((a,b)=>a.avgP-b.avgP);
+    const cheap=priced.slice(0,3), expensive=priced.slice(-2).reverse();
+    document.getElementById('mapPriceTable').innerHTML=`
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Cheapest States</div>
+      ${cheap.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
+        <span style="font-weight:700;color:var(--text)">${s.state}</span>
+        <span style="font-weight:800;color:var(--green)">$${s.avgP.toFixed(3)}/gal</span>
+      </div>`).join('')}
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-top:10px;margin-bottom:6px;">Most Expensive</div>
+      ${expensive.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
+        <span style="font-weight:700;color:var(--text)">${s.state}</span>
+        <span style="font-weight:800;color:var(--red)">$${s.avgP.toFixed(3)}/gal</span>
+      </div>`).join('')}`;
+  }
 
   // State table
   document.getElementById('stateTbody').innerHTML=states.map(s=>{
@@ -9072,6 +9211,9 @@ function goPage(p,btn){
 
 async function refreshAll(){
   const btn=document.getElementById('refBtn'); btn.classList.add('spin');
+  // Invalidate cached live prices so they get re-fetched
+  S_livePrices = null;
+  S_livePriceDate = null;
   for(let i=0;i<S.companies.length;i++) S.vehicles[i]=await fetchVehicles(i);
   renderDashboard(); buildQuickPick(); buildMaps(); updateTbAlerts();
   btn.classList.remove('spin');

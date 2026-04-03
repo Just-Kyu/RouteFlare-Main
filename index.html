@@ -384,6 +384,7 @@ body {
 .finder-map-panel .leaflet-container {
   font-family: var(--font);
 }
+#finderMapContainer { background: var(--map-bg); }
 #leafletMap.leaflet-container {
   position: absolute !important;
   inset: 0 !important;
@@ -598,7 +599,7 @@ body {
 .legend-val { font-weight: 700; font-size: 12px; color: var(--text); }
 
 /* ═══════════ US MAP ═══════════ */
-.map-container { width: 100%; position: relative; min-height: 180px; border-radius: 12px; overflow: hidden; }
+.map-container { width: 100%; position: relative; min-height: 180px; border-radius: 12px; overflow: hidden; background: var(--map-bg); }
 .map-svg { width: 100%; display: block; border-radius: 10px; overflow: hidden; }
 .state-path { stroke-width: 0.8; cursor: pointer; transition: opacity .2s, stroke .2s; }
 .state-path:hover { opacity: .75; }
@@ -956,7 +957,7 @@ body {
 }
 .report-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px var(--purple-glow); }
 .truck-table { width: 100%; border-collapse: collapse; }
-.truck-table th { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+.truck-table th { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 2; }
 .truck-table td { padding: 10px 10px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text2); transition: background .15s; }
 .truck-table tr:hover td { background: var(--surface2); }
 .truck-table .tunit { font-weight: 700; color: var(--purple-lt); font-size: 12px; }
@@ -1133,6 +1134,22 @@ body {
 .fl-table .fl-station { font-weight: 600; color: var(--text); }
 .fl-table .fl-saved { font-weight: 700; color: var(--green); }
 .fl-table .fl-total { font-weight: 700; color: var(--text); }
+
+
+/* ═══════════ COMPANY FILTER PILLS ═══════════ */
+.company-filter-wrap { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: thin; scrollbar-color: var(--surface3) transparent; -webkit-overflow-scrolling: touch; }
+.company-filter-wrap::-webkit-scrollbar { height: 4px; }
+.company-filter-wrap::-webkit-scrollbar-track { background: transparent; }
+.company-filter-wrap::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+.co-filter-chip { white-space: nowrap; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--font); cursor: pointer; border: 1px solid var(--border2); background: var(--surface2); color: var(--text2); transition: all .2s; flex-shrink: 0; }
+.co-filter-chip:hover { border-color: var(--purple); color: var(--purple-lt); }
+.co-filter-chip.on { background: var(--purple-dim); border-color: var(--purple); color: var(--purple-lt); }
+/* ═══════════ SORTABLE TABLE HEADERS ═══════════ */
+.fl-table th.sortable { cursor: pointer; user-select: none; transition: color .2s; }
+.fl-table th.sortable:hover { color: var(--purple-lt); }
+.fl-table th.sortable::after { content: '⇅'; margin-left: 4px; opacity: .4; font-size: 10px; }
+.fl-table th.sortable.asc::after { content: '↑'; opacity: .8; color: var(--purple-lt); }
+.fl-table th.sortable.desc::after { content: '↓'; opacity: .8; color: var(--purple-lt); }
 .fl-del-btn {
   background: none; border: none; color: var(--text3); cursor: pointer;
   padding: 4px; border-radius: 6px; transition: all .2s; display: flex; align-items: center; justify-content: center;
@@ -1478,7 +1495,7 @@ body {
 
       <!-- ANALYTICS -->
       <div class="page" id="page-analytics">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:10px;">
                 <div>
                   <div style="font-size:20px;font-weight:800;color:var(--text)">Fuel Analytics & Reports</div>
                   <div style="font-size:12px;color:var(--text2);margin-top:3px;">Track spending, savings and fuel patterns across your vehicles</div>
@@ -1493,6 +1510,7 @@ body {
                   <button class="report-btn" onclick="exportPDF()">⬇ Export PDF</button>
                 </div>
               </div>
+              <div class="company-filter-wrap" id="analyticsCompanyFilter"></div>
               <div id="aKpis"></div>
               <div class="analytics-grid">
                 <div class="card"><div class="card-title">Monthly Fuel Spend <span class="arrow">↗</span></div><div class="chart-wrap" style="height:200px"><canvas id="monthlyChart"></canvas></div></div>
@@ -1501,7 +1519,7 @@ body {
               <div class="card analytics-full">
                 <div class="card-title" style="margin-bottom:16px">Per-Truck Monthly Fuel Spend <span class="arrow">↗</span></div>
                 <div class="chart-wrap" style="height:180px;margin-bottom:16px"><canvas id="truckBarChart"></canvas></div>
-                <div style="overflow-x:auto;">
+                <div style="overflow-x:auto;max-height:400px;overflow-y:auto;border-radius:8px;">
                   <table class="truck-table" id="truckTable">
                     <thead><tr><th>Unit #</th><th>Truck Name</th><th>Company</th><th>Gallons</th><th>Spent</th><th>Saved</th><th>Avg $/gal</th><th>Spend</th></tr></thead>
                     <tbody id="truckTbody"></tbody>
@@ -1617,8 +1635,8 @@ body {
           <div class="card" style="overflow-x:auto;">
             <table class="fl-table">
               <thead><tr>
-                <th>Date</th><th>Station</th><th>Truck</th><th>Gallons</th>
-                <th>Price/Gal</th><th>Disc. Price</th><th>Total</th><th>Saved</th><th style="width:40px;"></th>
+                <th class="sortable" data-sort="date" data-table="history" onclick="sortFlTable(this)">Date</th><th>Station</th><th>Truck</th><th class="sortable" data-sort="gallons" data-table="history" onclick="sortFlTable(this)">Gallons</th>
+                <th class="sortable" data-sort="pricePerGal" data-table="history" onclick="sortFlTable(this)">Price/Gal</th><th class="sortable" data-sort="discountedPrice" data-table="history" onclick="sortFlTable(this)">Disc. Price</th><th class="sortable" data-sort="total" data-table="history" onclick="sortFlTable(this)">Total</th><th class="sortable" data-sort="saved" data-table="history" onclick="sortFlTable(this)">Saved</th><th style="width:40px;"></th>
               </tr></thead>
               <tbody id="flHistoryBody"></tbody>
             </table>
@@ -1637,8 +1655,8 @@ body {
             <div class="card-title">Fueling Breakdown</div>
             <table class="fl-table">
               <thead><tr>
-                <th>Station</th><th>Visits</th><th>Total Gallons</th>
-                <th>Avg $/Gal</th><th>Total Spent</th><th>Total Saved</th>
+                <th>Station</th><th class="sortable" data-sort="visits" data-table="report" onclick="sortFlTable(this)">Visits</th><th class="sortable" data-sort="gallons" data-table="report" onclick="sortFlTable(this)">Total Gallons</th>
+                <th class="sortable" data-sort="avgPrice" data-table="report" onclick="sortFlTable(this)">Avg $/Gal</th><th class="sortable" data-sort="spent" data-table="report" onclick="sortFlTable(this)">Total Spent</th><th class="sortable" data-sort="saved" data-table="report" onclick="sortFlTable(this)">Total Saved</th>
               </tr></thead>
               <tbody id="flReportBody"></tbody>
             </table>
@@ -1794,8 +1812,16 @@ function toggleTheme(){
   document.getElementById('themeLbl').textContent = S.theme==='dark' ? 'Dark' : 'Light';
   // Update chart colors
   updateChartTheme();
-  // Rebuild maps with correct bg
+  // Rebuild D3 maps with correct bg
   if(document.getElementById('app').classList.contains('on')) buildMaps();
+  // Update Leaflet tile layer for theme
+  if(S.leafletMap){
+    const dark=S.theme==='dark';
+    S.leafletMap.eachLayer(l=>{if(l instanceof L.TileLayer){l.setUrl(getTileUrl(dark));}});
+  }
+  // Rebuild map report if it's the active page
+  const mapReportPage=document.getElementById('page-mapReport');
+  if(mapReportPage&&mapReportPage.classList.contains('on')) renderMapReport();
 }
 
 function updateChartTheme(){
@@ -6506,11 +6532,41 @@ function renderMapReport(){
 // ═══════════════════════════════════════════════════════
 // ANALYTICS
 // ═══════════════════════════════════════════════════════
+S._analyticsCompany = 'all'; // 'all' or company name string
+
+function buildAnalyticsCompanyFilter(){
+  const wrap = document.getElementById('analyticsCompanyFilter');
+  if(!wrap) return;
+  // Get unique companies from fuel records
+  const companies = new Set();
+  S.fuelRecords.forEach(r=>{
+    const co = S.companies[r.companyIndex] || (r.companyIndex==null ? null : null);
+    if(co) companies.add(co);
+  });
+  const coList = [...companies].sort();
+  wrap.innerHTML = '<button class="co-filter-chip'+(S._analyticsCompany==='all'?' on':'')+'" onclick="setAnalyticsCompany('all',this)">All Companies</button>' +
+    coList.map(c=>'<button class="co-filter-chip'+(S._analyticsCompany===c?' on':'')+'" onclick="setAnalyticsCompany(''+c.replace(/'/g,"\'")+'',this)">'+c+'</button>').join('');
+}
+
+function setAnalyticsCompany(co, btn){
+  S._analyticsCompany = co;
+  btn.closest('.company-filter-wrap').querySelectorAll('.co-filter-chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderAnalytics();
+}
+
 function renderAnalytics(){
+  buildAnalyticsCompanyFilter();
   const month=parseInt(document.getElementById('reportMonth').value);
   const year=new Date().getFullYear();
   const recs=S.fuelRecords.filter(r=>{
-    const d=new Date(r.date); return d.getMonth()===month&&d.getFullYear()===year;
+    const d=new Date(r.date);
+    if(d.getMonth()!==month||d.getFullYear()!==year) return false;
+    if(S._analyticsCompany!=='all'){
+      const co=S.companies[r.companyIndex]||'';
+      if(co!==S._analyticsCompany) return false;
+    }
+    return true;
   });
   const totalSpend=recs.reduce((s,r)=>s+r.total,0);
   const totalSave=recs.reduce((s,r)=>s+r.saved,0);
@@ -6553,7 +6609,7 @@ function renderAnalytics(){
   });
 
   const truckMap={};
-  S.fuelRecords.forEach(r=>{
+  recs.forEach(r=>{
     if(!truckMap[r.truckUnit]) truckMap[r.truckUnit]={unit:r.truckUnit,name:r.truckName,company:S.companies[r.companyIndex]||'—',gallons:0,total:0,saved:0};
     truckMap[r.truckUnit].gallons+=r.gallons; truckMap[r.truckUnit].total+=r.total; truckMap[r.truckUnit].saved+=r.saved;
   });
@@ -7672,6 +7728,23 @@ function openLogForDispatch(dispatchId){
   document.getElementById('fuelModal').classList.add('on');
 }
 
+
+// ═══════════ TABLE SORTING ═══════════
+S._sortState = { history: { key: 'date', dir: 'desc' }, report: { key: 'spent', dir: 'desc' } };
+
+function sortFlTable(th){
+  const table = th.dataset.table;
+  const key = th.dataset.sort;
+  const state = S._sortState[table];
+  if(state.key === key) state.dir = state.dir==='desc' ? 'asc' : 'desc';
+  else { state.key = key; state.dir = 'desc'; }
+  // Update header classes
+  th.closest('thead').querySelectorAll('th.sortable').forEach(h=>{ h.classList.remove('asc','desc'); });
+  th.classList.add(state.dir);
+  if(table==='history') renderFuelHistory();
+  else renderMonthlyReport();
+}
+
 function renderFuelHistory(){
   const selectedMonth = document.getElementById('flMonthSelect').value;
   let history = getFuelLogHistory();
@@ -7686,7 +7759,14 @@ function renderFuelHistory(){
     return;
   }
   empty.style.display = 'none';
-  tbody.innerHTML = history.sort((a,b)=>b.date.localeCompare(a.date)).map((r,i)=>`
+  const hs = S._sortState.history;
+  history.sort((a,b)=>{
+    let va,vb;
+    if(hs.key==='date'){ va=a.date||''; vb=b.date||''; return hs.dir==='asc'?va.localeCompare(vb):vb.localeCompare(va); }
+    va=parseFloat(a[hs.key])||0; vb=parseFloat(b[hs.key])||0;
+    return hs.dir==='asc'?va-vb:vb-va;
+  });
+  tbody.innerHTML = history.map((r,i)=>`
     <tr>
       <td>${r.date}</td>
       <td class="fl-station">${r.station}</td>
@@ -7740,7 +7820,12 @@ function renderMonthlyReport(){
     byStation[r.station].saved += r.saved;
   });
   const tbody = document.getElementById('flReportBody');
-  tbody.innerHTML = Object.entries(byStation).sort((a,b)=>b[1].spent-a[1].spent).map(([name,d])=>`
+  const rs = S._sortState.report;
+  const stationEntries = Object.entries(byStation).sort((a,b)=>{
+    if(rs.key==='avgPrice'){ const va=a[1].gallons>0?a[1].spent/a[1].gallons:0; const vb=b[1].gallons>0?b[1].spent/b[1].gallons:0; return rs.dir==='asc'?va-vb:vb-va; }
+    return rs.dir==='asc'?a[1][rs.key]-b[1][rs.key]:b[1][rs.key]-a[1][rs.key];
+  });
+  tbody.innerHTML = stationEntries.map(([name,d])=>`
     <tr>
       <td class="fl-station">${name}</td>
       <td>${d.visits}</td>

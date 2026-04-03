@@ -215,7 +215,8 @@ body {
 .setup-card {
   background: var(--surface);
   border: 1px solid var(--border2);
-  border-radius: 20px;
+  border-top: 3px solid #5BBCB4;
+  border-radius: 16px;
   padding: 44px 40px;
   width: 100%; max-width: 480px;
   margin: auto 0;
@@ -1197,7 +1198,7 @@ body {
     var k = localStorage.getItem('ff_apiKeys');
     var companies = c ? JSON.parse(c) : [];
     var keys = k ? JSON.parse(k) : [];
-    if(companies.length && (g || keys.some(function(x){return x;}))){
+    if(companies.length){
       document.documentElement.classList.add('has-session');
     }
   } catch(e){}
@@ -1206,49 +1207,40 @@ body {
 
 <!-- ══ SETUP ══ -->
 <div id="setup">
-  <div class="setup-card">
+  <div class="setup-card" style="max-width:420px;padding:40px 36px;">
     <div class="setup-glow"></div>
-    <div style="position:absolute;top:16px;right:16px">
-      <div class="theme-toggle" onclick="toggleTheme()">
-        <span class="tt-ico"><svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line class="sun-ray" x1="12" y1="1" x2="12" y2="3"/><line class="sun-ray" x1="12" y1="21" x2="12" y2="23"/><line class="sun-ray" x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line class="sun-ray" x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line class="sun-ray" x1="1" y1="12" x2="3" y2="12"/><line class="sun-ray" x1="21" y1="12" x2="23" y2="12"/><line class="sun-ray" x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line class="sun-ray" x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
-        <div class="tt-track"><div class="tt-thumb"></div></div>
-        <span class="tt-ico"><svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/><path class="moon-star" d="M17 4l.5 1.5L19 6l-1.5.5L17 8l-.5-1.5L15 6l1.5-.5z" fill="var(--purple-lt)" stroke="none"/><path class="moon-star" d="M21 9l.3.9.9.3-.9.3L21 11.4l-.3-.9-.9-.3.9-.3z" fill="var(--purple-lt)" stroke="none"/></svg></span>
+    <div style="text-align:center;margin-bottom:28px;">
+      <div class="setup-logo" style="justify-content:center;margin-bottom:16px;">
+        <img src="image 49.png" alt="FuelPro" style="width:44px;height:44px;border-radius:12px;object-fit:contain;">
+        <div class="slogo-txt">Fuel<span>Pro</span></div>
       </div>
-    </div>
-    <div class="setup-logo">
-      <img src="image 49.png" alt="FuelPro" style="width:44px;height:44px;border-radius:12px;object-fit:contain;">
-      <div class="slogo-txt">Fuel<span>Pro</span></div>
-    </div>
-    <div class="setup-h">Connect to Samsara</div>
-    <div class="setup-sub">Monitor fuel levels, find cheapest truck stops, and track spending & savings across all your vehicles.</div>
-    <div class="flabel">Global Samsara API Key <span style="font-weight:400;font-size:10px;opacity:.65;">(used if no per-company key set)</span></div>
-    <div style="position:relative;margin-bottom:18px">
-      <input class="finput" type="password" id="apiInput" placeholder="samsara_api_xxxxxxxxxxxxxxxx (optional fallback)" style="margin-bottom:0;padding-right:44px"/>
-      <button onclick="toggleKey()" style="position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-    </div>
-    <div class="flabel">Companies</div>
-    <div class="co-list" id="coList"></div>
-    <button class="add-co" onclick="addCo()">+ Add Company</button>
-    <div class="flabel">Low Fuel Alert Threshold</div>
-    <div class="thresh-row">
-      <label>Alert when fuel drops below:</label>
-      <input type="range" min="5" max="40" value="20" id="tslider" oninput="document.getElementById('tval').textContent=this.value+'%'"/>
-      <div class="thresh-val" id="tval">20%</div>
+      <div class="setup-h" style="font-size:22px;margin-bottom:4px;">Log in to your account</div>
     </div>
 
-    <div class="flabel" style="margin-top:18px;">
-      Google Maps API Key
-      <span style="font-weight:400;color:var(--text3);font-size:10px;"> — optional, improves route geocoding accuracy</span>
+    <div class="flabel">Email*</div>
+    <input class="finput" type="email" id="loginEmail" placeholder="Enter email" autocomplete="email"/>
+
+    <div class="flabel">Password*</div>
+    <div style="position:relative;margin-bottom:6px;">
+      <input class="finput" type="password" id="loginPassword" placeholder="Enter password" style="margin-bottom:0;padding-right:44px;" autocomplete="current-password"/>
+      <button onclick="const i=document.getElementById('loginPassword');i.type=i.type==='password'?'text':'password';" style="position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">
-      <input class="api-input" type="password" id="gmKeyInput" placeholder="AIzaSy..." style="flex:1;" value="AIzaSyA7rrrxv_uNKeHsoKsn4FiYsLDT1DJrjYg"/>
-      <button class="eye-btn" onclick="toggleVis('gmKeyInput',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-    </div>
-    <div style="font-size:10px;color:var(--text3);margin-bottom:16px;">
-      Get a free key at <a href="https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com" target="_blank" style="color:var(--purple-lt);">Google Cloud Console</a> — enable Geocoding API + Maps JavaScript API
+    <div style="text-align:right;margin-bottom:22px;">
+      <a href="#" style="font-size:12px;color:var(--purple-lt);text-decoration:none;">Forgot password?</a>
     </div>
 
-    <button class="connect-btn" id="connBtn" onclick="connect()">Connect & Monitor</button>
+    <button class="connect-btn" id="connBtn" onclick="loginAndConnect()" style="border-radius:28px;margin-bottom:16px;">Log in</button>
+
+    <div style="text-align:center;font-size:12px;color:var(--text2);">
+      No account yet? <a href="#" style="color:var(--purple-lt);text-decoration:underline;font-weight:600;" onclick="event.preventDefault();">Book a demo and explore the platform.</a>
+    </div>
+
+    <!-- Hidden fields for Samsara config (auto-restored from localStorage) -->
+    <input type="hidden" id="apiInput" value=""/>
+    <input type="hidden" id="gmKeyInput" value="AIzaSyA7rrrxv_uNKeHsoKsn4FiYsLDT1DJrjYg"/>
+    <input type="hidden" id="tslider" value="20"/>
+    <div id="coList" style="display:none;"></div>
+    <span id="tval" style="display:none;">20%</span>
   </div>
 </div>
 
@@ -1996,20 +1988,19 @@ function init(){
   document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
   seedFuelRecords();
 
-  // Set default Google Maps API key if not already saved
-  if(!localStorage.getItem('gm_api_key')) localStorage.setItem('gm_api_key', 'AIzaSyA7rrrxv_uNKeHsoKsn4FiYsLDT1DJrjYg');
+  // Google Maps API key (hidden from UI)
   // Try to restore saved session
   const savedGlobal    = localStorage.getItem('ff_globalKey') || '';
   const savedKeys      = JSON.parse(localStorage.getItem('ff_apiKeys') || '[]');
   const savedCompanies = JSON.parse(localStorage.getItem('ff_companies') || '[]');
   const savedThreshold = localStorage.getItem('ff_threshold') || '20';
 
-  if(savedCompanies.length && (savedGlobal || savedKeys.some(k=>k))){
-    // Restore UI fields
-    document.getElementById('apiInput').value = savedGlobal;
-    document.getElementById('tslider').value = savedThreshold;
-    document.getElementById('tval').textContent = savedThreshold + '%';
-    savedCompanies.forEach((name, i) => addCo(name, savedKeys[i] || ''));
+  if(savedCompanies.length){
+    // Restore settings into hidden fields
+    const apiInp = document.getElementById('apiInput');
+    if(apiInp) apiInp.value = savedGlobal;
+    const tSlider = document.getElementById('tslider');
+    if(tSlider) tSlider.value = savedThreshold;
 
     // Auto-connect silently
     showLoader('Reconnecting to Samsara...');
@@ -2040,8 +2031,7 @@ function init(){
       startAutoRefresh();
     }, 100);
   } else {
-    // No saved session — show default empty companies
-    ['Company A','Company B'].forEach(n => addCo(n));
+    // No saved session — show login page
   }
 }
 
@@ -2077,49 +2067,51 @@ function toggleKey(){
   const i=document.getElementById('apiInput'); i.type=i.type==='password'?'text':'password';
 }
 
-async function connect(){
-  const globalKey=document.getElementById('apiInput').value.trim();
-  const rows=document.querySelectorAll('#coList .co-row');
-  const cos=[]; const apiKeys=[];
-  rows.forEach(row=>{
-    const nameInp=row.querySelector('.co-name-input');
-    const keyInp=row.querySelector('.co-key-input');
-    const name=(nameInp?.value||'').trim();
-    const key=(keyInp?.value||'').trim()||globalKey;
-    if(name){ cos.push(name); apiKeys.push(key); }
-  });
-  if(!cos.length) return showToast('vwa','!','No Companies','Add at least one company.');
-  if(!globalKey && apiKeys.every(k=>!k)) return showToast('vwa','!','Missing API Key','Enter a Samsara API key for at least one company.');
-  S.apiKey=globalKey; S.apiKeys=apiKeys; S.companies=cos;
-  // Persist to localStorage so refresh doesn't lose settings
+async function loginAndConnect(){
+  const email = (document.getElementById('loginEmail')?.value||'').trim();
+  const pass = (document.getElementById('loginPassword')?.value||'').trim();
+  if(!email) return showToast('vwa','!','Email Required','Please enter your email address.');
+  if(!pass) return showToast('vwa','!','Password Required','Please enter your password.');
+
+  // Restore saved Samsara config or use defaults
+  const globalKey = localStorage.getItem('ff_globalKey') || '';
+  const savedKeys = JSON.parse(localStorage.getItem('ff_apiKeys') || '[]');
+  const savedCompanies = JSON.parse(localStorage.getItem('ff_companies') || '[]');
+  const cos = savedCompanies.length ? savedCompanies : ['Company A'];
+  const apiKeys = savedKeys.length ? savedKeys : [globalKey];
+
+  S.apiKey = globalKey; S.apiKeys = apiKeys; S.companies = cos;
   localStorage.setItem('ff_globalKey', globalKey);
   localStorage.setItem('ff_apiKeys', JSON.stringify(apiKeys));
   localStorage.setItem('ff_companies', JSON.stringify(cos));
-  localStorage.setItem('ff_threshold', document.getElementById('tslider').value);
+  localStorage.setItem('ff_threshold', document.getElementById('tslider')?.value || '20');
   const gmKey = document.getElementById('gmKeyInput')?.value?.trim() || '';
   if(gmKey) localStorage.setItem('gm_api_key', gmKey);
-  S.threshold=parseInt(document.getElementById('tslider').value);
-  if('Notification' in window && Notification.permission==='default') await Notification.requestPermission();
-  showLoader('Connecting to Samsara...');
-  document.getElementById('connBtn').disabled=true;
-  for(let i=0;i<cos.length;i++){
-    setLtxt(`Loading ${cos[i]}...`); await delay(700);
-    S.vehicles[i]=await fetchVehicles(i);
+  S.threshold = parseInt(localStorage.getItem('ff_threshold') || '20');
+
+  showLoader('Signing in...');
+  document.getElementById('connBtn').disabled = true;
+  for(let i=0; i<cos.length; i++){
+    setLtxt('Loading ' + cos[i] + '...');
+    await delay(500);
+    S.vehicles[i] = await fetchVehicles(i);
   }
   hideLoader();
-  document.getElementById('setup').style.display='none';
+  document.getElementById('setup').style.display = 'none';
   document.getElementById('app').classList.add('on');
-  seedFuelRecords(); // re-seed with real truck names
+  seedFuelRecords();
   buildTabs(); renderDashboard(); buildCharts(); buildMaps();
   buildQuickPick(); populateTruckSelect();
-  // Restore EIA key if previously saved
-  const savedEIA=localStorage.getItem('eia_api_key')||'';
-  const eiaInput=document.getElementById('eiaApiKey');
-  if(eiaInput&&savedEIA){ eiaInput.value=savedEIA; }
-  const eiaStatus=document.getElementById('eiaStatus');
-  if(eiaStatus&&savedEIA) eiaStatus.textContent='Key saved — will use on next search';
+  const savedEIA = localStorage.getItem('eia_api_key') || '';
+  const eiaInput = document.getElementById('eiaApiKey');
+  if(eiaInput && savedEIA){ eiaInput.value = savedEIA; }
+  const eiaStatus = document.getElementById('eiaStatus');
+  if(eiaStatus && savedEIA) eiaStatus.textContent = 'Key saved — will use on next search';
   startAutoRefresh();
 }
+
+// Keep legacy connect() as alias for any remaining calls
+async function connect(){ loginAndConnect(); }
 
 // ═══════════════════════════════════════════════════════
 // SAMSARA API
@@ -6537,15 +6529,25 @@ S._analyticsCompany = 'all'; // 'all' or company name string
 function buildAnalyticsCompanyFilter(){
   const wrap = document.getElementById('analyticsCompanyFilter');
   if(!wrap) return;
-  // Get unique companies from fuel records
   const companies = new Set();
   S.fuelRecords.forEach(r=>{
-    const co = S.companies[r.companyIndex] || (r.companyIndex==null ? null : null);
+    const co = S.companies[r.companyIndex] || null;
     if(co) companies.add(co);
   });
   const coList = [...companies].sort();
-  wrap.innerHTML = '<button class="co-filter-chip'+(S._analyticsCompany==='all'?' on':'')+'" onclick="setAnalyticsCompany('all',this)">All Companies</button>' +
-    coList.map(c=>'<button class="co-filter-chip'+(S._analyticsCompany===c?' on':'')+'" onclick="setAnalyticsCompany(''+c.replace(/'/g,"\'")+'',this)">'+c+'</button>').join('');
+  wrap.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'co-filter-chip' + (S._analyticsCompany==='all'?' on':'');
+  allBtn.textContent = 'All Companies';
+  allBtn.onclick = function(){ setAnalyticsCompany('all', this); };
+  wrap.appendChild(allBtn);
+  coList.forEach(c=>{
+    const btn = document.createElement('button');
+    btn.className = 'co-filter-chip' + (S._analyticsCompany===c?' on':'');
+    btn.textContent = c;
+    btn.onclick = function(){ setAnalyticsCompany(c, this); };
+    wrap.appendChild(btn);
+  });
 }
 
 function setAnalyticsCompany(co, btn){

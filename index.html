@@ -2105,6 +2105,34 @@ async function loginAndConnect(){
   if(!email) return showToast('vwa','!','Email Required','Please enter your email address.');
   if(!pass) return showToast('vwa','!','Password Required','Please enter your password.');
 
+  // ─── Verify account against RouteFlare Admin Portal ───
+  const ADMIN_PORTAL = localStorage.getItem('rf_admin_url') || 'https://routeflare-admin.vercel.app';
+  showLoader('Verifying account...');
+  document.getElementById('connBtn').disabled = true;
+  try {
+    const vRes = await fetch(ADMIN_PORTAL + '/api/auth/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass }),
+    });
+    const vData = await vRes.json();
+    if (!vData.success) {
+      hideLoader();
+      document.getElementById('connBtn').disabled = false;
+      return showToast('vwa','!', vData.error || 'Access Denied', 'Your account is not verified. Contact your administrator.');
+    }
+    // Store features from admin portal
+    S.userFeatures = vData.features || [];
+    S.userName = vData.name || email;
+    localStorage.setItem('rf_user_email', email);
+    localStorage.setItem('rf_user_features', JSON.stringify(S.userFeatures));
+  } catch (err) {
+    // Admin portal unreachable — allow login in offline/dev mode
+    console.warn('Admin portal unreachable, allowing local login:', err);
+    S.userFeatures = [];
+    S.userName = email;
+  }
+
   // Restore saved Samsara config or use defaults
   const globalKey = localStorage.getItem('ff_globalKey') || '';
   const savedKeys = JSON.parse(localStorage.getItem('ff_apiKeys') || '[]');
@@ -2121,8 +2149,7 @@ async function loginAndConnect(){
   if(gmKey) localStorage.setItem('gm_api_key', gmKey);
   S.threshold = parseInt(localStorage.getItem('ff_threshold') || '20');
 
-  showLoader('Signing in...');
-  document.getElementById('connBtn').disabled = true;
+  setLtxt('Loading vehicles...');
   for(let i=0; i<cos.length; i++){
     setLtxt('Loading ' + cos[i] + '...');
     await delay(500);
@@ -2131,6 +2158,10 @@ async function loginAndConnect(){
   hideLoader();
   document.getElementById('setup').style.display = 'none';
   document.getElementById('app').classList.add('on');
+
+  // Apply feature restrictions from admin portal
+  if(S.userFeatures && S.userFeatures.length > 0) applyFeatureRestrictions();
+
   seedFuelRecords();
   buildTabs(); renderDashboard(); buildCharts(); buildMaps();
   buildQuickPick(); populateTruckSelect();
@@ -2140,6 +2171,18 @@ async function loginAndConnect(){
   const eiaStatus = document.getElementById('eiaStatus');
   if(eiaStatus && savedEIA) eiaStatus.textContent = 'Key saved — will use on next search';
   startAutoRefresh();
+}
+
+function applyFeatureRestrictions(){
+  const tabs = document.querySelectorAll('.sbn[data-p]');
+  tabs.forEach(tab => {
+    const page = tab.dataset.p;
+    if(page && !S.userFeatures.includes(page)){
+      tab.style.opacity = '0.3';
+      tab.style.pointerEvents = 'none';
+      tab.title = 'This feature is not enabled for your account';
+    }
+  });
 }
 
 // Keep legacy connect() as alias for any remaining calls

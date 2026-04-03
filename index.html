@@ -957,8 +957,18 @@ body {
   box-shadow: 0 2px 8px var(--purple-glow);
 }
 .report-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px var(--purple-glow); }
+.truck-table-scroll { max-height: 420px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+.truck-table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.truck-table-scroll::-webkit-scrollbar-track { background: transparent; }
+.truck-table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.truck-table-scroll::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 .truck-table { width: 100%; border-collapse: collapse; }
-.truck-table th { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 2; }
+.truck-table th { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--card); z-index: 2; white-space: nowrap; }
+.truck-table th.sortable { cursor: pointer; user-select: none; transition: color .15s; }
+.truck-table th.sortable:hover { color: var(--text); }
+.truck-table th.sortable::after { content: '\2195'; margin-left: 4px; font-size: 9px; opacity: .5; }
+.truck-table th.sortable.asc::after { content: '\2191'; opacity: 1; color: var(--purple-lt); }
+.truck-table th.sortable.desc::after { content: '\2193'; opacity: 1; color: var(--purple-lt); }
 .truck-table td { padding: 10px 10px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text2); transition: background .15s; }
 .truck-table tr:hover td { background: var(--surface2); }
 .truck-table .tunit { font-weight: 700; color: var(--purple-lt); font-size: 12px; }
@@ -1521,9 +1531,18 @@ body {
               <div class="card analytics-full">
                 <div class="card-title" style="margin-bottom:16px">Per-Truck Monthly Fuel Spend <span class="arrow">↗</span></div>
                 <div class="chart-wrap" style="height:180px;margin-bottom:16px"><canvas id="truckBarChart"></canvas></div>
-                <div style="overflow-x:auto;max-height:400px;overflow-y:auto;border-radius:8px;">
+                <div class="truck-table-scroll">
                   <table class="truck-table" id="truckTable">
-                    <thead><tr><th>Unit #</th><th>Truck Name</th><th>Company</th><th>Gallons</th><th>Spent</th><th>Saved</th><th>Avg $/gal</th><th>Spend</th></tr></thead>
+                    <thead><tr>
+                      <th class="sortable" data-sort="unit" data-table="truck" onclick="sortTruckTable(this)">Unit #</th>
+                      <th class="sortable" data-sort="name" data-table="truck" onclick="sortTruckTable(this)">Truck Name</th>
+                      <th>Company</th>
+                      <th class="sortable" data-sort="gallons" data-table="truck" onclick="sortTruckTable(this)">Gallons</th>
+                      <th class="sortable" data-sort="total" data-table="truck" onclick="sortTruckTable(this)">Spent</th>
+                      <th class="sortable" data-sort="saved" data-table="truck" onclick="sortTruckTable(this)">Saved</th>
+                      <th class="sortable" data-sort="avgPrice" data-table="truck" onclick="sortTruckTable(this)">Avg $/gal</th>
+                      <th class="sortable" data-sort="total" data-table="truck" onclick="sortTruckTable(this)">Spend</th>
+                    </tr></thead>
                     <tbody id="truckTbody"></tbody>
                   </table>
                 </div>
@@ -6848,12 +6867,7 @@ function renderAnalytics(){
     options:tb,
   });
 
-  document.getElementById('truckTbody').innerHTML=trucks.map(t=>`<tr>
-    <td class="tunit">${t.unit}</td><td class="tname">${t.name||t.unit}</td><td>${t.company}</td>
-    <td>${t.gallons.toLocaleString()} gal</td><td class="tspend">$${t.total.toFixed(0)}</td>
-    <td class="tsave">$${t.saved.toFixed(0)}</td><td>$${t.gallons>0?(t.total/t.gallons).toFixed(3):'—'}</td>
-    <td style="min-width:70px"><div class="tbar-mini"><div class="tbar-mini-fill" style="width:${((t.total/maxSpend)*100).toFixed(0)}%"></div></div></td>
-  </tr>`).join('');
+  renderTruckTable();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -7954,7 +7968,7 @@ function openLogForDispatch(dispatchId){
 
 
 // ═══════════ TABLE SORTING ═══════════
-S._sortState = { history: { key: 'date', dir: 'desc' }, report: { key: 'spent', dir: 'desc' } };
+S._sortState = { history: { key: 'date', dir: 'desc' }, report: { key: 'spent', dir: 'desc' }, truck: { key: 'total', dir: 'desc' } };
 S._histPage = 1;
 const HIST_PER_PAGE = 25;
 
@@ -7969,6 +7983,41 @@ function sortFlTable(th){
   th.classList.add(state.dir);
   if(table==='history'){ S._histPage=1; renderFuelHistory(); }
   else renderMonthlyReport();
+}
+
+function sortTruckTable(th){
+  const key = th.dataset.sort;
+  const state = S._sortState.truck;
+  if(state.key === key) state.dir = state.dir==='desc' ? 'asc' : 'desc';
+  else { state.key = key; state.dir = 'desc'; }
+  th.closest('thead').querySelectorAll('th.sortable').forEach(h=>{ h.classList.remove('asc','desc'); });
+  th.classList.add(state.dir);
+  renderTruckTable();
+}
+
+function renderTruckTable(){
+  const month = parseInt(document.getElementById('reportMonth').value);
+  const recs = (S.fuelRecords||[]).filter(r=>{ const d=new Date(r.date); return d.getMonth()===month && d.getFullYear()===2026; });
+  const truckMap={};
+  recs.forEach(r=>{
+    if(!truckMap[r.truckUnit]) truckMap[r.truckUnit]={unit:r.truckUnit,name:r.truckName,company:S.companies[r.companyIndex]||'—',gallons:0,total:0,saved:0};
+    truckMap[r.truckUnit].gallons+=r.gallons; truckMap[r.truckUnit].total+=r.total; truckMap[r.truckUnit].saved+=r.saved;
+  });
+  let trucks=Object.values(truckMap);
+  const ts = S._sortState.truck;
+  trucks.sort((a,b)=>{
+    if(ts.key==='unit') return ts.dir==='asc'?a.unit.localeCompare(b.unit):b.unit.localeCompare(a.unit);
+    if(ts.key==='name') return ts.dir==='asc'?(a.name||'').localeCompare(b.name||''):(b.name||'').localeCompare(a.name||'');
+    if(ts.key==='avgPrice'){ const va=a.gallons>0?a.total/a.gallons:0; const vb=b.gallons>0?b.total/b.gallons:0; return ts.dir==='asc'?va-vb:vb-va; }
+    return ts.dir==='asc'?a[ts.key]-b[ts.key]:b[ts.key]-a[ts.key];
+  });
+  const maxSpend=Math.max(...trucks.map(t=>t.total),1);
+  document.getElementById('truckTbody').innerHTML=trucks.map(t=>`<tr>
+    <td class="tunit">${t.unit}</td><td class="tname">${t.name||t.unit}</td><td>${t.company}</td>
+    <td>${t.gallons.toLocaleString()} gal</td><td class="tspend">$${t.total.toFixed(0)}</td>
+    <td class="tsave">$${t.saved.toFixed(0)}</td><td>$${t.gallons>0?(t.total/t.gallons).toFixed(3):'—'}</td>
+    <td style="min-width:70px"><div class="tbar-mini"><div class="tbar-mini-fill" style="width:${((t.total/maxSpend)*100).toFixed(0)}%"></div></div></td>
+  </tr>`).join('');
 }
 
 function renderFuelHistory(){

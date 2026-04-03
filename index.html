@@ -1532,7 +1532,6 @@ body {
               </div>
               <div class="card analytics-full">
                 <div class="card-title" style="margin-bottom:16px">Per-Truck Monthly Fuel Spend <span class="arrow">↗</span></div>
-                <div class="chart-wrap" style="height:180px;margin-bottom:16px"><canvas id="truckBarChart"></canvas></div>
                 <div class="truck-table-scroll">
                   <table class="truck-table" id="truckTable">
                     <thead><tr>
@@ -6856,17 +6855,6 @@ function renderAnalytics(){
   recs.forEach(r=>{
     if(!truckMap[r.truckUnit]) truckMap[r.truckUnit]={unit:r.truckUnit,name:r.truckName,company:S.companies[r.companyIndex]||'—',gallons:0,total:0,saved:0};
     truckMap[r.truckUnit].gallons+=r.gallons; truckMap[r.truckUnit].total+=r.total; truckMap[r.truckUnit].saved+=r.saved;
-  });
-  const trucks=Object.values(truckMap).sort((a,b)=>b.total-a.total);
-  const maxSpend=trucks[0]?.total||1;
-
-  const tbCtx=document.getElementById('truckBarChart').getContext('2d');
-  if(S.charts.truckBar) S.charts.truckBar.destroy();
-  const tb=baseOpts(); tb.indexAxis='y';
-  S.charts.truckBar=new Chart(tbCtx,{
-    type:'bar',
-    data:{labels:trucks.map(t=>t.unit),datasets:[{data:trucks.map(t=>t.total.toFixed(0)),backgroundColor:'rgba(124,58,237,.75)',hoverBackgroundColor:'rgba(139,92,246,.9)',borderRadius:6}]},
-    options:tb,
   });
 
   renderTruckTable();

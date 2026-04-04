@@ -1137,6 +1137,19 @@ body {
 .fl-table .fl-total { font-weight: 700; color: var(--text); }
 
 
+
+/* ═══════════ FUEL SYNC ═══════════ */
+.sync-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text2); font-family: var(--font); font-size: 11px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.sync-btn:hover { border-color: var(--purple); color: var(--purple-lt); background: var(--purple-dim); }
+.sync-btn.syncing { pointer-events: none; opacity: .7; }
+.sync-btn .sync-icon { transition: transform .3s; }
+.sync-btn.syncing .sync-icon { animation: spin-sync 1s linear infinite; }
+@keyframes spin-sync { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.sync-status { font-size: 10px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; }
+.sync-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.sync-dot.idle { background: var(--text3); }
+.sync-dot.err { background: var(--red); }
 /* ═══════════ COMPANY FILTER PILLS ═══════════ */
 .company-filter-wrap { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: thin; scrollbar-color: var(--surface3) transparent; -webkit-overflow-scrolling: touch; }
 .company-filter-wrap::-webkit-scrollbar { height: 4px; }
@@ -1601,10 +1614,18 @@ body {
             <select class="month-select" id="flMonthSelect" onchange="renderFuelLog()">
               <option value="all">All Time</option>
             </select>
+            <button class="sync-btn" id="syncBtn" onclick="syncFuelTransactions()" title="Sync from Samsara/Relay">
+              <svg class="sync-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+              Sync
+            </button>
             <button class="tb-btn primary" onclick="openAddFueling()">+ Log Fueling</button>
           </div>
         </div>
 
+        <div id="syncStatus" class="sync-status" style="margin-bottom:8px;padding:0 4px;display:none;">
+          <span class="sync-dot idle" id="syncDot"></span>
+          <span id="syncText">Not synced</span>
+        </div>
         <div class="fl-tabs">
           <button class="fl-tab on" onclick="setFlTab('dispatch',this)">Dispatched</button>
           <button class="fl-tab" onclick="setFlTab('history',this)">History</button>
@@ -1907,7 +1928,27 @@ function openManageCo(){
   thr.value = S.threshold;
   tval.textContent = S.threshold + '%';
   document.getElementById('manageCoStatus').style.display = 'none';
+  // Restore sync URL
+  const syncUrlInput = document.getElementById('manageSyncUrl');
+  if(syncUrlInput) syncUrlInput.value = localStorage.getItem('fuel_sync_url') || '';
   document.getElementById('manageCoModal').style.display = 'flex';
+}
+
+async function testSyncWorker(){
+  const url = document.getElementById('manageSyncUrl').value.trim();
+  const result = document.getElementById('syncTestResult');
+  if(!url){ result.textContent = 'Enter a worker URL first'; result.style.color = 'var(--orange)'; return; }
+  result.textContent = 'Testing...'; result.style.color = 'var(--text3)';
+  try {
+    const r = await fetch(url + '/transactions/count');
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    result.textContent = '✓ Connected — ' + (d.count || 0) + ' transactions stored';
+    result.style.color = 'var(--green)';
+  } catch(e){
+    result.textContent = '✕ Error: ' + e.message;
+    result.style.color = 'var(--red)';
+  }
 }
 
 function closeManageCo(){
@@ -1965,6 +2006,10 @@ async function saveManageCo(){
   localStorage.setItem('ff_companies', JSON.stringify(newNames));
   localStorage.setItem('ff_apiKeys', JSON.stringify(newKeys));
   localStorage.setItem('ff_threshold', newThreshold);
+  // Save sync URL
+  const syncUrl = document.getElementById('manageSyncUrl')?.value?.trim() || '';
+  if(syncUrl) localStorage.setItem('fuel_sync_url', syncUrl);
+  else localStorage.removeItem('fuel_sync_url');
 
   // Re-fetch vehicles
   for(let i = 0; i < newNames.length; i++){
@@ -2100,6 +2145,7 @@ async function loginAndConnect(){
   document.getElementById('setup').style.display = 'none';
   document.getElementById('app').classList.add('on');
   seedFuelRecords();
+  syncFuelTransactions(true); // Auto-sync fuel transactions
   buildTabs(); renderDashboard(); buildCharts(); buildMaps();
   buildQuickPick(); populateTruckSelect();
   const savedEIA = localStorage.getItem('eia_api_key') || '';
@@ -5849,6 +5895,134 @@ function seedFuelRecords(){
   }
 }
 
+
+// ═══════════════════════════════════════════════════════
+// FUEL SYNC — Auto-sync from Cloudflare Worker
+// ═══════════════════════════════════════════════════════
+// Set this to your deployed worker URL after running setup.sh
+const FUEL_SYNC_URL = localStorage.getItem('fuel_sync_url') || '';
+
+async function syncFuelTransactions(silent){
+  const syncUrl = FUEL_SYNC_URL || localStorage.getItem('fuel_sync_url') || '';
+  if(!syncUrl){
+    if(!silent) showToast('vwa','!','Sync Not Configured','Set up the Fuel Sync Worker first. Go to Settings.');
+    return { synced: 0 };
+  }
+
+  const btn = document.getElementById('syncBtn');
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncText');
+  const statusEl = document.getElementById('syncStatus');
+  if(statusEl) statusEl.style.display = 'flex';
+  if(btn) btn.classList.add('syncing');
+  if(dot){ dot.className = 'sync-dot idle'; }
+  if(txt) txt.textContent = 'Syncing...';
+
+  try {
+    // Fetch new transactions since last sync
+    const lastSync = localStorage.getItem('fuel_last_sync') || '';
+    const url = lastSync ? `${syncUrl}/transactions?since=${encodeURIComponent(lastSync)}` : `${syncUrl}/transactions`;
+    const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    if(!data.ok || !data.transactions?.length){
+      if(dot) dot.className = 'sync-dot live';
+      if(txt) txt.textContent = `Up to date · ${data.count || 0} total · Last: ${formatSyncTime(data.lastSync)}`;
+      if(btn) btn.classList.remove('syncing');
+      return { synced: 0 };
+    }
+
+    // Merge new transactions into fuel log
+    const existing = getFuelLogHistory();
+    const existingIds = new Set(existing.map(r => r.id));
+    let newCount = 0;
+
+    for(const tx of data.transactions){
+      if(!existingIds.has(tx.id) && (tx.gallons > 0 || tx.total > 0)){
+        existing.unshift(tx);
+        existingIds.add(tx.id);
+        newCount++;
+      }
+    }
+
+    if(newCount > 0){
+      saveFuelLogHistory(existing);
+      S.fuelRecords = existing;
+      // Re-render if on fuel log page
+      const fuelLogPage = document.getElementById('page-fuelLog');
+      if(fuelLogPage && fuelLogPage.classList.contains('on')){
+        renderFuelLog();
+      }
+      renderDashboard();
+      if(!silent) showToast('ok','ok','Synced!',`${newCount} new fuel transaction${newCount>1?'s':''} imported`);
+    }
+
+    // Save sync timestamp
+    localStorage.setItem('fuel_last_sync', new Date().toISOString());
+
+    if(dot) dot.className = 'sync-dot live';
+    if(txt) txt.textContent = `${newCount} new · ${data.count} total · Last: ${formatSyncTime(data.lastSync)}`;
+    if(btn) btn.classList.remove('syncing');
+
+    return { synced: newCount };
+
+  } catch(e){
+    console.error('Fuel sync error:', e);
+    if(dot) dot.className = 'sync-dot err';
+    if(txt) txt.textContent = `Sync error: ${e.message}`;
+    if(btn) btn.classList.remove('syncing');
+    if(!silent) showToast('vwa','!','Sync Failed', e.message.slice(0, 80));
+    return { synced: 0, error: e.message };
+  }
+}
+
+function formatSyncTime(iso){
+  if(!iso) return 'never';
+  try {
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMin = Math.round((now - d) / 60000);
+    if(diffMin < 1) return 'just now';
+    if(diffMin < 60) return `${diffMin}m ago`;
+    if(diffMin < 1440) return `${Math.round(diffMin/60)}h ago`;
+    return d.toLocaleDateString();
+  } catch(e){ return iso; }
+}
+
+// Push existing records to the sync worker (for backup/migration)
+async function pushRecordsToSync(){
+  const syncUrl = localStorage.getItem('fuel_sync_url') || '';
+  if(!syncUrl) return showToast('vwa','!','No Sync URL','Configure sync worker URL first.');
+
+  const records = getFuelLogHistory();
+  if(!records.length) return showToast('vwa','!','No Records','No fuel records to push.');
+
+  showLoader('Pushing records to sync worker...');
+  try {
+    // Push in batches of 100
+    let pushed = 0;
+    for(let i = 0; i < records.length; i += 100){
+      const batch = records.slice(i, i + 100);
+      setLtxt(`Pushing ${i + batch.length} of ${records.length}...`);
+      const resp = await fetch(`${syncUrl}/transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(batch),
+      });
+      if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      pushed += data.stored || 0;
+    }
+    hideLoader();
+    showToast('ok','ok','Pushed!',`${pushed} records sent to sync worker`);
+  } catch(e){
+    hideLoader();
+    showToast('vwa','!','Push Failed', e.message);
+  }
+}
+
+
 function saveFueling(){
   const unit=document.getElementById('mUnit').value;
   const station=document.getElementById('mStation').value.trim();
@@ -9073,9 +9247,12 @@ function goPage(p,btn){
 async function refreshAll(){
   const btn=document.getElementById('refBtn'); btn.classList.add('spin');
   for(let i=0;i<S.companies.length;i++) S.vehicles[i]=await fetchVehicles(i);
+  // Also sync fuel transactions from worker
+  const syncResult = await syncFuelTransactions(true);
   renderDashboard(); buildQuickPick(); buildMaps(); updateTbAlerts();
   btn.classList.remove('spin');
-  showToast('ok','ok','Data Refreshed',`${Object.values(S.vehicles).flat().length} vehicles updated`);
+  const syncMsg = syncResult.synced > 0 ? ` + ${syncResult.synced} new fuel txns` : '';
+  showToast('ok','ok','Data Refreshed',`${Object.values(S.vehicles).flat().length} vehicles updated${syncMsg}`);
 }
 
 function showLoader(t){ document.getElementById('ltxt').textContent=t; document.getElementById('loader').classList.add('on'); }
@@ -9109,6 +9286,15 @@ init();
     <button onclick="manageAddCo()" style="width:100%;padding:10px;background:var(--surface2);border:1px dashed var(--border2);border-radius:10px;color:var(--purple-lt);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;">+ Add Company</button>
 
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;">Fuel Sync Worker URL</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+        <input type="text" id="manageSyncUrl" placeholder="https://fuelpro-sync.yourname.workers.dev"
+          style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:12px;"/>
+        <button onclick="testSyncWorker()" style="background:var(--purple-dim);border:1px solid var(--purple);color:var(--purple-lt);border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;">Test</button>
+      </div>
+      <div id="syncTestResult" style="font-size:10px;color:var(--text3);margin-bottom:14px;"></div>
+    </div>
+    <div style="padding-top:12px;border-top:1px solid var(--border);">
       <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;">Low Fuel Alert Threshold</div>
       <div style="display:flex;align-items:center;gap:12px;">
         <input type="range" min="5" max="40" id="manageThreshold" style="flex:1;" oninput="document.getElementById('manageTval').textContent=this.value+'%'"/>

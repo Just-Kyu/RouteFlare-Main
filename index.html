@@ -1258,7 +1258,7 @@ body {
     </div>
 
     <div style="text-align:center;margin-top:14px;">
-      <a href="#" style="font-size:11px;color:var(--text3);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;display:inline-flex;align-items:center;gap:5px;transition:all .2s;" onclick="event.preventDefault();" onmouseover="this.style.color='var(--purple-lt)';this.style.borderColor='var(--purple-lt)'" onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">
+      <a id="adminPortalLink" href="#" target="_blank" style="font-size:11px;color:var(--text3);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;display:inline-flex;align-items:center;gap:5px;transition:all .2s;" onmouseover="this.style.color='var(--purple-lt)';this.style.borderColor='var(--purple-lt)'" onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15l-2-2h-4l-3 3V3h18v12h-4l-2 2z"/><path d="M16 8h.01"/></svg>
         Admin Portal
       </a>
@@ -1946,6 +1946,8 @@ function openManageCo(){
   thr.value = S.threshold;
   tval.textContent = S.threshold + '%';
   document.getElementById('manageCoStatus').style.display = 'none';
+  const adminUrlInput = document.getElementById('manageAdminUrl');
+  if(adminUrlInput) adminUrlInput.value = localStorage.getItem('rf_admin_url') || '';
   document.getElementById('manageCoModal').style.display = 'flex';
 }
 
@@ -2005,6 +2007,11 @@ async function saveManageCo(){
   localStorage.setItem('ff_apiKeys', JSON.stringify(newKeys));
   localStorage.setItem('ff_threshold', newThreshold);
 
+  // Save admin portal URL
+  const adminUrlVal = (document.getElementById('manageAdminUrl')?.value || '').trim().replace(/\/+$/, '');
+  if(adminUrlVal) localStorage.setItem('rf_admin_url', adminUrlVal);
+  updateAdminPortalLink();
+
   // Re-fetch vehicles
   for(let i = 0; i < newNames.length; i++){
     statusEl.textContent = `Loading ${newNames[i]}...`;
@@ -2028,6 +2035,8 @@ function init(){
   seedFuelRecords();
 
   // Google Maps API key (hidden from UI)
+  // Update admin portal link on login page
+  updateAdminPortalLink();
   // Try to restore saved session
   const savedGlobal    = localStorage.getItem('ff_globalKey') || '';
   const savedKeys      = JSON.parse(localStorage.getItem('ff_apiKeys') || '[]');
@@ -2113,7 +2122,7 @@ async function loginAndConnect(){
   if(!pass) return showToast('vwa','!','Password Required','Please enter your password.');
 
   // ─── Verify account against RouteFlare Admin Portal ───
-  const ADMIN_PORTAL = localStorage.getItem('rf_admin_url') || 'https://routeflare-admin.vercel.app';
+  const ADMIN_PORTAL = getAdminPortalUrl();
   showLoader('Verifying account...');
   document.getElementById('connBtn').disabled = true;
   try {
@@ -2190,6 +2199,22 @@ function applyFeatureRestrictions(){
       tab.title = 'This feature is not enabled for your account';
     }
   });
+}
+
+function getAdminPortalUrl(){
+  return (localStorage.getItem('rf_admin_url') || '').replace(/\/+$/, '');
+}
+
+function updateAdminPortalLink(){
+  const link = document.getElementById('adminPortalLink');
+  if(!link) return;
+  const url = getAdminPortalUrl();
+  if(url){
+    link.href = url;
+    link.style.display = 'inline-flex';
+  } else {
+    link.style.display = 'none';
+  }
 }
 
 // Keep legacy connect() as alias for any remaining calls
@@ -9464,6 +9489,12 @@ init();
         <input type="range" min="5" max="40" id="manageThreshold" style="flex:1;" oninput="document.getElementById('manageTval').textContent=this.value+'%'"/>
         <span id="manageTval" style="font-size:13px;font-weight:700;color:var(--purple-lt);min-width:36px;">20%</span>
       </div>
+    </div>
+
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;">Admin Portal URL</div>
+      <input type="text" id="manageAdminUrl" placeholder="https://your-admin-portal.vercel.app" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:12px;" />
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">Used for account verification on login</div>
     </div>
 
     <button onclick="saveManageCo()" style="width:100%;margin-top:20px;padding:13px;background:linear-gradient(135deg,#7C3AED,#6D28D9);color:#fff;border:none;border-radius:12px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.4);">Save & Reconnect</button>

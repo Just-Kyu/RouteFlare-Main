@@ -2123,8 +2123,14 @@ async function loginAndConnect(){
 
   // ─── Verify account against RouteFlare Admin Portal ───
   const ADMIN_PORTAL = getAdminPortalUrl();
+  if(!ADMIN_PORTAL){
+    hideLoader();
+    document.getElementById('connBtn').disabled = false;
+    return showToast('vwa','!','Not Configured','This app requires an Admin Portal connection. Contact your administrator.');
+  }
   showLoader('Verifying account...');
   document.getElementById('connBtn').disabled = true;
+  let verified = false;
   try {
     const vRes = await fetch(ADMIN_PORTAL + '/api/auth/verify', {
       method: 'POST',
@@ -2142,11 +2148,15 @@ async function loginAndConnect(){
     S.userName = vData.name || email;
     localStorage.setItem('rf_user_email', email);
     localStorage.setItem('rf_user_features', JSON.stringify(S.userFeatures));
+    verified = true;
   } catch (err) {
-    // Admin portal unreachable — allow login in offline/dev mode
-    console.warn('Admin portal unreachable, allowing local login:', err);
-    S.userFeatures = [];
-    S.userName = email;
+    console.error('Admin portal verification failed:', err);
+  }
+
+  if(!verified){
+    hideLoader();
+    document.getElementById('connBtn').disabled = false;
+    return showToast('vwa','!','Connection Failed','Could not reach the Admin Portal. Please check your connection or contact support.');
   }
 
   // Restore saved Samsara config or use defaults

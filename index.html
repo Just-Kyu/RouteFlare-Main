@@ -1244,6 +1244,13 @@ body {
 <div id="setup">
   <div class="setup-card" style="max-width:420px;padding:40px 36px;">
     <div class="setup-glow"></div>
+    <div style="position:absolute;top:16px;right:16px">
+      <div class="theme-toggle" onclick="toggleTheme()">
+        <span class="tt-ico"><svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line class="sun-ray" x1="12" y1="1" x2="12" y2="3"/><line class="sun-ray" x1="12" y1="21" x2="12" y2="23"/><line class="sun-ray" x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line class="sun-ray" x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line class="sun-ray" x1="1" y1="12" x2="3" y2="12"/><line class="sun-ray" x1="21" y1="12" x2="23" y2="12"/><line class="sun-ray" x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line class="sun-ray" x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
+        <div class="tt-track"><div class="tt-thumb"></div></div>
+        <span class="tt-ico"><svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/><path class="moon-star" d="M17 4l.5 1.5L19 6l-1.5.5L17 8l-.5-1.5L15 6l1.5-.5z" fill="var(--purple-lt)" stroke="none"/><path class="moon-star" d="M21 9l.3.9.9.3-.9.3L21 11.4l-.3-.9-.9-.3.9-.3z" fill="var(--purple-lt)" stroke="none"/></svg></span>
+      </div>
+    </div>
     <div style="text-align:center;margin-bottom:28px;">
       <div class="setup-logo" style="justify-content:center;margin-bottom:16px;">
         <img src="image 49.png" alt="FuelPro" style="width:44px;height:44px;border-radius:12px;object-fit:contain;">
@@ -1252,8 +1259,8 @@ body {
       <div class="setup-h" style="font-size:22px;margin-bottom:4px;">Log in to your account</div>
     </div>
 
-    <div class="flabel">Email*</div>
-    <input class="finput" type="email" id="loginEmail" placeholder="Enter email" autocomplete="email"/>
+    <div class="flabel">Username*</div>
+    <input class="finput" type="text" id="loginEmail" placeholder="Enter username" autocomplete="username"/>
 
     <div class="flabel">Password*</div>
     <div style="position:relative;margin-bottom:6px;">
@@ -2163,45 +2170,35 @@ function toggleKey(){
 async function loginAndConnect(){
   const email = (document.getElementById('loginEmail')?.value||'').trim();
   const pass = (document.getElementById('loginPassword')?.value||'').trim();
-  if(!email) return showToast('vwa','!','Email Required','Please enter your email address.');
+  if(!email) return showToast('vwa','!','Username Required','Please enter your username.');
   if(!pass) return showToast('vwa','!','Password Required','Please enter your password.');
 
-  // ─── Verify account against RouteFlare Admin Portal ───
-  const ADMIN_PORTAL = getAdminPortalUrl();
-  if(!ADMIN_PORTAL){
-    hideLoader();
-    document.getElementById('connBtn').disabled = false;
-    return showToast('vwa','!','Not Configured','This app requires an Admin Portal connection. Contact your administrator.');
-  }
-  showLoader('Verifying account...');
+  showLoader('Signing in...');
   document.getElementById('connBtn').disabled = true;
-  let verified = false;
-  try {
-    const vRes = await fetch(ADMIN_PORTAL + '/api/auth/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: pass }),
-    });
-    const vData = await vRes.json();
-    if (!vData.success) {
-      hideLoader();
-      document.getElementById('connBtn').disabled = false;
-      return showToast('vwa','!', vData.error || 'Access Denied', 'Your account is not verified. Contact your administrator.');
-    }
-    // Store features from admin portal
-    S.userFeatures = vData.features || [];
-    S.userName = vData.name || email;
-    localStorage.setItem('rf_user_email', email);
-    localStorage.setItem('rf_user_features', JSON.stringify(S.userFeatures));
-    verified = true;
-  } catch (err) {
-    console.error('Admin portal verification failed:', err);
-  }
 
-  if(!verified){
-    hideLoader();
-    document.getElementById('connBtn').disabled = false;
-    return showToast('vwa','!','Connection Failed','Could not reach the Admin Portal. Please check your connection or contact support.');
+  // ─── Verify account against Admin Portal (if configured) ───
+  const ADMIN_PORTAL = getAdminPortalUrl();
+  if(ADMIN_PORTAL){
+    try {
+      const vRes = await fetch(ADMIN_PORTAL + '/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass }),
+      });
+      const vData = await vRes.json();
+      if (!vData.success) {
+        hideLoader();
+        document.getElementById('connBtn').disabled = false;
+        return showToast('vwa','!', vData.error || 'Access Denied', 'Your account is not verified. Contact your administrator.');
+      }
+      S.userFeatures = vData.features || [];
+      S.userName = vData.name || email;
+      localStorage.setItem('rf_user_email', email);
+      localStorage.setItem('rf_user_features', JSON.stringify(S.userFeatures));
+    } catch (err) {
+      console.error('Admin portal verification failed:', err);
+      // Allow login even if admin portal is unreachable
+    }
   }
 
   // Restore saved Samsara config or use defaults

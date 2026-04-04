@@ -8898,10 +8898,8 @@ function saveEIAKey(val){
 // ═══════════════════════════════════════════════════════
 // MAP FULLSCREEN EXPAND
 // ═══════════════════════════════════════════════════════
-let _expandSourceId = null;
 
 function toggleMapExpand(containerId){
-  _expandSourceId = containerId;
   const overlay = document.getElementById('mapFullscreenOverlay');
   const body = document.getElementById('mapFullscreenBody');
   const title = document.getElementById('mapFullscreenTitle');
@@ -8947,7 +8945,6 @@ function closeMapExpand(){
   document.getElementById('mapFullscreenOverlay').classList.remove('on');
   document.getElementById('mapFullscreenBody').innerHTML = '';
   document.removeEventListener('keydown', _escClose);
-  _expandSourceId = null;
 }
 
 // ═══════════════════════════════════════════════════════

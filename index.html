@@ -957,10 +957,22 @@ body {
   box-shadow: 0 2px 8px var(--purple-glow);
 }
 .report-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px var(--purple-glow); }
-.truck-table { width: 100%; border-collapse: collapse; }
-.truck-table th { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 2; }
-.truck-table td { padding: 10px 10px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text2); transition: background .15s; }
-.truck-table tr:hover td { background: var(--surface2); }
+.truck-table-scroll { max-height: 500px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface2); }
+.truck-table-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.truck-table-scroll::-webkit-scrollbar-track { background: var(--surface2); border-radius: 4px; margin: 4px; }
+.truck-table-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+.truck-table-scroll::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+.truck-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; padding: 6px 8px; }
+.truck-table th { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); padding: 6px 12px; text-align: left; position: sticky; top: 0; background: var(--surface2); z-index: 2; white-space: nowrap; }
+.truck-table th.sortable { cursor: pointer; user-select: none; transition: color .15s; }
+.truck-table th.sortable:hover { color: var(--text); }
+.truck-table th.sortable::after { content: '\2195'; margin-left: 4px; font-size: 9px; opacity: .5; }
+.truck-table th.sortable.asc::after { content: '\2191'; opacity: 1; color: var(--purple-lt); }
+.truck-table th.sortable.desc::after { content: '\2193'; opacity: 1; color: var(--purple-lt); }
+.truck-table tr td { padding: 12px 12px; font-size: 12px; color: var(--text2); background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); transition: all .15s; }
+.truck-table tr td:first-child { border-radius: 10px 0 0 10px; border-left: 1px solid var(--border); }
+.truck-table tr td:last-child { border-radius: 0 10px 10px 0; border-right: 1px solid var(--border); }
+.truck-table tr:hover td { background: var(--surface); border-color: var(--purple-dim, rgba(124,58,237,.2)); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
 .truck-table .tunit { font-weight: 700; color: var(--purple-lt); font-size: 12px; }
 .truck-table .tname { color: var(--text); font-weight: 500; }
 .truck-table .tspend { font-weight: 700; color: var(--purple-lt); font-size: 13px; }
@@ -1170,6 +1182,16 @@ body {
 }
 .fl-del-btn:hover { color: var(--red); background: var(--red-dim); }
 
+/* History pagination */
+.fl-pagination { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 14px 8px 6px; flex-wrap: wrap; }
+.fl-page-btn { background: var(--card); border: 1px solid var(--border); color: var(--text2); cursor: pointer;
+  padding: 5px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; transition: all .15s; min-width: 34px; text-align: center; }
+.fl-page-btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+.fl-page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
+.fl-page-btn:disabled { opacity: .35; cursor: not-allowed; }
+.fl-page-dots { color: var(--text3); padding: 0 4px; font-size: 14px; user-select: none; }
+.fl-page-info { font-size: 12px; color: var(--text3); margin-left: 8px; }
+
 /* Monthly report cards */
 .monthly-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
 .monthly-kpi {
@@ -1246,6 +1268,13 @@ body {
 
     <div style="text-align:center;font-size:12px;color:var(--text2);">
       No account yet? <a href="#" style="color:var(--purple-lt);text-decoration:underline;font-weight:600;" onclick="event.preventDefault();">Book a demo and explore the platform.</a>
+    </div>
+
+    <div style="text-align:center;margin-top:14px;">
+      <a id="adminPortalLink" href="#" target="_blank" style="font-size:11px;color:var(--text3);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;display:inline-flex;align-items:center;gap:5px;transition:all .2s;" onmouseover="this.style.color='var(--purple-lt)';this.style.borderColor='var(--purple-lt)'" onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15l-2-2h-4l-3 3V3h18v12h-4l-2 2z"/><path d="M16 8h.01"/></svg>
+        Admin Portal
+      </a>
     </div>
 
     <!-- Hidden fields for Samsara config (auto-restored from localStorage) -->
@@ -1385,7 +1414,7 @@ body {
                     <div class="map-container" id="priceByStateMap" style="height:180px;"></div>
                     <div class="map-legend-row">
                       <span class="map-legend-lbl">$3.20</span>
-                      <div class="map-legend-bar" style="background:linear-gradient(90deg,#22C55E,#3B82F6,#EF4444)"></div>
+                      <div class="map-legend-bar" style="background:linear-gradient(90deg,#22C55E,#3B82F6,#7C3AED)"></div>
                       <span class="map-legend-lbl">$4.20</span>
                     </div>
                   </div>
@@ -1523,10 +1552,18 @@ body {
               </div>
               <div class="card analytics-full">
                 <div class="card-title" style="margin-bottom:16px">Per-Truck Monthly Fuel Spend <span class="arrow">↗</span></div>
-                <div class="chart-wrap" style="height:180px;margin-bottom:16px"><canvas id="truckBarChart"></canvas></div>
-                <div style="overflow-x:auto;max-height:400px;overflow-y:auto;border-radius:8px;">
+                <div class="truck-table-scroll">
                   <table class="truck-table" id="truckTable">
-                    <thead><tr><th>Unit #</th><th>Truck Name</th><th>Company</th><th>Gallons</th><th>Spent</th><th>Saved</th><th>Avg $/gal</th><th>Spend</th></tr></thead>
+                    <thead><tr>
+                      <th class="sortable" data-sort="unit" data-table="truck" onclick="sortTruckTable(this)">Unit #</th>
+                      <th class="sortable" data-sort="name" data-table="truck" onclick="sortTruckTable(this)">Truck Name</th>
+                      <th>Company</th>
+                      <th class="sortable" data-sort="gallons" data-table="truck" onclick="sortTruckTable(this)">Gallons</th>
+                      <th class="sortable" data-sort="total" data-table="truck" onclick="sortTruckTable(this)">Spent</th>
+                      <th class="sortable" data-sort="saved" data-table="truck" onclick="sortTruckTable(this)">Saved</th>
+                      <th class="sortable" data-sort="avgPrice" data-table="truck" onclick="sortTruckTable(this)">Avg $/gal</th>
+                      <th class="sortable" data-sort="total" data-table="truck" onclick="sortTruckTable(this)">Spend</th>
+                    </tr></thead>
                     <tbody id="truckTbody"></tbody>
                   </table>
                 </div>
@@ -1581,7 +1618,8 @@ body {
                   <div class="map-container" id="bigPriceMap" style="height:340px;"></div>
                   <div class="map-legend-row" style="margin-top:12px;">
                     <span class="map-legend-lbl">$3.20 cheap</span>
-                    <div class="map-legend-bar" style="background:linear-gradient(90deg,var(--green),#3B82F6,var(--red));"></div>
+                    <span class="map-legend-lbl" id="bigPriceLegendLive" style="font-size:9px;color:var(--green);font-weight:700;display:none;">● LIVE</span>
+                    <div class="map-legend-bar" style="background:linear-gradient(90deg,#22C55E,#3B82F6,#7C3AED);"></div>
                     <span class="map-legend-lbl">$4.20+ expensive</span>
                   </div>
                   <div id="mapPriceTable" style="margin-top:14px;display:flex;flex-direction:column;gap:7px;"></div>
@@ -1653,6 +1691,7 @@ body {
               </tr></thead>
               <tbody id="flHistoryBody"></tbody>
             </table>
+            <div id="flHistoryPagination" class="fl-pagination"></div>
             <div class="empty-state" id="historyEmpty" style="display:none;">
               <div class="es-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
               <div class="es-text">No fueling records yet</div>
@@ -1931,6 +1970,8 @@ function openManageCo(){
   // Restore sync URL
   const syncUrlInput = document.getElementById('manageSyncUrl');
   if(syncUrlInput) syncUrlInput.value = localStorage.getItem('fuel_sync_url') || '';
+  const adminUrlInput = document.getElementById('manageAdminUrl');
+  if(adminUrlInput) adminUrlInput.value = localStorage.getItem('rf_admin_url') || '';
   document.getElementById('manageCoModal').style.display = 'flex';
 }
 
@@ -2011,6 +2052,11 @@ async function saveManageCo(){
   if(syncUrl) localStorage.setItem('fuel_sync_url', syncUrl);
   else localStorage.removeItem('fuel_sync_url');
 
+  // Save admin portal URL
+  const adminUrlVal = (document.getElementById('manageAdminUrl')?.value || '').trim().replace(/\/+$/, '');
+  if(adminUrlVal) localStorage.setItem('rf_admin_url', adminUrlVal);
+  updateAdminPortalLink();
+
   // Re-fetch vehicles
   for(let i = 0; i < newNames.length; i++){
     statusEl.textContent = `Loading ${newNames[i]}...`;
@@ -2034,6 +2080,8 @@ function init(){
   seedFuelRecords();
 
   // Google Maps API key (hidden from UI)
+  // Update admin portal link on login page
+  updateAdminPortalLink();
   // Try to restore saved session
   const savedGlobal    = localStorage.getItem('ff_globalKey') || '';
   const savedKeys      = JSON.parse(localStorage.getItem('ff_apiKeys') || '[]');
@@ -2118,6 +2166,44 @@ async function loginAndConnect(){
   if(!email) return showToast('vwa','!','Email Required','Please enter your email address.');
   if(!pass) return showToast('vwa','!','Password Required','Please enter your password.');
 
+  // ─── Verify account against RouteFlare Admin Portal ───
+  const ADMIN_PORTAL = getAdminPortalUrl();
+  if(!ADMIN_PORTAL){
+    hideLoader();
+    document.getElementById('connBtn').disabled = false;
+    return showToast('vwa','!','Not Configured','This app requires an Admin Portal connection. Contact your administrator.');
+  }
+  showLoader('Verifying account...');
+  document.getElementById('connBtn').disabled = true;
+  let verified = false;
+  try {
+    const vRes = await fetch(ADMIN_PORTAL + '/api/auth/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass }),
+    });
+    const vData = await vRes.json();
+    if (!vData.success) {
+      hideLoader();
+      document.getElementById('connBtn').disabled = false;
+      return showToast('vwa','!', vData.error || 'Access Denied', 'Your account is not verified. Contact your administrator.');
+    }
+    // Store features from admin portal
+    S.userFeatures = vData.features || [];
+    S.userName = vData.name || email;
+    localStorage.setItem('rf_user_email', email);
+    localStorage.setItem('rf_user_features', JSON.stringify(S.userFeatures));
+    verified = true;
+  } catch (err) {
+    console.error('Admin portal verification failed:', err);
+  }
+
+  if(!verified){
+    hideLoader();
+    document.getElementById('connBtn').disabled = false;
+    return showToast('vwa','!','Connection Failed','Could not reach the Admin Portal. Please check your connection or contact support.');
+  }
+
   // Restore saved Samsara config or use defaults
   const globalKey = localStorage.getItem('ff_globalKey') || '';
   const savedKeys = JSON.parse(localStorage.getItem('ff_apiKeys') || '[]');
@@ -2134,8 +2220,7 @@ async function loginAndConnect(){
   if(gmKey) localStorage.setItem('gm_api_key', gmKey);
   S.threshold = parseInt(localStorage.getItem('ff_threshold') || '20');
 
-  showLoader('Signing in...');
-  document.getElementById('connBtn').disabled = true;
+  setLtxt('Loading vehicles...');
   for(let i=0; i<cos.length; i++){
     setLtxt('Loading ' + cos[i] + '...');
     await delay(500);
@@ -2144,6 +2229,10 @@ async function loginAndConnect(){
   hideLoader();
   document.getElementById('setup').style.display = 'none';
   document.getElementById('app').classList.add('on');
+
+  // Apply feature restrictions from admin portal
+  if(S.userFeatures && S.userFeatures.length > 0) applyFeatureRestrictions();
+
   seedFuelRecords();
   syncFuelTransactions(true); // Auto-sync fuel transactions
   buildTabs(); renderDashboard(); buildCharts(); buildMaps();
@@ -2154,6 +2243,34 @@ async function loginAndConnect(){
   const eiaStatus = document.getElementById('eiaStatus');
   if(eiaStatus && savedEIA) eiaStatus.textContent = 'Key saved — will use on next search';
   startAutoRefresh();
+}
+
+function applyFeatureRestrictions(){
+  const tabs = document.querySelectorAll('.sbn[data-p]');
+  tabs.forEach(tab => {
+    const page = tab.dataset.p;
+    if(page && !S.userFeatures.includes(page)){
+      tab.style.opacity = '0.3';
+      tab.style.pointerEvents = 'none';
+      tab.title = 'This feature is not enabled for your account';
+    }
+  });
+}
+
+function getAdminPortalUrl(){
+  return (localStorage.getItem('rf_admin_url') || '').replace(/\/+$/, '');
+}
+
+function updateAdminPortalLink(){
+  const link = document.getElementById('adminPortalLink');
+  if(!link) return;
+  const url = getAdminPortalUrl();
+  if(url){
+    link.href = url;
+    link.style.display = 'inline-flex';
+  } else {
+    link.style.display = 'none';
+  }
 }
 
 // Keep legacy connect() as alias for any remaining calls
@@ -6409,17 +6526,157 @@ async function fetchUsMap(){
   return usTopoData;
 }
 
+// ═══════════════════════════════════════════════════════
+// LIVE DIESEL PRICES — EIA Open Data with CORS proxy + fallback
+// ═══════════════════════════════════════════════════════
+// PADD regions → state abbreviations mapping
+const PADD_STATE_MAP = {
+  'PADD 1A': ['CT','ME','MA','NH','RI','VT'],
+  'PADD 1B': ['DE','DC','MD','NJ','NY','PA'],
+  'PADD 1C': ['GA','NC','SC','VA','WV','FL'],
+  'PADD 2': ['IL','IN','IA','KS','KY','MI','MN','MO','NE','ND','OH','OK','SD','TN','WI'],
+  'PADD 3': ['AL','AR','LA','MS','NM','TX'],
+  'PADD 4': ['CO','ID','MT','UT','WY'],
+  'PADD 5': ['AK','AZ','CA','HI','NV','OR','WA'],
+};
+// Build reverse lookup: state → PADD region
+const STATE_TO_PADD = {};
+Object.entries(PADD_STATE_MAP).forEach(([region, states]) => {
+  states.forEach(s => STATE_TO_PADD[s] = region);
+});
+
+let S_livePrices = null;   // { 'AL': 3.45, 'CA': 4.89, ... }
+let S_livePriceDate = null; // Date string for when prices were fetched
+let S_livePriceSource = null; // 'eia' or 'fallback'
+
+// Built-in fallback: Recent diesel prices by PADD region (March 2026)
+// These will be used if the API call fails and will be overwritten by live data when available
+const FALLBACK_PADD_PRICES = {
+  'PADD 1A': 4.12,  // New England
+  'PADD 1B': 4.08,  // Central Atlantic
+  'PADD 1C': 3.85,  // Lower Atlantic
+  'PADD 2':  3.72,  // Midwest
+  'PADD 3':  3.65,  // Gulf Coast
+  'PADD 4':  3.82,  // Rocky Mountain
+  'PADD 5':  4.35,  // West Coast
+};
+
+function applyFallbackPrices(){
+  const statePrices = {};
+  Object.entries(FALLBACK_PADD_PRICES).forEach(([region, price]) => {
+    const states = PADD_STATE_MAP[region];
+    if(states) states.forEach(s => statePrices[s] = price);
+  });
+  return statePrices;
+}
+
+async function fetchLiveDieselPrices(){
+  if(S_livePrices) return S_livePrices;
+
+  // Attempt 1: Direct EIA v2 API call (works if CORS allowed and key is valid)
+  try {
+    const eiaUrl = 'https://api.eia.gov/v2/petroleum/rdc2/?frequency=weekly&data[0]=value&facets[product][]=DFO&facets[area][]=PADD1A&facets[area][]=PADD1B&facets[area][]=PADD1C&facets[area][]=PADD2&facets[area][]=PADD3&facets[area][]=PADD4&facets[area][]=PADD5&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=16';
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const r = await fetch(eiaUrl, {signal: controller.signal});
+    clearTimeout(timeout);
+    if(r.ok){
+      const json = await r.json();
+      const data = json?.response?.data || [];
+      if(data.length > 0){
+        const parsed = parseEIAPrices(data);
+        if(parsed){
+          S_livePrices = parsed;
+          S_livePriceDate = data[0]?.period || null;
+          S_livePriceSource = 'eia';
+          console.log(`[RouteFlare] ✅ Live EIA diesel prices loaded for ${Object.keys(parsed).length} states`);
+          return S_livePrices;
+        }
+      }
+    }
+  } catch(e){ console.warn('[RouteFlare] Direct EIA call failed:', e.message); }
+
+  // Attempt 2: Try via CORS proxy
+  try {
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(
+      'https://api.eia.gov/v2/petroleum/rdc2/?frequency=weekly&data[0]=value&facets[product][]=DFO&facets[area][]=PADD1A&facets[area][]=PADD1B&facets[area][]=PADD1C&facets[area][]=PADD2&facets[area][]=PADD3&facets[area][]=PADD4&facets[area][]=PADD5&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=16'
+    );
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const r = await fetch(proxyUrl, {signal: controller.signal});
+    clearTimeout(timeout);
+    if(r.ok){
+      const json = JSON.parse(await r.text());
+      const data = json?.response?.data || [];
+      if(data.length > 0){
+        const parsed = parseEIAPrices(data);
+        if(parsed){
+          S_livePrices = parsed;
+          S_livePriceDate = data[0]?.period || null;
+          S_livePriceSource = 'eia';
+          console.log(`[RouteFlare] ✅ EIA prices loaded via proxy for ${Object.keys(parsed).length} states`);
+          return S_livePrices;
+        }
+      }
+    }
+  } catch(e){ console.warn('[RouteFlare] CORS proxy EIA call failed:', e.message); }
+
+  // Fallback: Use built-in recent diesel prices
+  console.warn('[RouteFlare] Using built-in fallback diesel prices (March 2026)');
+  S_livePrices = applyFallbackPrices();
+  S_livePriceDate = '2026-03-31';
+  S_livePriceSource = 'fallback';
+  return S_livePrices;
+}
+
+function parseEIAPrices(data){
+  const regionPrices = {};
+  const seen = {};
+  data.forEach(row => {
+    const areaId = row.duoarea || row.area || '';
+    const areaName = row['area-name'] || '';
+    // Try both area ID and name
+    const normalized = areaId.replace(/ /g,'').toUpperCase();
+    const nameNorm = areaName.replace(/ /g,'').toUpperCase();
+    const key = normalized || nameNorm;
+    if(!seen[key] && row.value != null){
+      seen[key] = true;
+      const val = parseFloat(row.value);
+      if(val > 0) regionPrices[key] = val;
+    }
+  });
+
+  // Map PADD regions to states
+  const statePrices = {};
+  Object.entries(PADD_STATE_MAP).forEach(([region, states]) => {
+    const norm = region.replace(/ /g,'').toUpperCase();
+    let price = regionPrices[norm] || regionPrices[region.toUpperCase()] || regionPrices[region];
+    if(!price){
+      // Try short forms: PADD1A, PADD1B, etc.
+      const short = region.replace(/ /g,'');
+      price = regionPrices[short];
+    }
+    if(price) states.forEach(s => statePrices[s] = price);
+  });
+
+  if(Object.keys(statePrices).length > 10) return statePrices;
+  return null;
+}
+
 function buildMaps(){
-  // Double rAF ensures browser has completed layout before measuring containers
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    buildStateMap('fuelByStateMap','fueling');
-    buildStateMap('priceByStateMap','price');
-    const dark=S.theme==='dark';
-    const legend = document.getElementById('fuelMapLegend');
-    if(legend) legend.style.background = dark
-      ? 'linear-gradient(90deg,#1A2030,#7C3AED)'
-      : 'linear-gradient(90deg,#E8EEF6,#7C3AED)';
-  }));
+  // Fetch live prices in the background, then render maps
+  fetchLiveDieselPrices().then(() => {
+    // Double rAF ensures browser has completed layout before measuring containers
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      buildStateMap('fuelByStateMap','fueling');
+      buildStateMap('priceByStateMap','price');
+      const dark=S.theme==='dark';
+      const legend = document.getElementById('fuelMapLegend');
+      if(legend) legend.style.background = dark
+        ? 'linear-gradient(90deg,#1A2030,#7C3AED)'
+        : 'linear-gradient(90deg,#E8EEF6,#7C3AED)';
+    }));
+  });
 }
 
 function buildStateMap(containerId, type){
@@ -6449,16 +6706,29 @@ function buildStateMap(containerId, type){
     records.forEach(r=>{ stateData[r.state]=(stateData[r.state]||0)+1; });
     Object.keys(stateData).forEach(s=>stateData[s]=((stateData[s]/total)*100));
   } else {
-    const stateGals={}, stateCost={};
-    records.forEach(r=>{
-      stateGals[r.state]=(stateGals[r.state]||0)+r.gallons;
-      stateCost[r.state]=(stateCost[r.state]||0)+r.total;
-    });
-    Object.keys(stateGals).forEach(s=>stateData[s]=stateCost[s]/stateGals[s]);
+    // Use live diesel prices from EIA when available; fall back to transaction data
+    if(S_livePrices && Object.keys(S_livePrices).length > 10){
+      Object.entries(S_livePrices).forEach(([state, price]) => {
+        stateData[state] = price;
+      });
+      console.log('[RouteFlare] Price map using LIVE diesel prices from EIA');
+    } else {
+      // Fallback: compute from transaction records
+      const stateGals={}, stateCost={};
+      records.forEach(r=>{
+        stateGals[r.state]=(stateGals[r.state]||0)+r.gallons;
+        stateCost[r.state]=(stateCost[r.state]||0)+r.total;
+      });
+      Object.keys(stateGals).forEach(s=>stateData[s]=stateCost[s]/stateGals[s]);
+    }
   }
 
-  const maxVal=type==='fueling'?Math.max(...Object.values(stateData).map(Number),1):4.20;
-  const minVal=type==='price'?3.20:0;
+  // Dynamic min/max from actual data for better color distribution
+  const allPrices = type==='price' ? Object.values(stateData).filter(v => v > 0) : [];
+  const liveMax = allPrices.length ? Math.max(...allPrices) : 4.20;
+  const liveMin = allPrices.length ? Math.min(...allPrices) : 3.20;
+  const maxVal=type==='fueling'?Math.max(...Object.values(stateData).map(Number),1):Math.ceil(liveMax*20)/20;
+  const minVal=type==='price'?Math.floor(liveMin*20)/20:0;
 
   loadD3Scripts(async ()=>{
     const topo = await fetchUsMap().catch(()=>null);
@@ -6490,10 +6760,18 @@ function buildStateMap(containerId, type){
           return `rgb(${Math.round(180+(124-180)*pct)},${Math.round(200+(58-200)*pct)},${Math.round(220+(237-220)*pct)})`;
         }
       } else {
+        // App-themed gradient: green (cheap) → blue (mid) → purple (expensive)
         const pct=Math.min(Math.max((numVal-minVal)/(maxVal-minVal),0),1);
         let r,g,b;
-        if(pct<0.5){const p2=pct*2;r=Math.round(34+(59-34)*p2);g=Math.round(197+(130-197)*p2);b=Math.round(94+(246-94)*p2);}
-        else{const p2=(pct-0.5)*2;r=Math.round(59+(239-59)*p2);g=Math.round(130+(68-130)*p2);b=Math.round(246+(68-246)*p2);}
+        if(pct<0.5){
+          // green (#22C55E) → blue (#3B82F6)
+          const p2=pct*2;
+          r=Math.round(34+(59-34)*p2);g=Math.round(197+(130-197)*p2);b=Math.round(94+(246-94)*p2);
+        } else {
+          // blue (#3B82F6) → purple (#7C3AED)
+          const p2=(pct-0.5)*2;
+          r=Math.round(59+(124-59)*p2);g=Math.round(130+(58-130)*p2);b=Math.round(246+(237-246)*p2);
+        }
         return `rgb(${r},${g},${b})`;
       }
     }
@@ -6616,7 +6894,20 @@ function renderMapReport(){
     ? 'linear-gradient(90deg,#1A2030,#7C3AED)'
     : 'linear-gradient(90deg,#E8EEF6,#7C3AED)';
 
-  // Compute state stats
+  // Show LIVE indicator if we have live prices
+  const liveTag = document.getElementById('bigPriceLegendLive');
+  if(liveTag) liveTag.style.display = S_livePrices ? 'inline' : 'none';
+  if(liveTag){
+    if(S_livePriceSource === 'eia'){
+      liveTag.textContent = '● LIVE';
+      liveTag.style.color = 'var(--green)';
+    } else {
+      liveTag.textContent = '● EST';
+      liveTag.style.color = 'var(--purple-lt)';
+    }
+  }
+
+  // Compute state stats from transactions (for fueling map & KPIs)
   const stateMap={};
   S.fuelRecords.forEach(r=>{
     if(!r.state) return;
@@ -6632,11 +6923,24 @@ function renderMapReport(){
   const avgPrice=totalGals>0?(totalSpend/totalGals).toFixed(3):0;
   const topState=states[0]?.state||'—';
 
+  // Live national avg from EIA or transaction-based
+  let nationalAvg = avgPrice;
+  let priceSourceLabel = 'blended rate';
+  if(S_livePrices && Object.keys(S_livePrices).length > 10){
+    const vals = Object.values(S_livePrices);
+    nationalAvg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(3);
+    if(S_livePriceSource === 'eia'){
+      priceSourceLabel = S_livePriceDate ? `EIA weekly (${S_livePriceDate})` : 'live EIA';
+    } else {
+      priceSourceLabel = S_livePriceDate ? `Est. ${S_livePriceDate}` : 'recent estimate';
+    }
+  }
+
   // KPI row
   document.getElementById('mapKpis').innerHTML=`
     <div class="kpi-card kp-tot"><div class="kpi-lbl">States Active</div><div class="kpi-val" style="font-size:30px">${states.length}</div><div class="kpi-sub">states with fuel stops</div></div>
     <div class="kpi-card kp-spend"><div class="kpi-lbl">Top State</div><div class="kpi-val" style="font-size:30px">${topState}</div><div class="kpi-sub">${states[0]?.stops||0} stops, $${(states[0]?.total||0).toFixed(0)}</div></div>
-    <div class="kpi-card kp-save"><div class="kpi-lbl">Avg $/Gal</div><div class="kpi-val" style="font-size:30px">$${avgPrice}</div><div class="kpi-sub">blended rate</div></div>
+    <div class="kpi-card kp-save"><div class="kpi-lbl">Avg $/Gal</div><div class="kpi-val" style="font-size:30px">$${nationalAvg}</div><div class="kpi-sub">${priceSourceLabel}</div></div>
     <div class="kpi-card kp-tot"><div class="kpi-lbl">Total Spend</div><div class="kpi-val" style="font-size:28px">$${totalSpend.toFixed(0)}</div><div class="kpi-sub">${totalStops} stops across US</div></div>`;
 
   // Top states list for fueling map
@@ -6657,20 +6961,42 @@ function renderMapReport(){
     </div>`;
   }).join('');
 
-  // Price leaders list
-  const priced=states.filter(s=>s.gallons>0).map(s=>({...s,avgP:s.total/s.gallons})).sort((a,b)=>a.avgP-b.avgP);
-  const cheap=priced.slice(0,3), expensive=priced.slice(-2).reverse();
-  document.getElementById('mapPriceTable').innerHTML=`
-    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Cheapest States</div>
-    ${cheap.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
-      <span style="font-weight:700;color:var(--text)">${s.state}</span>
-      <span style="font-weight:800;color:var(--green)">$${s.avgP.toFixed(3)}/gal</span>
-    </div>`).join('')}
-    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-top:10px;margin-bottom:6px;">Most Expensive</div>
-    ${expensive.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
-      <span style="font-weight:700;color:var(--text)">${s.state}</span>
-      <span style="font-weight:800;color:var(--red)">$${s.avgP.toFixed(3)}/gal</span>
-    </div>`).join('')}`;
+  // Price leaders list — use live prices when available, else transaction data
+  if(S_livePrices && Object.keys(S_livePrices).length > 10){
+    const liveEntries = Object.entries(S_livePrices).map(([state,price])=>({state,price})).sort((a,b)=>a.price-b.price);
+    const cheap=liveEntries.slice(0,3), expensive=liveEntries.slice(-3).reverse();
+    const srcLabel = S_livePriceDate ? `Week of ${S_livePriceDate}` : 'Latest EIA data';
+    document.getElementById('mapPriceTable').innerHTML=`
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);">Current Diesel Prices</div>
+        <span style="font-size:9px;font-weight:700;color:var(--green);background:var(--green-dim);border:1px solid rgba(34,197,94,.25);padding:1px 6px;border-radius:4px;">LIVE</span>
+      </div>
+      <div style="font-size:9px;color:var(--text3);margin-bottom:8px;">Source: US EIA — ${srcLabel}</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Cheapest Regions</div>
+      ${cheap.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
+        <span style="font-weight:700;color:var(--text)">${s.state}</span>
+        <span style="font-weight:800;color:var(--green)">$${s.price.toFixed(3)}/gal</span>
+      </div>`).join('')}
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-top:10px;margin-bottom:6px;">Most Expensive</div>
+      ${expensive.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
+        <span style="font-weight:700;color:var(--text)">${s.state}</span>
+        <span style="font-weight:800;color:var(--purple-lt)">$${s.price.toFixed(3)}/gal</span>
+      </div>`).join('')}`;
+  } else {
+    const priced=states.filter(s=>s.gallons>0).map(s=>({...s,avgP:s.total/s.gallons})).sort((a,b)=>a.avgP-b.avgP);
+    const cheap=priced.slice(0,3), expensive=priced.slice(-2).reverse();
+    document.getElementById('mapPriceTable').innerHTML=`
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Cheapest States</div>
+      ${cheap.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
+        <span style="font-weight:700;color:var(--text)">${s.state}</span>
+        <span style="font-weight:800;color:var(--green)">$${s.avgP.toFixed(3)}/gal</span>
+      </div>`).join('')}
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-top:10px;margin-bottom:6px;">Most Expensive</div>
+      ${expensive.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
+        <span style="font-weight:700;color:var(--text)">${s.state}</span>
+        <span style="font-weight:800;color:var(--red)">$${s.avgP.toFixed(3)}/gal</span>
+      </div>`).join('')}`;
+  }
 
   // State table
   document.getElementById('stateTbody').innerHTML=states.map(s=>{
@@ -6789,24 +7115,8 @@ function renderAnalytics(){
     if(!truckMap[r.truckUnit]) truckMap[r.truckUnit]={unit:r.truckUnit,name:r.truckName,company:S.companies[r.companyIndex]||'—',gallons:0,total:0,saved:0};
     truckMap[r.truckUnit].gallons+=r.gallons; truckMap[r.truckUnit].total+=r.total; truckMap[r.truckUnit].saved+=r.saved;
   });
-  const trucks=Object.values(truckMap).sort((a,b)=>b.total-a.total);
-  const maxSpend=trucks[0]?.total||1;
 
-  const tbCtx=document.getElementById('truckBarChart').getContext('2d');
-  if(S.charts.truckBar) S.charts.truckBar.destroy();
-  const tb=baseOpts(); tb.indexAxis='y';
-  S.charts.truckBar=new Chart(tbCtx,{
-    type:'bar',
-    data:{labels:trucks.map(t=>t.unit),datasets:[{data:trucks.map(t=>t.total.toFixed(0)),backgroundColor:'rgba(124,58,237,.75)',hoverBackgroundColor:'rgba(139,92,246,.9)',borderRadius:6}]},
-    options:tb,
-  });
-
-  document.getElementById('truckTbody').innerHTML=trucks.map(t=>`<tr>
-    <td class="tunit">${t.unit}</td><td class="tname">${t.name||t.unit}</td><td>${t.company}</td>
-    <td>${t.gallons.toLocaleString()} gal</td><td class="tspend">$${t.total.toFixed(0)}</td>
-    <td class="tsave">$${t.saved.toFixed(0)}</td><td>$${t.gallons>0?(t.total/t.gallons).toFixed(3):'—'}</td>
-    <td style="min-width:70px"><div class="tbar-mini"><div class="tbar-mini-fill" style="width:${((t.total/maxSpend)*100).toFixed(0)}%"></div></div></td>
-  </tr>`).join('');
+  renderTruckTable();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -7834,6 +8144,7 @@ function setFlTab(tab, btn){
 
 function renderFuelLog(){
   populateMonthSelect();
+  S._histPage = 1;
   renderDispatchQueue();
   renderFuelHistory();
   renderMonthlyReport();
@@ -7906,7 +8217,9 @@ function openLogForDispatch(dispatchId){
 
 
 // ═══════════ TABLE SORTING ═══════════
-S._sortState = { history: { key: 'date', dir: 'desc' }, report: { key: 'spent', dir: 'desc' } };
+S._sortState = { history: { key: 'date', dir: 'desc' }, report: { key: 'spent', dir: 'desc' }, truck: { key: 'total', dir: 'desc' } };
+S._histPage = 1;
+const HIST_PER_PAGE = 25;
 
 function sortFlTable(th){
   const table = th.dataset.table;
@@ -7917,8 +8230,43 @@ function sortFlTable(th){
   // Update header classes
   th.closest('thead').querySelectorAll('th.sortable').forEach(h=>{ h.classList.remove('asc','desc'); });
   th.classList.add(state.dir);
-  if(table==='history') renderFuelHistory();
+  if(table==='history'){ S._histPage=1; renderFuelHistory(); }
   else renderMonthlyReport();
+}
+
+function sortTruckTable(th){
+  const key = th.dataset.sort;
+  const state = S._sortState.truck;
+  if(state.key === key) state.dir = state.dir==='desc' ? 'asc' : 'desc';
+  else { state.key = key; state.dir = 'desc'; }
+  th.closest('thead').querySelectorAll('th.sortable').forEach(h=>{ h.classList.remove('asc','desc'); });
+  th.classList.add(state.dir);
+  renderTruckTable();
+}
+
+function renderTruckTable(){
+  const month = parseInt(document.getElementById('reportMonth').value);
+  const recs = (S.fuelRecords||[]).filter(r=>{ const d=new Date(r.date); return d.getMonth()===month && d.getFullYear()===2026; });
+  const truckMap={};
+  recs.forEach(r=>{
+    if(!truckMap[r.truckUnit]) truckMap[r.truckUnit]={unit:r.truckUnit,name:r.truckName,company:S.companies[r.companyIndex]||'—',gallons:0,total:0,saved:0};
+    truckMap[r.truckUnit].gallons+=r.gallons; truckMap[r.truckUnit].total+=r.total; truckMap[r.truckUnit].saved+=r.saved;
+  });
+  let trucks=Object.values(truckMap);
+  const ts = S._sortState.truck;
+  trucks.sort((a,b)=>{
+    if(ts.key==='unit') return ts.dir==='asc'?a.unit.localeCompare(b.unit):b.unit.localeCompare(a.unit);
+    if(ts.key==='name') return ts.dir==='asc'?(a.name||'').localeCompare(b.name||''):(b.name||'').localeCompare(a.name||'');
+    if(ts.key==='avgPrice'){ const va=a.gallons>0?a.total/a.gallons:0; const vb=b.gallons>0?b.total/b.gallons:0; return ts.dir==='asc'?va-vb:vb-va; }
+    return ts.dir==='asc'?a[ts.key]-b[ts.key]:b[ts.key]-a[ts.key];
+  });
+  const maxSpend=Math.max(...trucks.map(t=>t.total),1);
+  document.getElementById('truckTbody').innerHTML=trucks.map(t=>`<tr>
+    <td class="tunit">${t.unit}</td><td class="tname">${t.name||t.unit}</td><td>${t.company}</td>
+    <td>${t.gallons.toLocaleString()} gal</td><td class="tspend">$${t.total.toFixed(0)}</td>
+    <td class="tsave">$${t.saved.toFixed(0)}</td><td>$${t.gallons>0?(t.total/t.gallons).toFixed(3):'—'}</td>
+    <td style="min-width:70px"><div class="tbar-mini"><div class="tbar-mini-fill" style="width:${((t.total/maxSpend)*100).toFixed(0)}%"></div></div></td>
+  </tr>`).join('');
 }
 
 function renderFuelHistory(){
@@ -7929,8 +8277,10 @@ function renderFuelHistory(){
   }
   const tbody = document.getElementById('flHistoryBody');
   const empty = document.getElementById('historyEmpty');
+  const pag = document.getElementById('flHistoryPagination');
   if(!history.length){
     tbody.innerHTML = '';
+    pag.innerHTML = '';
     empty.style.display = 'block';
     return;
   }
@@ -7942,7 +8292,11 @@ function renderFuelHistory(){
     va=parseFloat(a[hs.key])||0; vb=parseFloat(b[hs.key])||0;
     return hs.dir==='asc'?va-vb:vb-va;
   });
-  tbody.innerHTML = history.map((r,i)=>`
+  const totalPages = Math.ceil(history.length / HIST_PER_PAGE);
+  if(S._histPage > totalPages) S._histPage = totalPages;
+  const start = (S._histPage - 1) * HIST_PER_PAGE;
+  const pageData = history.slice(start, start + HIST_PER_PAGE);
+  tbody.innerHTML = pageData.map((r,i)=>`
     <tr>
       <td>${r.date}</td>
       <td class="fl-station">${r.station}</td>
@@ -7952,9 +8306,36 @@ function renderFuelHistory(){
       <td>$${parseFloat(r.discountedPrice).toFixed(3)}</td>
       <td class="fl-total">$${parseFloat(r.discountTotal).toFixed(2)}</td>
       <td class="fl-saved">$${parseFloat(r.saved).toFixed(2)}</td>
-      <td><button class="fl-del-btn" onclick="deleteFuelRecord('${r.id||i}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></td>
+      <td><button class="fl-del-btn" onclick="deleteFuelRecord('${r.id||(start+i)}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></td>
     </tr>
   `).join('');
+  if(totalPages <= 1){ pag.innerHTML = ''; return; }
+  let btns = `<button class="fl-page-btn" onclick="goHistPage(${S._histPage-1})" ${S._histPage===1?'disabled':''}>‹</button>`;
+  const range = getPageRange(S._histPage, totalPages);
+  range.forEach(p => {
+    if(p === '...') btns += `<span class="fl-page-dots">…</span>`;
+    else btns += `<button class="fl-page-btn ${p===S._histPage?'active':''}" onclick="goHistPage(${p})">${p}</button>`;
+  });
+  btns += `<button class="fl-page-btn" onclick="goHistPage(${S._histPage+1})" ${S._histPage===totalPages?'disabled':''}>›</button>`;
+  btns += `<span class="fl-page-info">Page ${S._histPage} of ${totalPages} · ${history.length} records</span>`;
+  pag.innerHTML = btns;
+}
+
+function goHistPage(p){
+  S._histPage = p;
+  renderFuelHistory();
+  document.getElementById('flHistory').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function getPageRange(current, total){
+  if(total <= 7) return Array.from({length:total},(_,i)=>i+1);
+  const pages = [];
+  pages.push(1);
+  if(current > 3) pages.push('...');
+  for(let i = Math.max(2, current-1); i <= Math.min(total-1, current+1); i++) pages.push(i);
+  if(current < total-2) pages.push('...');
+  pages.push(total);
+  return pages;
 }
 
 function deleteFuelRecord(recordId){
@@ -9246,6 +9627,10 @@ function goPage(p,btn){
 
 async function refreshAll(){
   const btn=document.getElementById('refBtn'); btn.classList.add('spin');
+  // Invalidate cached live prices so they get re-fetched
+  S_livePrices = null;
+  S_livePriceDate = null;
+  S_livePriceSource = null;
   for(let i=0;i<S.companies.length;i++) S.vehicles[i]=await fetchVehicles(i);
   // Also sync fuel transactions from worker
   const syncResult = await syncFuelTransactions(true);
@@ -9300,6 +9685,12 @@ init();
         <input type="range" min="5" max="40" id="manageThreshold" style="flex:1;" oninput="document.getElementById('manageTval').textContent=this.value+'%'"/>
         <span id="manageTval" style="font-size:13px;font-weight:700;color:var(--purple-lt);min-width:36px;">20%</span>
       </div>
+    </div>
+
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;">Admin Portal URL</div>
+      <input type="text" id="manageAdminUrl" placeholder="https://your-admin-portal.vercel.app" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:12px;" />
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">Used for account verification on login</div>
     </div>
 
     <button onclick="saveManageCo()" style="width:100%;margin-top:20px;padding:13px;background:linear-gradient(135deg,#7C3AED,#6D28D9);color:#fff;border:none;border-radius:12px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.4);">Save & Reconnect</button>

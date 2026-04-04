@@ -1,0 +1,14 @@
+name = "fuelpro-sync"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+# Shared secret for authenticating FuelPro requests (change this!)
+SYNC_SECRET = "fp_sync_2026_change_me"
+
+# Samsara API key (set via `wrangler secret put SAMSARA_API_KEY`)
+# SAMSARA_API_KEY = ""
+
+[[kv_namespaces]]
+binding = "FUEL_KV"
+id = ""  # Fill after `wrangler kv:namespace create FUEL_KV`

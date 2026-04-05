@@ -1245,7 +1245,7 @@ body {
   <div class="setup-card" style="max-width:420px;padding:40px 36px;">
     <div class="setup-glow"></div>
     <div style="position:absolute;top:16px;right:16px">
-      <div class="theme-toggle" onclick="toggleTheme()">
+      <div class="theme-toggle" onclick="toggleTheme()" role="button" tabindex="0" aria-label="Toggle day/night theme" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTheme();}">
         <span class="tt-ico"><svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line class="sun-ray" x1="12" y1="1" x2="12" y2="3"/><line class="sun-ray" x1="12" y1="21" x2="12" y2="23"/><line class="sun-ray" x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line class="sun-ray" x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line class="sun-ray" x1="1" y1="12" x2="3" y2="12"/><line class="sun-ray" x1="21" y1="12" x2="23" y2="12"/><line class="sun-ray" x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line class="sun-ray" x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
         <div class="tt-track"><div class="tt-thumb"></div></div>
         <span class="tt-ico"><svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/><path class="moon-star" d="M17 4l.5 1.5L19 6l-1.5.5L17 8l-.5-1.5L15 6l1.5-.5z" fill="var(--purple-lt)" stroke="none"/><path class="moon-star" d="M21 9l.3.9.9.3-.9.3L21 11.4l-.3-.9-.9-.3.9-.3z" fill="var(--purple-lt)" stroke="none"/></svg></span>
@@ -1332,7 +1332,7 @@ body {
           </div>
           <div class="tb-alert-backdrop" id="tbAlertBackdrop" onclick="closeTbAlerts()"></div>
         </div>
-        <div class="theme-toggle" onclick="toggleTheme()" title="Toggle day/night">
+        <div class="theme-toggle" onclick="toggleTheme()" title="Toggle day/night" role="button" tabindex="0" aria-label="Toggle day/night theme" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTheme();}">
           <span class="tt-ico"><svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line class="sun-ray" x1="12" y1="1" x2="12" y2="3"/><line class="sun-ray" x1="12" y1="21" x2="12" y2="23"/><line class="sun-ray" x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line class="sun-ray" x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line class="sun-ray" x1="1" y1="12" x2="3" y2="12"/><line class="sun-ray" x1="21" y1="12" x2="23" y2="12"/><line class="sun-ray" x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line class="sun-ray" x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
           <div class="tt-track"><div class="tt-thumb"></div></div>
           <span class="tt-ico"><svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/><path class="moon-star" d="M17 4l.5 1.5L19 6l-1.5.5L17 8l-.5-1.5L15 6l1.5-.5z" fill="var(--purple-lt)" stroke="none"/><path class="moon-star" d="M21 9l.3.9.9.3-.9.3L21 11.4l-.3-.9-.9-.3.9-.3z" fill="var(--purple-lt)" stroke="none"/></svg></span>

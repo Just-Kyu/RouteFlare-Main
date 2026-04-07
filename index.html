@@ -203,6 +203,9 @@ body {
 .tb-alert-item .tai-arrow { color: var(--text3); font-size: 10px; flex-shrink: 0; }
 .tb-alert-empty { text-align: center; padding: 20px 10px; color: var(--text3); font-size: 12px; }
 
+/* ── ACCESSIBILITY: Focus States ── */
+*:focus-visible { outline: 2px solid var(--purple-lt); outline-offset: 2px; }
+
 /* ═══════════ SETUP ═══════════ */
 #setup {
   position: fixed; inset: 0;
@@ -1768,7 +1771,7 @@ body {
         <div class="modal-sub" style="margin-bottom:0">Record fuel purchase — savings calculated automatically</div>
       </div>
     </div>
-    <button class="modal-close" onclick="closeFuelModal()">✕</button>
+    <button aria-label="Close modal" class="modal-close" onclick="closeFuelModal()">✕</button>
     <div class="modal-grid">
       <div class="ig"><label>Truck Unit #</label>
         <select id="mUnit" class="finput" style="margin-bottom:0;appearance:none;cursor:pointer;">
@@ -1803,7 +1806,7 @@ body {
 <!-- TELEGRAM DISPATCH MODAL -->
 <div class="tg-modal-overlay" id="tgModal">
   <div class="tg-modal">
-    <button class="modal-close" onclick="closeTgModal()">✕</button>
+    <button aria-label="Close modal" class="modal-close" onclick="closeTgModal()">✕</button>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
       <div style="width:38px;height:38px;border-radius:10px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 3px 12px rgba(124,58,237,.3);"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M3 22V6a2 2 0 012-2h6a2 2 0 012 2v16H3zm3-12h4v4H6v-4zm12.5-4l2 2-1.5 1.5L21 11v6a1 1 0 01-2 0v-4h-2V6l3.5-2z"/></svg></div>
       <div><div class="modal-h" style="margin-bottom:0">Send to Telegram</div><div class="modal-sub" style="margin-bottom:0">Dispatch fuel stop info to driver</div></div>
@@ -9571,7 +9574,7 @@ function showToast(lvl,ico,title,desc){
   const svgIco = lvl==='ok'
     ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>'
     : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round"><path d="M12 9v4"/><circle cx="12" cy="16" r=".5" fill="var(--red)"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
-  t.innerHTML=`<div class="tico">${svgIco}</div><div class="tbody"><div class="tttl">${title}</div><div class="tdesc">${desc}</div></div><button class="tx" onclick="this.parentElement.remove()">✕</button>`;
+  t.innerHTML=`<div class="tico">${svgIco}</div><div class="tbody"><div class="tttl">${title}</div><div class="tdesc">${desc}</div></div><button aria-label="Close toast" class="tx" onclick="this.parentElement.remove()">✕</button>`;
   wrap.appendChild(t); setTimeout(()=>t.remove(),5000);
 }
 

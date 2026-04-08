@@ -1,0 +1,1 @@
+## 2024-04-08 - Icon-only buttons lack ARIA labels\n**Learning:** Found several icon-only buttons (like modal close buttons, remove buttons, alert buttons) missing aria-labels which is an accessibility issue.\n**Action:** Adding `aria-label` attributes to icon-only buttons.

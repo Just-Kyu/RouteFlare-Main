@@ -1768,7 +1768,7 @@ body {
         <div class="modal-sub" style="margin-bottom:0">Record fuel purchase — savings calculated automatically</div>
       </div>
     </div>
-    <button class="modal-close" onclick="closeFuelModal()">✕</button>
+    <button class="modal-close" aria-label="Close fuel modal" onclick="closeFuelModal()">✕</button>
     <div class="modal-grid">
       <div class="ig"><label>Truck Unit #</label>
         <select id="mUnit" class="finput" style="margin-bottom:0;appearance:none;cursor:pointer;">
@@ -1803,7 +1803,7 @@ body {
 <!-- TELEGRAM DISPATCH MODAL -->
 <div class="tg-modal-overlay" id="tgModal">
   <div class="tg-modal">
-    <button class="modal-close" onclick="closeTgModal()">✕</button>
+    <button class="modal-close" aria-label="Close telegram modal" onclick="closeTgModal()">✕</button>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
       <div style="width:38px;height:38px;border-radius:10px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 3px 12px rgba(124,58,237,.3);"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M3 22V6a2 2 0 012-2h6a2 2 0 012 2v16H3zm3-12h4v4H6v-4zm12.5-4l2 2-1.5 1.5L21 11v6a1 1 0 01-2 0v-4h-2V6l3.5-2z"/></svg></div>
       <div><div class="modal-h" style="margin-bottom:0">Send to Telegram</div><div class="modal-sub" style="margin-bottom:0">Dispatch fuel stop info to driver</div></div>
@@ -1832,7 +1832,7 @@ body {
 
 <!-- NOTIFICATION PANEL -->
 <div class="notif-panel" id="notifPanel">
-  <div class="np-head"><div class="np-title">Fuel Alerts</div><button class="np-x" onclick="toggleNotif()">✕</button></div>
+  <div class="np-head"><div class="np-title">Fuel Alerts</div><button class="np-x" aria-label="Close notification panel" onclick="toggleNotif()">✕</button></div>
   <div class="np-list" id="npList"><div class="empty"><div class="ei"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div><p>No alerts yet</p></div></div>
   <button class="np-clear" onclick="clearNotifs()">Clear All</button>
 </div>
@@ -8303,7 +8303,7 @@ function renderFuelHistory(){
       <td>$${parseFloat(r.discountedPrice).toFixed(3)}</td>
       <td class="fl-total">$${parseFloat(r.discountTotal).toFixed(2)}</td>
       <td class="fl-saved">$${parseFloat(r.saved).toFixed(2)}</td>
-      <td><button class="fl-del-btn" onclick="deleteFuelRecord('${r.id||(start+i)}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></td>
+      <td><button class="fl-del-btn" aria-label="Delete record" onclick="deleteFuelRecord('${r.id||(start+i)}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></td>
     </tr>
   `).join('');
   if(totalPages <= 1){ pag.innerHTML = ''; return; }

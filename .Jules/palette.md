@@ -1,0 +1,3 @@
+## 2026-04-13 - App-Wide Missing ARIA Labels for Icon-Only Buttons
+**Learning:** This app heavily relies on raw SVG and Unicode characters inside <button> tags for icon-only interactive elements (like modal closes, password visibility toggles, and remove row actions) within dynamically injected string template literals. None of these elements natively possess text equivalents, rendering them effectively invisible and un-actionable for screen reader users.
+**Action:** When adding new UI elements, specifically those injected via template literals in index.html, explicitly provide descriptive aria-label attributes to ensure they are accessible.

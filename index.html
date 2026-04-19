@@ -1245,11 +1245,11 @@ body {
   <div class="setup-card" style="max-width:420px;padding:40px 36px;">
     <div class="setup-glow"></div>
     <div style="position:absolute;top:16px;right:16px">
-      <div class="theme-toggle" onclick="toggleTheme()">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
         <span class="tt-ico"><svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line class="sun-ray" x1="12" y1="1" x2="12" y2="3"/><line class="sun-ray" x1="12" y1="21" x2="12" y2="23"/><line class="sun-ray" x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line class="sun-ray" x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line class="sun-ray" x1="1" y1="12" x2="3" y2="12"/><line class="sun-ray" x1="21" y1="12" x2="23" y2="12"/><line class="sun-ray" x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line class="sun-ray" x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
         <div class="tt-track"><div class="tt-thumb"></div></div>
         <span class="tt-ico"><svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/><path class="moon-star" d="M17 4l.5 1.5L19 6l-1.5.5L17 8l-.5-1.5L15 6l1.5-.5z" fill="var(--purple-lt)" stroke="none"/><path class="moon-star" d="M21 9l.3.9.9.3-.9.3L21 11.4l-.3-.9-.9-.3.9-.3z" fill="var(--purple-lt)" stroke="none"/></svg></span>
-      </div>
+      </button>
     </div>
     <div style="text-align:center;margin-bottom:28px;">
       <div class="setup-logo" style="justify-content:center;margin-bottom:16px;">
@@ -1265,7 +1265,7 @@ body {
     <div class="flabel">Password*</div>
     <div style="position:relative;margin-bottom:6px;">
       <input class="finput" type="password" id="loginPassword" placeholder="Enter password" style="margin-bottom:0;padding-right:44px;" autocomplete="current-password"/>
-      <button onclick="const i=document.getElementById('loginPassword');i.type=i.type==='password'?'text':'password';" style="position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+      <button onclick="const i=document.getElementById('loginPassword');i.type=i.type==='password'?'text':'password';" style="position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;" aria-label="Toggle password visibility"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
     </div>
     <div style="text-align:right;margin-bottom:22px;">
       <a href="#" style="font-size:12px;color:var(--purple-lt);text-decoration:none;">Forgot password?</a>
@@ -1332,12 +1332,12 @@ body {
           </div>
           <div class="tb-alert-backdrop" id="tbAlertBackdrop" onclick="closeTbAlerts()"></div>
         </div>
-        <div class="theme-toggle" onclick="toggleTheme()" title="Toggle day/night">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle day/night" aria-label="Toggle theme">
           <span class="tt-ico"><svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line class="sun-ray" x1="12" y1="1" x2="12" y2="3"/><line class="sun-ray" x1="12" y1="21" x2="12" y2="23"/><line class="sun-ray" x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line class="sun-ray" x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line class="sun-ray" x1="1" y1="12" x2="3" y2="12"/><line class="sun-ray" x1="21" y1="12" x2="23" y2="12"/><line class="sun-ray" x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line class="sun-ray" x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
           <div class="tt-track"><div class="tt-thumb"></div></div>
           <span class="tt-ico"><svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/><path class="moon-star" d="M17 4l.5 1.5L19 6l-1.5.5L17 8l-.5-1.5L15 6l1.5-.5z" fill="var(--purple-lt)" stroke="none"/><path class="moon-star" d="M21 9l.3.9.9.3-.9.3L21 11.4l-.3-.9-.9-.3.9-.3z" fill="var(--purple-lt)" stroke="none"/></svg></span>
           <span class="tt-lbl" id="themeLbl">Dark</span>
-        </div>
+        </button>
         <button class="tb-btn primary" onclick="openAddFueling()">+ Log Fueling</button>
         <button class="tb-btn" id="refBtn" onclick="refreshAll()">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
@@ -1408,7 +1408,7 @@ body {
                 <!-- Col 3: Maps -->
                 <div class="dash-col" style="min-width:0">
                   <div class="card">
-                    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">Fueling by State <button class="map-expand-btn" onclick="toggleMapExpand('fuelByStateMap')" title="Fullscreen">⛶</button></div>
+                    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">Fueling by State <button class="map-expand-btn" onclick="toggleMapExpand('fuelByStateMap')" title="Fullscreen" aria-label="Expand fueling by state map">⛶</button></div>
                     <div class="map-container" id="fuelByStateMap" style="height:180px;"></div>
                     <div class="map-legend-row">
                       <span class="map-legend-lbl">0%</span>
@@ -1417,7 +1417,7 @@ body {
                     </div>
                   </div>
                   <div class="card">
-                    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">Avg Diesel Price by State <button class="map-expand-btn" onclick="toggleMapExpand('priceByStateMap')" title="Fullscreen">⛶</button></div>
+                    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">Avg Diesel Price by State <button class="map-expand-btn" onclick="toggleMapExpand('priceByStateMap')" title="Fullscreen" aria-label="Expand average diesel price by state map">⛶</button></div>
                     <div class="map-container" id="priceByStateMap" style="height:180px;"></div>
                     <div class="map-legend-row">
                       <span class="map-legend-lbl">$3.20</span>
@@ -1604,7 +1604,7 @@ body {
                       <span style="width:10px;height:10px;border-radius:3px;background:var(--purple);display:inline-block;box-shadow:0 0 8px var(--purple-glow)"></span>
                       Fueling Activity by State
                     </span>
-                    <button class="map-expand-btn" onclick="toggleMapExpand('bigFuelMap')" title="Fullscreen">⛶</button>
+                    <button class="map-expand-btn" onclick="toggleMapExpand('bigFuelMap')" title="Fullscreen" aria-label="Expand fueling activity by state map">⛶</button>
                   </div>
                   <div class="map-container" id="bigFuelMap" style="height:340px;"></div>
                   <div class="map-legend-row" style="margin-top:12px;">
@@ -1620,7 +1620,7 @@ body {
                       <span style="width:10px;height:10px;border-radius:3px;background:#3B82F6;display:inline-block;box-shadow:0 0 8px rgba(59,130,246,.3)"></span>
                       Avg Diesel Price by State
                     </span>
-                    <button class="map-expand-btn" onclick="toggleMapExpand('bigPriceMap')" title="Fullscreen">⛶</button>
+                    <button class="map-expand-btn" onclick="toggleMapExpand('bigPriceMap')" title="Fullscreen" aria-label="Expand average diesel price by state map">⛶</button>
                   </div>
                   <div class="map-container" id="bigPriceMap" style="height:340px;"></div>
                   <div class="map-legend-row" style="margin-top:12px;">
@@ -1738,7 +1738,7 @@ body {
             <span style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#7C3AED;border:2px solid #fff;display:inline-block;"></span>A Origin</span>
             <span style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#22C55E;display:inline-block;"></span>B Destination</span>
           </span>
-          <button class="map-expand-btn" onclick="toggleMapExpand('leafletMap')" title="Fullscreen map">⛶</button>
+          <button class="map-expand-btn" onclick="toggleMapExpand('leafletMap')" title="Fullscreen map" aria-label="Expand route map">⛶</button>
         </div>
       </div>
       <div id="finderMapContainer" style="flex:1;position:relative;overflow:hidden;">
@@ -1768,7 +1768,7 @@ body {
         <div class="modal-sub" style="margin-bottom:0">Record fuel purchase — savings calculated automatically</div>
       </div>
     </div>
-    <button class="modal-close" onclick="closeFuelModal()">✕</button>
+    <button class="modal-close" onclick="closeFuelModal()" aria-label="Close modal">✕</button>
     <div class="modal-grid">
       <div class="ig"><label>Truck Unit #</label>
         <select id="mUnit" class="finput" style="margin-bottom:0;appearance:none;cursor:pointer;">
@@ -1803,7 +1803,7 @@ body {
 <!-- TELEGRAM DISPATCH MODAL -->
 <div class="tg-modal-overlay" id="tgModal">
   <div class="tg-modal">
-    <button class="modal-close" onclick="closeTgModal()">✕</button>
+    <button class="modal-close" onclick="closeTgModal()" aria-label="Close modal">✕</button>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
       <div style="width:38px;height:38px;border-radius:10px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 3px 12px rgba(124,58,237,.3);"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M3 22V6a2 2 0 012-2h6a2 2 0 012 2v16H3zm3-12h4v4H6v-4zm12.5-4l2 2-1.5 1.5L21 11v6a1 1 0 01-2 0v-4h-2V6l3.5-2z"/></svg></div>
       <div><div class="modal-h" style="margin-bottom:0">Send to Telegram</div><div class="modal-sub" style="margin-bottom:0">Dispatch fuel stop info to driver</div></div>
@@ -1832,7 +1832,7 @@ body {
 
 <!-- NOTIFICATION PANEL -->
 <div class="notif-panel" id="notifPanel">
-  <div class="np-head"><div class="np-title">Fuel Alerts</div><button class="np-x" onclick="toggleNotif()">✕</button></div>
+  <div class="np-head"><div class="np-title">Fuel Alerts</div><button class="np-x" onclick="toggleNotif()" aria-label="Close notifications">✕</button></div>
   <div class="np-list" id="npList"><div class="empty"><div class="ei"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div><p>No alerts yet</p></div></div>
   <button class="np-clear" onclick="clearNotifs()">Clear All</button>
 </div>
@@ -1963,7 +1963,7 @@ function openManageCo(){
       <input type="password" value="${S.apiKeys[i]||''}" placeholder="API key"
         style="flex:2;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:12px;"
         data-type="key" data-idx="${i}"/>
-      <button onclick="this.previousElementSibling.type=this.previousElementSibling.type==='password'?'text':'password'"
+      <button onclick="this.previousElementSibling.type=this.previousElementSibling.type==='password'?'text':'password'" aria-label="Toggle password visibility"
         style="background:none;border:1px solid var(--border2);border-radius:8px;padding:8px 10px;color:var(--text3);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
       ${S.companies.length > 1 ? `<button onclick="manageRemoveCo(${i})" style="background:none;border:1px solid var(--red);border-radius:8px;padding:8px 10px;color:var(--red);cursor:pointer;font-size:12px;">✕</button>` : ''}
     `;
@@ -2015,7 +2015,7 @@ function manageAddCo(){
     <input type="password" placeholder="API key"
       style="flex:2;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:12px;"
       data-type="key" data-idx="${i}"/>
-    <button onclick="this.previousElementSibling.type=this.previousElementSibling.type==='password'?'text':'password'"
+    <button onclick="this.previousElementSibling.type=this.previousElementSibling.type==='password'?'text':'password'" aria-label="Toggle password visibility"
       style="background:none;border:1px solid var(--border2);border-radius:8px;padding:8px 10px;color:var(--text3);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
     <button onclick="this.closest('div').remove()" style="background:none;border:1px solid var(--red);border-radius:8px;padding:8px 10px;color:var(--red);cursor:pointer;font-size:12px;">✕</button>
   `;
@@ -2154,7 +2154,7 @@ function addCo(name='', apiKey=''){
     </div>
     <div style="position:relative;">
       <input class="co-key-input" type="password" placeholder="Samsara API key for this company (samsara_api_…)" value="${apiKey}" style="width:100%;padding-right:38px;font-size:11px;"/>
-      <button onclick="const inp=this.previousElementSibling;inp.type=inp.type==='password'?'text':'password';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button onclick="const inp=this.previousElementSibling;inp.type=inp.type==='password'?'text':'password';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;" aria-label="Toggle password visibility"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
     </div>
     <div class="co-test-row" style="display:flex;align-items:center;gap:8px;">
       <button onclick="testCompanyKey(this)" style="background:var(--purple-dim);border:1px solid var(--purple);color:var(--purple-lt);border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;font-family:var(--font);cursor:pointer;">Test Connection</button>
@@ -9656,7 +9656,7 @@ init();
 <!-- MANAGE COMPANIES MODAL -->
 <div class="modal-overlay" id="manageCoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:28px;width:480px;max-width:95vw;max-height:85vh;overflow-y:auto;position:relative;box-shadow:0 24px 64px rgba(0,0,0,.5);">
-    <button onclick="closeManageCo()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px;">✕</button>
+    <button class="modal-close" onclick="closeManageCo()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px;" aria-label="Close modal">✕</button>
     <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:4px;">Manage Companies</div>
     <div style="font-size:12px;color:var(--text3);margin-bottom:20px;">Add, remove or update company API keys without signing out</div>
 
@@ -9699,7 +9699,7 @@ init();
       <span style="font-size:15px;font-weight:800;color:var(--text)" id="mapFullscreenTitle">Map</span>
       <span class="pill" id="mapFullscreenPill" style="display:none"></span>
     </div>
-    <button class="map-fullscreen-close" onclick="closeMapExpand()">✕ Close Fullscreen</button>
+    <button class="map-fullscreen-close" onclick="closeMapExpand()" aria-label="Close fullscreen map">✕ Close Fullscreen</button>
   </div>
   <div class="map-fullscreen-body" id="mapFullscreenBody"></div>
 </div>

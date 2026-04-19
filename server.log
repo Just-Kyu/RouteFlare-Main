@@ -1,0 +1,6 @@
+127.0.0.1 - - [19/Apr/2026 22:23:50] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [19/Apr/2026 22:23:50] "GET /image%2049.png HTTP/1.1" 200 -
+127.0.0.1 - - [19/Apr/2026 22:23:50] code 404, message File not found
+127.0.0.1 - - [19/Apr/2026 22:23:50] "GET /logo.png HTTP/1.1" 404 -
+127.0.0.1 - - [19/Apr/2026 22:23:51] code 404, message File not found
+127.0.0.1 - - [19/Apr/2026 22:23:51] "GET /logo.png HTTP/1.1" 404 -

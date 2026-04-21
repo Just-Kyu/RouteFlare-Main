@@ -8005,6 +8005,12 @@ function openStationDetailPanel(st, idx){
   ).join('') : '<div style="font-size:11px;color:var(--text3);">No amenity info available</div>';
 
   const distLabel = finderMode === 'nearby' ? 'mi away' : 'mi off route';
+  const distLine = st._isOverview ? '' : st.distFromA ? st.distFromA+' mi from A · '+st.distFromB+' mi from B' : (st.detour ? st.detour+' '+distLabel : '');
+
+  if(st._isOverview && !S._finderCollapsed){
+    collapseFinderPanel();
+    S._overviewCollapsed = true;
+  }
 
   panel.innerHTML = `
     <div class="sdp-header">
@@ -8016,7 +8022,7 @@ function openStationDetailPanel(st, idx){
           ${st.relay ? '<span class="sdp-badge in-network">In-network</span>' : ''}
           <span class="sdp-badge location">${locationStr}</span>
         </div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px;">${st.distFromA ? st.distFromA+' mi from A · '+st.distFromB+' mi from B' : st.detour+' '+distLabel}</div>
+        ${distLine ? `<div style="font-size:11px;color:var(--text3);margin-top:4px;">${distLine}</div>` : ''}
       </div>
     </div>
     <div class="sdp-fuels" style="grid-template-columns:${gridCols}">
@@ -8056,9 +8062,17 @@ function openStationDetailPanel(st, idx){
 function closeStationDetailPanel(){
   const panel = document.getElementById('stationDetailPanel');
   if(panel) panel.remove();
-  // Reset toggle button position
   const toggleBtn = document.getElementById('finderToggleBtn');
   if(toggleBtn) toggleBtn.style.left = '12px';
+  if(S._overviewCollapsed){
+    S._overviewCollapsed = false;
+    const pagesEl = document.querySelector('.pages');
+    const mapPanel = document.getElementById('finderMapPanel');
+    if(pagesEl) pagesEl.classList.remove('collapsed');
+    if(mapPanel){ mapPanel.classList.remove('fullwidth'); mapPanel.classList.add('visible'); }
+    S._finderCollapsed = false;
+    [100,350,700].forEach(t=>setTimeout(()=>{ if(S.leafletMap) S.leafletMap.invalidateSize(); },t));
+  }
 }
 
 function collapseFinderPanel(){
@@ -8996,22 +9010,65 @@ function initAllStationsMap(){
     showCoverageOnHover: false,
     zoomToBoundsOnClick: true,
     disableClusteringAtZoom: 12,
-    chunkedLoading: true
+    chunkedLoading: true,
+    iconCreateFunction: function(cluster){
+      const count = cluster.getChildCount();
+      let prices = [];
+      cluster.getAllChildMarkers().forEach(m => { if(m._stPrice) prices.push(m._stPrice); });
+      const best = prices.length ? Math.min(...prices) : 0;
+      const sz = count < 20 ? 'small' : count < 100 ? 'medium' : 'large';
+      const dim = sz === 'small' ? 40 : sz === 'medium' ? 48 : 56;
+      const fs1 = sz === 'small' ? 13 : sz === 'medium' ? 14 : 15;
+      const fs2 = sz === 'small' ? 9 : 10;
+      return L.divIcon({
+        html:`<div style="width:${dim}px;height:${dim}px;border-radius:50%;background:#7C3AED;border:3px solid rgba(124,58,237,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(124,58,237,.4);"><span style="font-size:${fs1}px;font-weight:800;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;line-height:1;">${count}</span>${best?`<span style="font-size:${fs2}px;font-weight:600;color:rgba(255,255,255,.8);font-family:'Plus Jakarta Sans',sans-serif;line-height:1;">$${best.toFixed(2)}</span>`:''}</div>`,
+        className:'', iconSize:[dim,dim], iconAnchor:[dim/2,dim/2]
+      });
+    }
   });
 
-  const chainColors = { pilot:'#7C3AED', loves:'#E11D48', ta:'#F59E0B', petro:'#F59E0B' };
+  const basePrice = (S_livePrices && S_livePrices.national) ? S_livePrices.national : 3.45;
 
+  S._overviewStations = [];
   ALL_STATIONS.forEach(ps => {
-    const ch = ps.ch || 'pilot';
-    const col = chainColors[ch] || '#7C3AED';
-    const label = ch === 'loves' ? "L" : ch === 'ta' ? 'TA' : ch === 'petro' ? 'P' : 'PJ';
-    const icon = L.divIcon({
-      html:`<div style="width:26px;height:26px;border-radius:50%;background:${col};border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.3);">${label}</div>`,
-      className:'', iconSize:[26,26], iconAnchor:[13,13]
-    });
-    const m = L.marker([ps.lat, ps.lng], {icon});
     const raw = stationToRaw(ps);
-    m.on('click', () => openStationDetailPanel(raw, 0));
+    const chain = matchChain(raw.name, raw.brand) || OTHER_CHAIN;
+    const h = coordHash(ps.lat, ps.lng);
+    const statePrice = (S_livePrices && raw.state && S_livePrices[raw.state]) ? S_livePrices[raw.state] : basePrice;
+    const hasRealDiesel = raw.dieselPrice && raw.dieselPrice > 0;
+    const retailPrice = hasRealDiesel ? raw.dieselPrice : Math.max(3.05, statePrice + (h*0.20-0.08));
+    const discount = chain.relay ? 0.15 : 0.05;
+    const discountPrice = retailPrice - discount;
+    const h2 = coordHash(ps.lat+0.001, ps.lng+0.001);
+    const defPrice = Math.max(2.80, statePrice - 0.35 + (h2*0.15-0.05));
+    const reeferPrice = Math.max(3.20, retailPrice + 0.10 + (h2*0.08));
+    const finalAmenities = raw.csvAmenities && raw.csvAmenities.length ? raw.csvAmenities : chain.amenities;
+    const hasDEFReal = raw.hasDEF || (finalAmenities||[]).some(a=>a.toUpperCase()==='DEF');
+
+    const enriched = {
+      ...chain, name: raw.name || chain.name, chainName: chain.name,
+      lat: ps.lat, lng: ps.lng, address: raw.address, city: raw.city, state: raw.state,
+      amenities: finalAmenities,
+      phone: raw.phone || '', interstate: raw.interstate || '',
+      parkingSpaces: raw.parkingSpaces || 0, fuelLanes: raw.fuelLanes || 0,
+      showerCount: raw.showerCount || 0, restaurants: raw.restaurants || [],
+      price: discountPrice.toFixed(3), retailPrice: retailPrice.toFixed(3),
+      savings: discount.toFixed(2), defPrice: hasDEFReal ? defPrice.toFixed(3) : null,
+      reeferPrice: chain.relay ? reeferPrice.toFixed(3) : null,
+      detour: null, storeId: raw.storeId || '', _isOverview: true
+    };
+
+    const ch = ps.ch || 'pilot';
+    const col = ch === 'loves' ? '#E11D48' : ch === 'ta' || ch === 'petro' ? '#F59E0B' : '#7C3AED';
+    const icon = makeStationIcon(enriched.price, col, 22, enriched.name);
+    const m = L.marker([ps.lat, ps.lng], {icon});
+    m._stPrice = discountPrice;
+    const stIdx = S._overviewStations.length;
+    S._overviewStations.push(enriched);
+    m.on('click', () => {
+      S.finderStops = S._overviewStations;
+      openStationDetailPanel(enriched, stIdx);
+    });
     clusters.addLayer(m);
   });
 

@@ -6588,39 +6588,62 @@ function applyFallbackPrices(){
 }
 
 async function fetchLiveDieselPrices(){
-  if(S_livePrices) return S_livePrices;
+  if(S_livePrices && Object.keys(S_livePrices).length > 10) return S_livePrices;
 
   const apiKey = getEIAKey();
-  const baseParams = 'frequency=weekly&data[0]=value&facets[product][]=DFO&facets[area][]=PADD1A&facets[area][]=PADD1B&facets[area][]=PADD1C&facets[area][]=PADD2&facets[area][]=PADD3&facets[area][]=PADD4&facets[area][]=PADD5&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=16';
 
-  // Attempt 1: Direct EIA v2 API call with API key
+  // PADD region codes for the pri/gnd/data endpoint
+  const paddAreas = ['R1X','R1Y','R1Z','R20','R30','R40','R50'];
+  const paddAreaParams = paddAreas.map(a => `facets[duoarea][]=${a}`).join('&');
+  const gndUrl = `https://api.eia.gov/v2/petroleum/pri/gnd/data/?frequency=weekly&data[0]=value&facets[product][]=EPD2DXL0&${paddAreaParams}&sort[0][column]=period&sort[0][direction]=desc&length=14&api_key=${apiKey}`;
+
+  // Map PADD area codes to PADD region names used by PADD_STATE_MAP
+  const AREA_TO_PADD = {'R1X':'PADD 1A','R1Y':'PADD 1B','R1Z':'PADD 1C','R20':'PADD 2','R30':'PADD 3','R40':'PADD 4','R50':'PADD 5'};
+
+  function parsePaddGnd(data){
+    const regionPrices = {};
+    const seen = {};
+    data.forEach(row => {
+      const area = row.duoarea || '';
+      if(!seen[area] && row.value != null){
+        seen[area] = true;
+        const val = parseFloat(row.value);
+        if(val > 0 && AREA_TO_PADD[area]) regionPrices[AREA_TO_PADD[area]] = val;
+      }
+    });
+    if(Object.keys(regionPrices).length < 3) return null;
+    const statePrices = {};
+    Object.entries(PADD_STATE_MAP).forEach(([region, states]) => {
+      if(regionPrices[region]) states.forEach(s => statePrices[s] = regionPrices[region]);
+    });
+    return Object.keys(statePrices).length > 10 ? statePrices : null;
+  }
+
+  // Attempt 1: EIA pri/gnd/data endpoint with PADD regions (most reliable)
   try {
-    const eiaUrl = `https://api.eia.gov/v2/petroleum/rdc2/?${baseParams}&api_key=${apiKey}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
-    const r = await fetch(eiaUrl, {signal: controller.signal});
+    const r = await fetch(gndUrl, {signal: controller.signal});
     clearTimeout(timeout);
     if(r.ok){
       const json = await r.json();
       const data = json?.response?.data || [];
       if(data.length > 0){
-        const parsed = parseEIAPrices(data);
+        const parsed = parsePaddGnd(data);
         if(parsed){
           S_livePrices = parsed;
           S_livePriceDate = data[0]?.period || null;
           S_livePriceSource = 'eia';
-          console.log(`[RouteFlare] ✅ Live EIA diesel prices loaded for ${Object.keys(parsed).length} states`);
+          console.log(`[RouteFlare] Live EIA PADD diesel prices loaded for ${Object.keys(parsed).length} states`);
           return S_livePrices;
         }
       }
     }
-  } catch(e){ console.warn('[RouteFlare] Direct EIA call failed:', e.message); }
+  } catch(e){ console.warn('[RouteFlare] Direct EIA PADD call failed:', e.message); }
 
-  // Attempt 2: Try via CORS proxy
+  // Attempt 2: Same endpoint via CORS proxy
   try {
-    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(
-      `https://api.eia.gov/v2/petroleum/rdc2/?${baseParams}&api_key=${apiKey}`
-    );
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(gndUrl);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     const r = await fetch(proxyUrl, {signal: controller.signal});
@@ -6629,17 +6652,37 @@ async function fetchLiveDieselPrices(){
       const json = JSON.parse(await r.text());
       const data = json?.response?.data || [];
       if(data.length > 0){
-        const parsed = parseEIAPrices(data);
+        const parsed = parsePaddGnd(data);
         if(parsed){
           S_livePrices = parsed;
           S_livePriceDate = data[0]?.period || null;
           S_livePriceSource = 'eia';
-          console.log(`[RouteFlare] ✅ EIA prices loaded via proxy for ${Object.keys(parsed).length} states`);
+          console.log(`[RouteFlare] EIA PADD prices loaded via proxy for ${Object.keys(parsed).length} states`);
           return S_livePrices;
         }
       }
     }
   } catch(e){ console.warn('[RouteFlare] CORS proxy EIA call failed:', e.message); }
+
+  // Attempt 3: Get national average and scale fallback PADD prices proportionally
+  try {
+    const natResult = await fetchEIAPrices(apiKey);
+    if(natResult && natResult.national){
+      const fallback = FALLBACK_PADD_PRICES;
+      const fallbackAvg = Object.values(fallback).reduce((a,b)=>a+b,0) / Object.values(fallback).length;
+      const scale = natResult.national / fallbackAvg;
+      const statePrices = {};
+      Object.entries(PADD_STATE_MAP).forEach(([region, states]) => {
+        const price = (fallback[region] || fallbackAvg) * scale;
+        states.forEach(s => statePrices[s] = parseFloat(price.toFixed(3)));
+      });
+      S_livePrices = statePrices;
+      S_livePriceDate = new Date().toISOString().split('T')[0];
+      S_livePriceSource = 'eia';
+      console.log(`[RouteFlare] EIA national price $${natResult.national} scaled to ${Object.keys(statePrices).length} states`);
+      return S_livePrices;
+    }
+  } catch(e){ console.warn('[RouteFlare] National EIA scaling failed:', e.message); }
 
   // Fallback: Use built-in recent diesel prices
   console.warn('[RouteFlare] Using built-in fallback diesel prices (March 2026)');
@@ -8997,10 +9040,7 @@ S._overviewMapLoaded = false;
 async function initAllStationsMap(){
   if(S._overviewMapLoaded && S.leafletMap) return;
 
-  const eiaKey = getEIAKey();
-  if(eiaKey && !S_livePrices){
-    try { const p = await fetchEIAPrices(eiaKey); if(p) S_livePrices = p; } catch(e){}
-  }
+  await fetchLiveDieselPrices();
   const mapPanel = document.getElementById('finderMapPanel');
   const mapDiv = document.getElementById('leafletMap');
   const placeholder = document.getElementById('finderMapPlaceholder');
@@ -9037,7 +9077,8 @@ async function initAllStationsMap(){
     }
   });
 
-  const basePrice = (S_livePrices && S_livePrices.national) ? S_livePrices.national : 3.45;
+  const lpVals = S_livePrices ? Object.values(S_livePrices).filter(v => typeof v === 'number') : [];
+  const basePrice = lpVals.length ? lpVals.reduce((a,b)=>a+b,0)/lpVals.length : 3.45;
 
   S._overviewStations = [];
   ALL_STATIONS.forEach(ps => {

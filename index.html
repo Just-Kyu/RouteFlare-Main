@@ -1526,7 +1526,7 @@ body {
                     <div id="fErr"></div>
                     <div id="eiaKeyRow" style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                       <div class="ig" style="flex:1;min-width:180px;">
-                        <label>EIA API Key <span style="font-weight:400;font-size:9px;opacity:.7;">(optional — <a href="https://www.eia.gov/opendata/register.php" target="_blank" style="color:var(--purple);">get free key</a>)</span></label>
+                        <label>EIA API Key <span style="font-weight:400;font-size:9px;opacity:.7;">(<a href="https://www.eia.gov/opendata/register.php" target="_blank" style="color:var(--purple);">get free key</a>)</span></label>
                         <input type="text" id="eiaApiKey" placeholder="Paste EIA key for real diesel prices" style="font-size:11px;" oninput="saveEIAKey(this.value)"/>
                       </div>
                       <div id="eiaStatus" style="font-size:10px;color:var(--text3);margin-top:16px;">Prices shown as est. without key</div>
@@ -2138,14 +2138,14 @@ function init(){
       seedFuelRecords(); // re-seed with real truck names
       buildTabs(); renderDashboard(); buildCharts(); buildMaps();
       buildQuickPick(); populateTruckSelect();
-      const savedEIA = localStorage.getItem('eia_api_key') || '';
+      const savedEIA = getEIAKey();
       const eiaInput = document.getElementById('eiaApiKey');
-      if(eiaInput && savedEIA){ eiaInput.value = savedEIA; }
+      if(eiaInput) eiaInput.value = savedEIA;
       const savedGM = localStorage.getItem('gm_api_key') || '';
       const gmInput = document.getElementById('gmKeyInput');
       if(gmInput && savedGM){ gmInput.value = savedGM; }
       const eiaStatus = document.getElementById('eiaStatus');
-      if(eiaStatus && savedEIA) eiaStatus.textContent = 'Key saved — will use on next search';
+      if(eiaStatus) eiaStatus.textContent = 'Key saved — will use on next search';
       startAutoRefresh();
     }, 100);
   } else {
@@ -2252,11 +2252,11 @@ async function loginAndConnect(){
   syncFuelTransactions(true); // Auto-sync fuel transactions
   buildTabs(); renderDashboard(); buildCharts(); buildMaps();
   buildQuickPick(); populateTruckSelect();
-  const savedEIA = localStorage.getItem('eia_api_key') || '';
+  const savedEIA = getEIAKey();
   const eiaInput = document.getElementById('eiaApiKey');
-  if(eiaInput && savedEIA){ eiaInput.value = savedEIA; }
+  if(eiaInput) eiaInput.value = savedEIA;
   const eiaStatus = document.getElementById('eiaStatus');
-  if(eiaStatus && savedEIA) eiaStatus.textContent = 'Key saved — will use on next search';
+  if(eiaStatus) eiaStatus.textContent = 'Key saved — will use on next search';
   startAutoRefresh();
 }
 
@@ -6564,6 +6564,9 @@ let S_livePrices = null;   // { 'AL': 3.45, 'CA': 4.89, ... }
 let S_livePriceDate = null; // Date string for when prices were fetched
 let S_livePriceSource = null; // 'eia' or 'fallback'
 
+const DEFAULT_EIA_KEY = 'dhh3cJOIN3i9qqy9UxFFpiPTJLtlo46tCr62upNN';
+function getEIAKey(){ return localStorage.getItem('eia_api_key') || DEFAULT_EIA_KEY; }
+
 // Built-in fallback: Recent diesel prices by PADD region (March 2026)
 // These will be used if the API call fails and will be overwritten by live data when available
 const FALLBACK_PADD_PRICES = {
@@ -7211,7 +7214,7 @@ async function findStops(){
   const fType      = document.getElementById('fType').value;
   const fSort      = document.getElementById('fSort').value;
   const maxDetour  = parseFloat(document.getElementById('fDetour').value || '5');
-  const eiaKey     = localStorage.getItem('eia_api_key') || '';
+  const eiaKey     = getEIAKey();
 
   try {
     // ── 1. Geocode origin & destination IN PARALLEL ──────────────────────
@@ -7729,7 +7732,7 @@ async function findNearbyStops(){
 
   const fType = document.getElementById('fType').value;
   const fSort = document.getElementById('fSort').value;
-  const eiaKey = localStorage.getItem('eia_api_key') || '';
+  const eiaKey = getEIAKey();
 
   try {
     // Geocode all locations IN PARALLEL
@@ -8989,8 +8992,13 @@ S.leafletMap = null;
 S._finderCollapsed = false;
 S._overviewMapLoaded = false;
 
-function initAllStationsMap(){
+async function initAllStationsMap(){
   if(S._overviewMapLoaded && S.leafletMap) return;
+
+  const eiaKey = getEIAKey();
+  if(eiaKey && !S_livePrices){
+    try { const p = await fetchEIAPrices(eiaKey); if(p) S_livePrices = p; } catch(e){}
+  }
   const mapPanel = document.getElementById('finderMapPanel');
   const mapDiv = document.getElementById('leafletMap');
   const placeholder = document.getElementById('finderMapPlaceholder');

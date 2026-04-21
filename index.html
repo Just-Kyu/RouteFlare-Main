@@ -6,7 +6,10 @@
 <title>RouteFlare</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA7rrrxv_uNKeHsoKsn4FiYsLDT1DJrjYg&libraries=places"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
@@ -631,6 +634,21 @@ body {
 .chain-chip input[type=checkbox] { display:none; }
 .chain-chip.active { background: var(--purple-dim); border-color: var(--purple); color: var(--purple-lt); }
 .chain-chip:hover { border-color: var(--purple-lt); color: var(--purple-lt); }
+/* marker cluster overrides */
+.marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+  background: rgba(124,58,237,.25) !important;
+}
+.marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+  background: #7C3AED !important;
+  color: #fff !important;
+  font-family: var(--font) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+}
+.marker-cluster-medium { background: rgba(124,58,237,.35) !important; }
+.marker-cluster-medium div { font-size: 14px !important; }
+.marker-cluster-large { background: rgba(124,58,237,.45) !important; }
+.marker-cluster-large div { font-size: 15px !important; }
 /* telegram modal */
 .tg-modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px); }
 .tg-modal-overlay.on { display:flex; }
@@ -7854,6 +7872,7 @@ async function fetchStationsNearby(lat, lng, radiusMeters, fuelType){
 }
 
 function renderNearbyMap(coords, stops){
+  S._overviewMapLoaded = false;
   const mapPanel = document.getElementById('finderMapPanel');
   mapPanel.classList.add('visible');
   const mapDiv = document.getElementById('leafletMap');
@@ -8954,6 +8973,58 @@ S.finderStops = [];
 S.finderMarkers = [];
 S.leafletMap = null;
 S._finderCollapsed = false;
+S._overviewMapLoaded = false;
+
+function initAllStationsMap(){
+  if(S._overviewMapLoaded && S.leafletMap) return;
+  const mapPanel = document.getElementById('finderMapPanel');
+  const mapDiv = document.getElementById('leafletMap');
+  const placeholder = document.getElementById('finderMapPlaceholder');
+  if(placeholder) placeholder.style.display = 'none';
+  if(S.leafletMap){ S.leafletMap.remove(); S.leafletMap = null; }
+
+  const dark = S.theme === 'dark';
+  const lmap = L.map(mapDiv, {zoomControl:true, attributionControl:true}).setView([39.5, -98.35], 4);
+  L.tileLayer(getTileUrl(dark), {
+    attribution:'&copy; <a href="https://carto.com">CARTO</a> &copy; <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    subdomains:'abcd', maxZoom:19
+  }).addTo(lmap);
+
+  const clusters = L.markerClusterGroup({
+    maxClusterRadius: 60,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    disableClusteringAtZoom: 12,
+    chunkedLoading: true
+  });
+
+  const chainColors = { pilot:'#7C3AED', loves:'#E11D48', ta:'#F59E0B', petro:'#F59E0B' };
+
+  ALL_STATIONS.forEach(ps => {
+    const ch = ps.ch || 'pilot';
+    const col = chainColors[ch] || '#7C3AED';
+    const label = ch === 'loves' ? "L" : ch === 'ta' ? 'TA' : ch === 'petro' ? 'P' : 'PJ';
+    const icon = L.divIcon({
+      html:`<div style="width:26px;height:26px;border-radius:50%;background:${col};border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.3);">${label}</div>`,
+      className:'', iconSize:[26,26], iconAnchor:[13,13]
+    });
+    const m = L.marker([ps.lat, ps.lng], {icon});
+    const raw = stationToRaw(ps);
+    m.on('click', () => openStationDetailPanel(raw, 0));
+    clusters.addLayer(m);
+  });
+
+  lmap.addLayer(clusters);
+  S.leafletMap = lmap;
+  S._overviewMapLoaded = true;
+
+  const countEl = document.getElementById('mapStopCount');
+  countEl.textContent = `${ALL_STATIONS.length} stations`;
+  countEl.style.display = 'inline';
+
+  [100,350,700].forEach(t=>setTimeout(()=>lmap.invalidateSize(),t));
+}
 
 // Hardcoded coords for 100 most common US cities — ultimate fallback if APIs fail
 const CITY_COORDS = {
@@ -9467,6 +9538,7 @@ async function renderFinderMap(){
 
   document.getElementById('finderMapPlaceholder').style.display='none';
 
+  S._overviewMapLoaded = false;
   // Destroy old map instance before recreating (avoids stale size)
   if(S.leafletMap){ try{ S.leafletMap.remove(); }catch(e){} S.leafletMap=null; }
 
@@ -9600,7 +9672,6 @@ function goPage(p,btn){
   const wasFinderVisible = mapPanel && (mapPanel.classList.contains('visible') || mapPanel.classList.contains('fullwidth'));
   if(p==='finder'){
     if(S._finderCollapsed){
-      // Map fullwidth, pages collapsed
       if(pagesEl) pagesEl.classList.add('collapsed');
       mapPanel.classList.remove('visible');
       mapPanel.classList.add('fullwidth');
@@ -9608,6 +9679,7 @@ function goPage(p,btn){
       mapPanel.classList.add('visible');
       mapPanel.classList.remove('fullwidth');
     }
+    setTimeout(()=>{ initAllStationsMap(); },150);
     [100,350,700].forEach(t=>setTimeout(()=>{ if(S.leafletMap) S.leafletMap.invalidateSize(); },t));
   } else {
     if(mapPanel){ mapPanel.classList.remove('visible'); mapPanel.classList.remove('fullwidth'); }

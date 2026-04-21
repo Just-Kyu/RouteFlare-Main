@@ -6592,79 +6592,93 @@ async function fetchLiveDieselPrices(){
 
   const apiKey = getEIAKey();
 
-  // PADD region codes for the pri/gnd/data endpoint
-  const paddAreas = ['R1X','R1Y','R1Z','R20','R30','R40','R50'];
-  const paddAreaParams = paddAreas.map(a => `facets[duoarea][]=${a}`).join('&');
-  const gndUrl = `https://api.eia.gov/v2/petroleum/pri/gnd/data/?frequency=weekly&data[0]=value&facets[product][]=EPD2DXL0&${paddAreaParams}&sort[0][column]=period&sort[0][direction]=desc&length=14&api_key=${apiKey}`;
-
-  // Map PADD area codes to PADD region names used by PADD_STATE_MAP
+  // All US state codes for EIA API (S + state abbreviation)
+  const allStates = ['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+  const stateAreaCodes = allStates.map(s => 'S' + s);
+  const paddAreaCodes = ['R1X','R1Y','R1Z','R20','R30','R40','R50'];
+  const allAreas = [...stateAreaCodes, ...paddAreaCodes];
+  const areaParams = allAreas.map(a => `facets[duoarea][]=${a}`).join('&');
   const AREA_TO_PADD = {'R1X':'PADD 1A','R1Y':'PADD 1B','R1Z':'PADD 1C','R20':'PADD 2','R30':'PADD 3','R40':'PADD 4','R50':'PADD 5'};
 
-  function parsePaddGnd(data){
-    const regionPrices = {};
+  function parseStateAndPaddData(data){
+    const stateDirectPrices = {};
+    const paddPrices = {};
     const seen = {};
     data.forEach(row => {
       const area = row.duoarea || '';
-      if(!seen[area] && row.value != null){
-        seen[area] = true;
-        const val = parseFloat(row.value);
-        if(val > 0 && AREA_TO_PADD[area]) regionPrices[AREA_TO_PADD[area]] = val;
+      if(seen[area] || row.value == null) return;
+      seen[area] = true;
+      const val = parseFloat(row.value);
+      if(val <= 0) return;
+      if(area.length === 3 && area.startsWith('S')){
+        stateDirectPrices[area.slice(1)] = val;
+      } else if(AREA_TO_PADD[area]){
+        paddPrices[AREA_TO_PADD[area]] = val;
       }
     });
-    if(Object.keys(regionPrices).length < 3) return null;
+
     const statePrices = {};
-    Object.entries(PADD_STATE_MAP).forEach(([region, states]) => {
-      if(regionPrices[region]) states.forEach(s => statePrices[s] = regionPrices[region]);
+    allStates.forEach(st => {
+      if(stateDirectPrices[st]){
+        statePrices[st] = stateDirectPrices[st];
+      } else {
+        const padd = STATE_TO_PADD[st];
+        if(padd && paddPrices[padd]) statePrices[st] = paddPrices[padd];
+      }
     });
+
+    const directCount = Object.keys(stateDirectPrices).length;
+    const paddCount = Object.keys(paddPrices).length;
+    console.log(`[RouteFlare] EIA: ${directCount} state prices + ${paddCount} PADD regions → ${Object.keys(statePrices).length} states total`);
     return Object.keys(statePrices).length > 10 ? statePrices : null;
   }
 
-  // Attempt 1: EIA pri/gnd/data endpoint with PADD regions (most reliable)
+  const gndUrl = `https://api.eia.gov/v2/petroleum/pri/gnd/data/?frequency=weekly&data[0]=value&facets[product][]=EPD2DXL0&${areaParams}&sort[0][column]=period&sort[0][direction]=desc&length=120&api_key=${apiKey}`;
+
+  // Attempt 1: Direct EIA call — state + PADD data
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const timeout = setTimeout(() => controller.abort(), 10000);
     const r = await fetch(gndUrl, {signal: controller.signal});
     clearTimeout(timeout);
     if(r.ok){
       const json = await r.json();
       const data = json?.response?.data || [];
       if(data.length > 0){
-        const parsed = parsePaddGnd(data);
+        const parsed = parseStateAndPaddData(data);
         if(parsed){
           S_livePrices = parsed;
           S_livePriceDate = data[0]?.period || null;
           S_livePriceSource = 'eia';
-          console.log(`[RouteFlare] Live EIA PADD diesel prices loaded for ${Object.keys(parsed).length} states`);
           return S_livePrices;
         }
       }
     }
-  } catch(e){ console.warn('[RouteFlare] Direct EIA PADD call failed:', e.message); }
+  } catch(e){ console.warn('[RouteFlare] Direct EIA state call failed:', e.message); }
 
-  // Attempt 2: Same endpoint via CORS proxy
+  // Attempt 2: Via CORS proxy
   try {
     const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(gndUrl);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 12000);
     const r = await fetch(proxyUrl, {signal: controller.signal});
     clearTimeout(timeout);
     if(r.ok){
       const json = JSON.parse(await r.text());
       const data = json?.response?.data || [];
       if(data.length > 0){
-        const parsed = parsePaddGnd(data);
+        const parsed = parseStateAndPaddData(data);
         if(parsed){
           S_livePrices = parsed;
           S_livePriceDate = data[0]?.period || null;
           S_livePriceSource = 'eia';
-          console.log(`[RouteFlare] EIA PADD prices loaded via proxy for ${Object.keys(parsed).length} states`);
           return S_livePrices;
         }
       }
     }
   } catch(e){ console.warn('[RouteFlare] CORS proxy EIA call failed:', e.message); }
 
-  // Attempt 3: Get national average and scale fallback PADD prices proportionally
+  // Attempt 3: National average → scale PADD fallback prices
   try {
     const natResult = await fetchEIAPrices(apiKey);
     if(natResult && natResult.national){
@@ -6673,19 +6687,18 @@ async function fetchLiveDieselPrices(){
       const scale = natResult.national / fallbackAvg;
       const statePrices = {};
       Object.entries(PADD_STATE_MAP).forEach(([region, states]) => {
-        const price = (fallback[region] || fallbackAvg) * scale;
-        states.forEach(s => statePrices[s] = parseFloat(price.toFixed(3)));
+        const regionPrice = (fallback[region] || fallbackAvg) * scale;
+        states.forEach(s => statePrices[s] = parseFloat(regionPrice.toFixed(3)));
       });
       S_livePrices = statePrices;
       S_livePriceDate = new Date().toISOString().split('T')[0];
       S_livePriceSource = 'eia';
-      console.log(`[RouteFlare] EIA national price $${natResult.national} scaled to ${Object.keys(statePrices).length} states`);
       return S_livePrices;
     }
   } catch(e){ console.warn('[RouteFlare] National EIA scaling failed:', e.message); }
 
-  // Fallback: Use built-in recent diesel prices
-  console.warn('[RouteFlare] Using built-in fallback diesel prices (March 2026)');
+  // Fallback: hardcoded PADD prices
+  console.warn('[RouteFlare] Using built-in fallback diesel prices');
   S_livePrices = applyFallbackPrices();
   S_livePriceDate = '2026-03-31';
   S_livePriceSource = 'fallback';

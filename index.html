@@ -6590,9 +6590,12 @@ function applyFallbackPrices(){
 async function fetchLiveDieselPrices(){
   if(S_livePrices) return S_livePrices;
 
-  // Attempt 1: Direct EIA v2 API call (works if CORS allowed and key is valid)
+  const apiKey = getEIAKey();
+  const baseParams = 'frequency=weekly&data[0]=value&facets[product][]=DFO&facets[area][]=PADD1A&facets[area][]=PADD1B&facets[area][]=PADD1C&facets[area][]=PADD2&facets[area][]=PADD3&facets[area][]=PADD4&facets[area][]=PADD5&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=16';
+
+  // Attempt 1: Direct EIA v2 API call with API key
   try {
-    const eiaUrl = 'https://api.eia.gov/v2/petroleum/rdc2/?frequency=weekly&data[0]=value&facets[product][]=DFO&facets[area][]=PADD1A&facets[area][]=PADD1B&facets[area][]=PADD1C&facets[area][]=PADD2&facets[area][]=PADD3&facets[area][]=PADD4&facets[area][]=PADD5&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=16';
+    const eiaUrl = `https://api.eia.gov/v2/petroleum/rdc2/?${baseParams}&api_key=${apiKey}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     const r = await fetch(eiaUrl, {signal: controller.signal});
@@ -6616,7 +6619,7 @@ async function fetchLiveDieselPrices(){
   // Attempt 2: Try via CORS proxy
   try {
     const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(
-      'https://api.eia.gov/v2/petroleum/rdc2/?frequency=weekly&data[0]=value&facets[product][]=DFO&facets[area][]=PADD1A&facets[area][]=PADD1B&facets[area][]=PADD1C&facets[area][]=PADD2&facets[area][]=PADD3&facets[area][]=PADD4&facets[area][]=PADD5&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=16'
+      `https://api.eia.gov/v2/petroleum/rdc2/?${baseParams}&api_key=${apiKey}`
     );
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);

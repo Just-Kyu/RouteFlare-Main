@@ -1010,6 +1010,30 @@ body {
 .modal-close:hover { color: var(--text); }
 .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
 .modal-grid .ig.full { grid-column: 1/-1; }
+.truck-search-wrap { position: relative; }
+.truck-dropdown {
+  display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+  max-height: 220px; overflow-y: auto; margin-top: 4px;
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
+.truck-dropdown.open { display: block; }
+.truck-dropdown::-webkit-scrollbar { width: 4px; }
+.truck-dropdown::-webkit-scrollbar-track { background: transparent; }
+.truck-dropdown::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.truck-opt {
+  padding: 9px 14px; cursor: pointer; font-size: 12px; font-weight: 500;
+  color: var(--text); font-family: var(--font); transition: background .1s;
+  display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border);
+}
+.truck-opt:last-child { border-bottom: none; }
+.truck-opt:hover, .truck-opt.active { background: var(--purple-dim); color: var(--purple-lt); }
+.truck-opt .t-unit { font-weight: 700; min-width: 50px; }
+.truck-opt .t-name { color: var(--text2); font-weight: 400; }
+.truck-opt:hover .t-name { color: var(--purple-lt); }
+.truck-dropdown .truck-empty {
+  padding: 16px; text-align: center; font-size: 11px; color: var(--text3);
+}
 .modal-save-btn { width: 100%; background: linear-gradient(135deg, var(--purple-lt), var(--purple)); color: #fff; border: none; border-radius: 10px; font-family: var(--font); font-weight: 700; font-size: 15px; padding: 13px; cursor: pointer; transition: all .2s; box-shadow: 0 4px 12px var(--purple-glow); }
 .modal-save-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px var(--purple-glow); }
 
@@ -1788,9 +1812,11 @@ body {
     <button class="modal-close" onclick="closeFuelModal()">✕</button>
     <div class="modal-grid">
       <div class="ig"><label>Truck Unit #</label>
-        <select id="mUnit" class="finput" style="margin-bottom:0;appearance:none;cursor:pointer;">
-          <option value="">Select truck...</option>
-        </select>
+        <div class="truck-search-wrap" id="truckSearchWrap">
+          <input type="text" class="finput" id="mUnitSearch" placeholder="Search truck #..." autocomplete="off" style="margin-bottom:0;" onfocus="openTruckDropdown()" oninput="filterTruckDropdown(this.value)" onblur="closeTruckDropdown()"/>
+          <input type="hidden" id="mUnit" />
+          <div class="truck-dropdown" id="truckDropdown"></div>
+        </div>
       </div>
       <div class="ig"><label>Fuel Station</label><input class="finput" style="margin-bottom:0" type="text" id="mStation" placeholder="e.g. Pilot Flying J"/></div>
       <div class="ig"><label>Gallons Fueled</label><input class="finput" style="margin-bottom:0" type="number" id="mGallons" placeholder="e.g. 120" min="1"/></div>
@@ -8292,6 +8318,8 @@ function openLogForDispatch(dispatchId){
   document.getElementById('mDiscount').value = d.discountedPrice;
   if(d.assignedUnit){
     document.getElementById('mUnit').value = d.assignedUnit;
+    const match = S._truckList.find(t => t.unit === d.assignedUnit);
+    document.getElementById('mUnitSearch').value = match ? `${match.unit} — ${match.name}` : d.assignedUnit;
   }
   if(d.state){
     const sel = document.getElementById('mState');
@@ -9724,13 +9752,49 @@ function exportPDF(){
 // ═══════════════════════════════════════════════════════
 function openAddFueling(){ populateTruckSelect(); document.getElementById('fuelModal').classList.add('on'); }
 function closeFuelModal(){ document.getElementById('fuelModal').classList.remove('on'); }
+S._truckList = [];
 function populateTruckSelect(){
-  const sel=document.getElementById('mUnit'); const cur=sel.value;
-  sel.innerHTML='<option value="">Select truck...</option>';
-  Object.values(S.vehicles).flat().forEach(v=>{
-    const o=document.createElement('option'); o.value=v.unitNumber; o.textContent=`${v.unitNumber} — ${v.name}`; sel.appendChild(o);
-  });
-  if(cur) sel.value=cur;
+  S._truckList = Object.values(S.vehicles).flat().map(v => ({unit: v.unitNumber, name: v.name}));
+  const hidden = document.getElementById('mUnit');
+  const search = document.getElementById('mUnitSearch');
+  if(hidden.value){
+    const match = S._truckList.find(t => t.unit === hidden.value);
+    if(match) search.value = `${match.unit} — ${match.name}`;
+  }
+}
+
+function openTruckDropdown(){
+  const dd = document.getElementById('truckDropdown');
+  dd.classList.add('open');
+  filterTruckDropdown(document.getElementById('mUnitSearch').value);
+}
+
+function closeTruckDropdown(){
+  setTimeout(() => document.getElementById('truckDropdown').classList.remove('open'), 150);
+}
+
+function filterTruckDropdown(query){
+  const dd = document.getElementById('truckDropdown');
+  const q = query.toLowerCase().trim();
+  const filtered = q ? S._truckList.filter(t =>
+    t.unit.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)
+  ) : S._truckList;
+
+  if(!filtered.length){
+    dd.innerHTML = '<div class="truck-empty">No trucks match "' + (query||'') + '"</div>';
+    return;
+  }
+  dd.innerHTML = filtered.map(t =>
+    `<div class="truck-opt" onmousedown="selectTruck('${t.unit}','${t.name.replace(/'/g,"\\'")}')">
+      <span class="t-unit">${t.unit}</span><span class="t-name">${t.name}</span>
+    </div>`
+  ).join('');
+}
+
+function selectTruck(unit, name){
+  document.getElementById('mUnit').value = unit;
+  document.getElementById('mUnitSearch').value = `${unit} — ${name}`;
+  document.getElementById('truckDropdown').classList.remove('open');
 }
 
 function triggerAlert(v,lvl){

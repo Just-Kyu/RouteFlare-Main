@@ -1714,6 +1714,7 @@ body {
         </div>
         <div class="fl-tabs">
           <button class="fl-tab on" onclick="setFlTab('dispatch',this)">Dispatched</button>
+          <button class="fl-tab" onclick="setFlTab('relay',this)">Relay Fuel Plans</button>
           <button class="fl-tab" onclick="setFlTab('history',this)">History</button>
           <button class="fl-tab" onclick="setFlTab('reports',this)">Monthly Report</button>
         </div>
@@ -1726,6 +1727,24 @@ body {
             <div class="es-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4z"/></svg></div>
             <div class="es-text">No dispatched stations yet</div>
             <div class="es-sub">Use the Finder to find stations and send to drivers via Telegram</div>
+          </div>
+        </div>
+
+        <!-- Relay Fuel Plans -->
+        <div class="fl-section" id="flRelay" style="margin-top:14px;">
+          <div class="card" style="overflow-x:auto;">
+            <table class="fl-table">
+              <thead><tr>
+                <th class="sortable" data-sort="date" data-table="relay" onclick="sortFlTable(this)">Date</th><th>Station</th><th>Truck</th><th>Gallons</th>
+                <th class="sortable" data-sort="pricePerGal" data-table="relay" onclick="sortFlTable(this)">Price/Gal</th><th class="sortable" data-sort="discountedPrice" data-table="relay" onclick="sortFlTable(this)">Disc. Price</th><th>Total</th><th>Saved</th><th>Status</th><th style="width:80px;"></th>
+              </tr></thead>
+              <tbody id="flRelayBody"></tbody>
+            </table>
+            <div class="empty-state" id="relayEmpty" style="display:none;">
+              <div class="es-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+              <div class="es-text">No Relay fuel plans yet</div>
+              <div class="es-sub">Add a fueling log and select "Relay" to create a fuel plan</div>
+            </div>
           </div>
         </div>
 
@@ -1802,14 +1821,17 @@ body {
 <!-- ADD FUELING MODAL -->
 <div class="modal-overlay" id="fuelModal">
   <div class="modal">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-      <img src="logo-icon.png" alt="R" width="32" height="32" style="border-radius:8px;object-fit:contain;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <div>
-        <div class="modal-h" style="margin-bottom:0">Log Fueling Stop</div>
-        <div class="modal-sub" style="margin-bottom:0">Record fuel purchase — savings calculated automatically</div>
+        <div class="modal-h" style="margin-bottom:2px">Log Fueling Stop</div>
+        <div class="modal-sub" style="margin-bottom:0">Select where to add this record</div>
       </div>
+      <button class="modal-close" onclick="closeFuelModal()">✕</button>
     </div>
-    <button class="modal-close" onclick="closeFuelModal()">✕</button>
+    <div class="fuel-dest-toggle" style="display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:3px;margin-bottom:14px;">
+      <button type="button" class="fl-tab on" id="destRelay" onclick="setFuelDest('relay',this)">Relay</button>
+      <button type="button" class="fl-tab" id="destRouteflare" onclick="setFuelDest('routeflare',this)">RouteFlare</button>
+    </div>
     <div class="modal-grid">
       <div class="ig"><label>Truck Unit #</label>
         <div class="truck-search-wrap" id="truckSearchWrap">
@@ -6181,14 +6203,17 @@ async function pushRecordsToSync(){
 
 
 function saveFueling(){
+  const dest = S._fuelDest || 'routeflare';
   const unit=document.getElementById('mUnit').value;
   const station=document.getElementById('mStation').value.trim();
-  const gals=parseFloat(document.getElementById('mGallons').value);
+  const galsRaw=document.getElementById('mGallons').value;
+  const gals=parseFloat(galsRaw) || 0;
   const price=parseFloat(document.getElementById('mPrice').value);
   const disc=parseFloat(document.getElementById('mDiscount').value||price);
   const state=document.getElementById('mState').value;
   const date=document.getElementById('mDate').value;
-  if(!unit||!station||!gals||!price) return showToast('vwa','!','Missing Fields','Fill all required fields.');
+  if(!unit||!station||!price) return showToast('vwa','!','Missing Fields','Fill truck, station, and price.');
+  if(dest === 'routeflare' && !gals) return showToast('vwa','!','Missing Gallons','Gallons required for RouteFlare logs.');
   const rec={
     id:`fr_${Date.now()}`, companyIndex:S.activeCompany,
     truckUnit:unit, truckName:unit, station, gallons:gals,
@@ -6196,6 +6221,7 @@ function saveFueling(){
     total:parseFloat((gals*price).toFixed(2)),
     discountTotal:parseFloat((gals*disc).toFixed(2)),
     saved:parseFloat((gals*(price-disc)).toFixed(2)),
+    fuelDest: dest,
   };
   S.fuelRecords.push(rec);
   // Persist to localStorage fuel log
@@ -6214,7 +6240,9 @@ function saveFueling(){
   }
   closeFuelModal();
   renderDashboard(); refreshCharts();
-  showToast('ok','ok','Fueling Logged',`${gals} gals at ${station} — saved $${rec.saved.toFixed(2)}`);
+  const destLabel = dest === 'relay' ? 'Relay Plan' : 'RouteFlare';
+  const galsMsg = gals > 0 ? `${gals} gals at ${station}` : `${station} (pending gallons)`;
+  showToast('ok','ok',`Added to ${destLabel}`, galsMsg + (rec.saved > 0 ? ` — saved $${rec.saved.toFixed(2)}` : ''));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -8252,17 +8280,35 @@ function saveFuelLogHistory(list){
   localStorage.setItem('ff_fuel_log', JSON.stringify(list));
 }
 
+S._fuelDest = 'relay';
+function setFuelDest(dest, btn){
+  S._fuelDest = dest;
+  document.querySelectorAll('.fuel-dest-toggle .fl-tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  const galInput = document.getElementById('mGallons');
+  const galLabel = galInput.closest('.ig').querySelector('label');
+  if(dest === 'relay'){
+    galLabel.innerHTML = 'Gallons Fueled <span style="font-size:9px;opacity:.6;">(optional)</span>';
+    galInput.required = false;
+  } else {
+    galLabel.textContent = 'Gallons Fueled';
+    galInput.required = true;
+  }
+}
+
 function setFlTab(tab, btn){
-  document.querySelectorAll('.fl-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('#page-fuelLog > .fl-tabs > .fl-tab').forEach(t=>t.classList.remove('on'));
   document.querySelectorAll('.fl-section').forEach(s=>s.classList.remove('on'));
   btn.classList.add('on');
-  document.getElementById(tab==='dispatch'?'flDispatch':tab==='history'?'flHistory':'flReports').classList.add('on');
+  const map = {dispatch:'flDispatch', relay:'flRelay', history:'flHistory', reports:'flReports'};
+  document.getElementById(map[tab]).classList.add('on');
 }
 
 function renderFuelLog(){
   populateMonthSelect();
   S._histPage = 1;
   renderDispatchQueue();
+  renderRelayPlans();
   renderFuelHistory();
   renderMonthlyReport();
 }
@@ -8334,6 +8380,54 @@ function openLogForDispatch(dispatchId){
   document.getElementById('fuelModal').classList.add('on');
 }
 
+
+function renderRelayPlans(){
+  const history = getFuelLogHistory().filter(r => r.fuelDest === 'relay');
+  const tbody = document.getElementById('flRelayBody');
+  const empty = document.getElementById('relayEmpty');
+  if(!history.length){
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = history.map(r => {
+    const hasFueled = r.gallons > 0;
+    const status = hasFueled
+      ? '<span style="color:var(--green);font-weight:700;font-size:11px;">Fueled</span>'
+      : '<span style="color:var(--purple-lt);font-weight:600;font-size:11px;">Pending</span>';
+    return `<tr>
+      <td>${r.date}</td>
+      <td class="fl-station">${r.station}</td>
+      <td>${r.truckUnit||'—'}</td>
+      <td>${hasFueled ? r.gallons : '<span style="color:var(--text3);">—</span>'}</td>
+      <td>$${parseFloat(r.pricePerGal).toFixed(3)}</td>
+      <td>$${parseFloat(r.discountedPrice).toFixed(3)}</td>
+      <td class="fl-total">${hasFueled ? '$'+parseFloat(r.discountTotal).toFixed(2) : '—'}</td>
+      <td class="fl-saved">${hasFueled ? '$'+parseFloat(r.saved).toFixed(2) : '—'}</td>
+      <td>${status}</td>
+      <td>${!hasFueled ? '<button class="dc-log-btn" style="font-size:10px;padding:4px 10px;" onclick="openUpdateRelay(\''+r.id+'\')">Update</button>' : ''}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openUpdateRelay(id){
+  const history = getFuelLogHistory();
+  const rec = history.find(r => r.id === id);
+  if(!rec) return;
+  const gals = prompt('Enter gallons fueled:');
+  if(!gals || isNaN(parseFloat(gals))) return;
+  rec.gallons = parseFloat(gals);
+  rec.total = parseFloat((rec.gallons * rec.pricePerGal).toFixed(2));
+  rec.discountTotal = parseFloat((rec.gallons * rec.discountedPrice).toFixed(2));
+  rec.saved = parseFloat((rec.gallons * (rec.pricePerGal - rec.discountedPrice)).toFixed(2));
+  saveFuelLogHistory(history);
+  const memRec = S.fuelRecords.find(r => r.id === id);
+  if(memRec){ Object.assign(memRec, {gallons:rec.gallons, total:rec.total, discountTotal:rec.discountTotal, saved:rec.saved}); }
+  renderFuelLog();
+  renderDashboard(); refreshCharts();
+  showToast('ok','ok','Updated',`${rec.gallons} gals logged for ${rec.station}`);
+}
 
 // ═══════════ TABLE SORTING ═══════════
 S._sortState = { history: { key: 'date', dir: 'desc' }, report: { key: 'spent', dir: 'desc' }, truck: { key: 'total', dir: 'desc' } };
@@ -9750,7 +9844,21 @@ function exportPDF(){
 // ═══════════════════════════════════════════════════════
 // MODALS & NOTIFICATIONS
 // ═══════════════════════════════════════════════════════
-function openAddFueling(){ populateTruckSelect(); document.getElementById('fuelModal').classList.add('on'); }
+function openAddFueling(){
+  populateTruckSelect();
+  S._fuelDest = 'relay';
+  document.querySelectorAll('.fuel-dest-toggle .fl-tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('destRelay').classList.add('on');
+  setFuelDest('relay', document.getElementById('destRelay'));
+  document.getElementById('mUnitSearch').value = '';
+  document.getElementById('mUnit').value = '';
+  document.getElementById('mStation').value = '';
+  document.getElementById('mGallons').value = '';
+  document.getElementById('mPrice').value = '';
+  document.getElementById('mDiscount').value = '';
+  document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fuelModal').classList.add('on');
+}
 function closeFuelModal(){ document.getElementById('fuelModal').classList.remove('on'); }
 S._truckList = [];
 function populateTruckSelect(){

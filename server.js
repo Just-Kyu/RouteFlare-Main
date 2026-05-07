@@ -110,21 +110,27 @@ app.get('/fleet/vehicles', async (req, res) => {
   }
 });
 
-// ─── Samsara: ALL vehicle stats (paginated) ──────────────
+// ─── Samsara: vehicle stats (direct proxy) ──────────────
 app.get('/fleet/vehicles/stats', async (req, res) => {
   const apiKey = getSamsaraKey(req);
   if (!apiKey) return res.status(401).json({ error: 'Missing Samsara API key' });
 
   try {
-    const all = await samsaraFetchAll('/fleet/vehicles/stats', apiKey, {
-      types: req.query.types || 'fuelPercents,engineStates,gps,obdOdometerMeters',
-      decorations: req.query.decorations || '',
+    const qs = req.originalUrl.substring(req.originalUrl.indexOf('?'));
+    const samsaraUrl = `${SAMSARA_BASE}/fleet/vehicles/stats${qs}`;
+    console.log(`[stats] Proxying: ${samsaraUrl}`);
+    const sRes = await fetch(samsaraUrl, {
+      headers: { Authorization: `Bearer ${apiKey}` },
     });
-    console.log(`[stats] ${all.length} vehicles`);
-    res.json({ data: all, pagination: { hasNextPage: false } });
+    const data = await sRes.text();
+    const parsed = JSON.parse(data);
+    const count = parsed.data?.length || 0;
+    const withFuel = parsed.data?.filter(v => v.fuelPercent?.value !== undefined).length || 0;
+    console.log(`[stats] ${sRes.status} — ${count} vehicles, ${withFuel} with fuel data`);
+    res.status(sRes.status).set('Content-Type', 'application/json').send(data);
   } catch (err) {
-    console.error('[stats]', err.message);
-    res.status(err.status || 500).json({ error: err.message });
+    console.error('[stats] Error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -163,6 +169,29 @@ app.all('/fuel-purchase/*', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ─── Debug endpoint ──────────────────────────────────────
+app.get('/api/debug/samsara', async (req, res) => {
+  const apiKey = getSamsaraKey(req);
+  if (!apiKey) return res.status(401).json({ error: 'Send Authorization: Bearer <key> header' });
+
+  const out = { vehicles: null, stats: null, errors: [] };
+  try {
+    const vRes = await fetch(`${SAMSARA_BASE}/fleet/vehicles?limit=3`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    out.vehicles = await vRes.json();
+  } catch (e) { out.errors.push('vehicles: ' + e.message); }
+
+  try {
+    const sRes = await fetch(`${SAMSARA_BASE}/fleet/vehicles/stats?types=fuelPercents,engineStates,gps,obdOdometerMeters&decorations=reverseGeo&limit=3`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    out.stats = await sRes.json();
+  } catch (e) { out.errors.push('stats: ' + e.message); }
+
+  res.json(out);
 });
 
 // ─── Transactions ────────────────────────────────────────

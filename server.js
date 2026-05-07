@@ -165,7 +165,7 @@ app.get('/api/debug/samsara', async (req, res) => {
   } catch (e) { out.errors.push('vehicles: ' + e.message); }
 
   try {
-    const sRes = await fetch(`${SAMSARA_BASE}/fleet/vehicles/stats?types=fuelPercents,engineStates,gps,obdOdometerMeters&decorations=reverseGeo&limit=3`, {
+    const sRes = await fetch(`${SAMSARA_BASE}/fleet/vehicles/stats?types=fuelPercents,engineStates,gps,obdOdometerMeters&limit=3`, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     out.stats = await sRes.json();

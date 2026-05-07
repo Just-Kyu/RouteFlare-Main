@@ -1993,7 +1993,7 @@ async function debugSamsara(){
     output += `First vehicle ID: "${firstId}"\n\n`;
 
     // 2. Stats for just that vehicle
-    const sRes = await fetch(`${getBackendUrl()}/fleet/vehicles/stats?types=fuelPercents,gps,engineStates,obdOdometerMeters&decorations=reverseGeo&limit=3`, { headers });
+    const sRes = await fetch(`${getBackendUrl()}/fleet/vehicles/stats?types=fuelPercents,gps,engineStates,obdOdometerMeters&limit=3`, { headers });
     const sJson = await sRes.json();
     const statsItems = sJson.data || [];
 
@@ -2390,7 +2390,7 @@ async function fetchVehicles(ci){
       let statsMap = {};
       try{
         const sRes = await fetch(
-          `${backend}/fleet/vehicles/stats?types=fuelPercents,engineStates,gps,obdOdometerMeters&decorations=reverseGeo&limit=512`,
+          `${backend}/fleet/vehicles/stats?types=fuelPercents,engineStates,gps,obdOdometerMeters&limit=200`,
           { headers }
         );
         if(sRes.ok){

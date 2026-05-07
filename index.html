@@ -2388,24 +2388,29 @@ async function fetchVehicles(ci){
       // NOTE: Samsara returns each stat as a SINGLE OBJECT, not an array
       // e.g. sv.fuelPercent.value (not sv.fuelPercents[0].value)
       let statsMap = {};
-      try{
-        const sRes = await fetch(
-          `${backend}/fleet/vehicles/stats?types=fuelPercents,engineStates,gps,obdOdometerMeters&limit=200`,
-          { headers }
-        );
-        if(sRes.ok){
-          const sJson = await sRes.json();
-          console.log('[RouteFlare] Stats raw — total:', (sJson.data||[]).length, 'sample:', sJson.data?.[0]);
-          (sJson.data||[]).forEach(sv => { statsMap[sv.id] = sv; });
-        } else {
-          console.warn('Stats failed:', sRes.status, await sRes.text());
-        }
-      } catch(e){ console.warn('Stats error:', e.message); }
-
-      // Check ID matching
-      const vIds = vData.slice(0,3).map(v => v.id);
-      const sIds = Object.keys(statsMap).slice(0,3);
-      console.log('[RouteFlare] Vehicle IDs (sample):', vIds, 'Stats IDs (sample):', sIds, 'Match:', vIds[0] === sIds[0]);
+      let licenseError = false;
+      // Try each stat type independently — different Samsara licenses gate different data
+      const statTypes = ['gps', 'fuelPercents', 'engineStates', 'obdOdometerMeters'];
+      for(const type of statTypes){
+        try{
+          const sRes = await fetch(`${backend}/fleet/vehicles/stats?types=${type}&limit=200`, { headers });
+          if(sRes.ok){
+            const sJson = await sRes.json();
+            (sJson.data||[]).forEach(sv => {
+              if(!statsMap[sv.id]) statsMap[sv.id] = {};
+              Object.assign(statsMap[sv.id], sv);
+            });
+            console.log(`[RouteFlare] Stats[${type}]: ${(sJson.data||[]).length} vehicles`);
+          } else {
+            const errTxt = await sRes.text();
+            if(errTxt.includes('licenses')) licenseError = true;
+            console.warn(`Stats[${type}] failed:`, sRes.status, errTxt);
+          }
+        } catch(e){ console.warn(`Stats[${type}] error:`, e.message); }
+      }
+      if(licenseError){
+        showToast('vwa','!','Samsara License','API key missing Vehicle Stats license — fuel/GPS data unavailable');
+      }
 
       const trucks = vData.map(v => {
         const sv = statsMap[v.id] || {};

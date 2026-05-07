@@ -1973,6 +1973,23 @@ function getBackendUrl(){
   return (localStorage.getItem('rf_backend_url') || '').replace(/\/+$/, '');
 }
 
+function formatRelativeTime(iso){
+  const then = new Date(iso).getTime();
+  if(isNaN(then)) return '—';
+  const diff = Date.now() - then;
+  const mins = Math.floor(diff/60000);
+  if(mins < 1) return 'Just now';
+  if(mins < 60) return `${mins} min${mins===1?'':'s'} ago`;
+  const hrs = Math.floor(mins/60);
+  if(hrs < 24) return `${hrs} hour${hrs===1?'':'s'} ago`;
+  const days = Math.floor(hrs/24);
+  if(days < 30) return days===1 ? 'a day ago' : `${days} days ago`;
+  const months = Math.floor(days/30);
+  if(months < 12) return months===1 ? 'a month ago' : `${months} months ago`;
+  const years = Math.floor(days/365);
+  return years===1 ? 'a year ago' : `${years} years ago`;
+}
+
 async function debugSamsara(){
   const apiKey = (S.apiKeys && S.apiKeys[0]) || S.apiKey || '';
   if(!apiKey){ alert('No API key found in S.apiKeys[0] or S.apiKey'); return; }
@@ -2473,6 +2490,12 @@ async function fetchVehicles(ci){
 
         const updatedAt = sv.fuelPercent?.time ?? sv.gps?.time ?? new Date().toISOString();
 
+        // Last Trip: "On Trip" if engine on, else relative time from last GPS update
+        const lastTripTime = sv.gps?.time ?? sv.fuelPercent?.time ?? null;
+        const lastTrip = engineState === 'On'
+          ? 'On Trip'
+          : (lastTripTime ? formatRelativeTime(lastTripTime) : 'Never active');
+
         return {
           id:          v.id,
           name:        v.name || `Vehicle ${v.id}`,
@@ -2484,6 +2507,7 @@ async function fetchVehicles(ci){
           odometer,
           engineState,
           updatedAt,
+          lastTrip,
           lat: gps?.latitude  ?? null,
           lng: gps?.longitude ?? null,
         };
@@ -6367,6 +6391,8 @@ function renderVehicles(veh){
     const engineBadge = v.engineState==='On'
       ? `<span style="background:#22C55E22;color:#22C55E;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:6px;">ON</span>`
       : `<span style="background:#6B728022;color:#6B7280;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:6px;">OFF</span>`;
+    const tripLabel = v.lastTrip || '—';
+    const tripColor = v.lastTrip === 'On Trip' ? 'var(--green)' : 'var(--text2)';
     const fuelLabel = v.fuelEst
       ? `${v.fuelPercent}%<span style="font-size:9px;color:#aaa;margin-left:2px;">est.</span>`
       : `${v.fuelPercent}%`;
@@ -6385,6 +6411,7 @@ function renderVehicles(veh){
         <div class="vmi"><span>${S.companies[S.activeCompany]}</span></div>
         <div class="vmi"><span>${upd}</span></div>
       </div>
+      <div style="font-size:11px;color:${tripColor};margin-top:6px;font-weight:600;">Last Trip: ${tripLabel}</div>
       ${lvl!=='vok'?`<button class="vfind-btn" onclick="goFindForTruck('${v.location.replace(/'/g,"\\'")}',${v.lat!=null?v.lat:'null'},${v.lng!=null?v.lng:'null'})">Find Nearest Fuel Stop</button>`:''}`;
     grid.appendChild(card);
   });

@@ -1969,6 +1969,10 @@ function updateChartTheme(){
 // ═══════════════════════════════════════════════════════
 // SETUP
 // ═══════════════════════════════════════════════════════
+function getBackendUrl(){
+  return (localStorage.getItem('rf_backend_url') || '').replace(/\/+$/, '');
+}
+
 async function debugSamsara(){
   const apiKey = (S.apiKeys && S.apiKeys[0]) || S.apiKey || '';
   if(!apiKey){ alert('No API key found in S.apiKeys[0] or S.apiKey'); return; }
@@ -1978,7 +1982,7 @@ async function debugSamsara(){
 
   try{
     // 1. Vehicle list — grab first 2 IDs
-    const vRes = await fetch(`https://patient-snow-c57c.ismoilovquvonchbek02052004.workers.dev/fleet/vehicles?limit=3`, { headers });
+    const vRes = await fetch(`${getBackendUrl()}/fleet/vehicles?limit=3`, { headers });
     const vJson = await vRes.json();
     const vehicles = vJson.data || [];
     output += `VEHICLES (first 3):\n${JSON.stringify(vehicles.map(v=>({id:v.id,name:v.name,vin:v.vin})),null,2)}\n\n`;
@@ -1989,7 +1993,7 @@ async function debugSamsara(){
     output += `First vehicle ID: "${firstId}"\n\n`;
 
     // 2. Stats for just that vehicle
-    const sRes = await fetch(`https://patient-snow-c57c.ismoilovquvonchbek02052004.workers.dev/fleet/vehicles/stats?types=fuelPercents,gps,engineStates,obdOdometerMeters&decorations=reverseGeo&limit=3`, { headers });
+    const sRes = await fetch(`${getBackendUrl()}/fleet/vehicles/stats?types=fuelPercents,gps,engineStates,obdOdometerMeters&decorations=reverseGeo&limit=3`, { headers });
     const sJson = await sRes.json();
     const statsItems = sJson.data || [];
 
@@ -2039,12 +2043,32 @@ function openManageCo(){
   thr.value = S.threshold;
   tval.textContent = S.threshold + '%';
   document.getElementById('manageCoStatus').style.display = 'none';
+  // Restore backend URL
+  const backendUrlInput = document.getElementById('manageBackendUrl');
+  if(backendUrlInput) backendUrlInput.value = localStorage.getItem('rf_backend_url') || '';
   // Restore sync URL
   const syncUrlInput = document.getElementById('manageSyncUrl');
   if(syncUrlInput) syncUrlInput.value = localStorage.getItem('fuel_sync_url') || '';
   const adminUrlInput = document.getElementById('manageAdminUrl');
   if(adminUrlInput) adminUrlInput.value = localStorage.getItem('rf_admin_url') || '';
   document.getElementById('manageCoModal').style.display = 'flex';
+}
+
+async function testBackendUrl(){
+  const url = (document.getElementById('manageBackendUrl').value || '').trim().replace(/\/+$/, '');
+  const el = document.getElementById('backendTestResult');
+  if(!url){ el.textContent = 'Enter backend URL first'; el.style.color = 'var(--orange)'; return; }
+  el.textContent = 'Testing...'; el.style.color = 'var(--text3)';
+  try {
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    el.textContent = '✓ ' + (d.service || 'Connected') + ' — ' + (d.transactions || 0) + ' transactions';
+    el.style.color = 'var(--green)';
+  } catch(e){
+    el.textContent = '✕ Error: ' + e.message;
+    el.style.color = 'var(--red)';
+  }
 }
 
 async function testSyncWorker(){
@@ -2119,7 +2143,11 @@ async function saveManageCo(){
   localStorage.setItem('ff_companies', JSON.stringify(newNames));
   localStorage.setItem('ff_apiKeys', JSON.stringify(newKeys));
   localStorage.setItem('ff_threshold', newThreshold);
-  // Save sync URL
+  // Save backend URL
+  const backendUrlVal = (document.getElementById('manageBackendUrl')?.value || '').trim().replace(/\/+$/, '');
+  if(backendUrlVal) localStorage.setItem('rf_backend_url', backendUrlVal);
+  else localStorage.removeItem('rf_backend_url');
+  // Save sync URL (falls back to backend URL if empty)
   const syncUrl = document.getElementById('manageSyncUrl')?.value?.trim() || '';
   if(syncUrl) localStorage.setItem('fuel_sync_url', syncUrl);
   else localStorage.removeItem('fuel_sync_url');
@@ -2345,11 +2373,16 @@ async function fetchVehicles(ci){
   const apiKey = (S.apiKeys && S.apiKeys[ci]) || S.apiKey || '';
 
   if(apiKey){
+    const backend = getBackendUrl();
+    if(!backend){
+      showToast('vwa','!','No Backend','Set Backend URL in Settings → Manage Companies');
+      return [];
+    }
     try{
       const headers = { Authorization: `Bearer ${apiKey}` };
 
       // Vehicle list
-      const vRes = await fetch(`https://patient-snow-c57c.ismoilovquvonchbek02052004.workers.dev/fleet/vehicles?limit=200`, { headers });
+      const vRes = await fetch(`${backend}/fleet/vehicles`, { headers });
       if(!vRes.ok) throw new Error(`Vehicles API ${vRes.status}`);
       const vJson = await vRes.json();
       const vData = vJson.data || [];
@@ -2361,7 +2394,7 @@ async function fetchVehicles(ci){
       let statsMap = {};
       try{
         const sRes = await fetch(
-          `https://patient-snow-c57c.ismoilovquvonchbek02052004.workers.dev/fleet/vehicles/stats?types=fuelPercents,engineStates,gps,obdOdometerMeters&decorations=reverseGeo&limit=200`,
+          `${backend}/fleet/vehicles/stats?types=fuelPercents,engineStates,gps,obdOdometerMeters&decorations=reverseGeo`,
           { headers }
         );
         if(sRes.ok){
@@ -2446,7 +2479,7 @@ async function testCompanyKey(btn){
   btn.disabled=true; btn.textContent='Testing…';
   statusEl.textContent=''; statusEl.style.color='var(--text3)';
   try{
-    const r = await fetch('https://patient-snow-c57c.ismoilovquvonchbek02052004.workers.dev/fleet/vehicles?limit=5', {
+    const r = await fetch(`${getBackendUrl()}/fleet/vehicles?limit=5`, {
       headers:{ Authorization:`Bearer ${key}` }
     });
     if(r.ok){
@@ -6079,7 +6112,7 @@ function seedFuelRecords(){
 // FUEL SYNC — Auto-sync from Cloudflare Worker
 // ═══════════════════════════════════════════════════════
 // Set this to your deployed worker URL after running setup.sh
-const FUEL_SYNC_URL = localStorage.getItem('fuel_sync_url') || '';
+const FUEL_SYNC_URL = localStorage.getItem('fuel_sync_url') || localStorage.getItem('rf_backend_url') || '';
 
 async function syncFuelTransactions(silent){
   const syncUrl = FUEL_SYNC_URL || localStorage.getItem('fuel_sync_url') || '';
@@ -10030,7 +10063,16 @@ init();
     <button onclick="manageAddCo()" style="width:100%;padding:10px;background:var(--surface2);border:1px dashed var(--border2);border-radius:10px;color:var(--purple-lt);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;">+ Add Company</button>
 
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;">Fuel Sync Worker URL</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;">Backend URL (Railway)</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+        <input type="text" id="manageBackendUrl" placeholder="https://routeflare-backend-production.up.railway.app"
+          style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:12px;"/>
+        <button onclick="testBackendUrl()" style="background:var(--purple-dim);border:1px solid var(--purple);color:var(--purple-lt);border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;">Test</button>
+      </div>
+      <div id="backendTestResult" style="font-size:10px;color:var(--text3);margin-bottom:14px;"></div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:16px;">Samsara proxy + fuel sync — handles pagination for all vehicles</div>
+
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;">Fuel Sync Worker URL <span style="font-weight:400;color:var(--text3)">(optional, uses Backend URL if empty)</span></div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
         <input type="text" id="manageSyncUrl" placeholder="https://fuelpro-sync.yourname.workers.dev"
           style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:12px;"/>

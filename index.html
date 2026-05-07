@@ -2390,7 +2390,7 @@ async function fetchVehicles(ci){
       let statsMap = {};
       try{
         const sRes = await fetch(
-          `${backend}/fleet/vehicles/stats?types=fuelPercents,engineStates,gps,obdOdometerMeters&decorations=reverseGeo`,
+          `${backend}/fleet/vehicles/stats?types=fuelPercents,engineStates,gps,obdOdometerMeters&decorations=reverseGeo&limit=512`,
           { headers }
         );
         if(sRes.ok){

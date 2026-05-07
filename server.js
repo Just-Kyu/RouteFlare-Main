@@ -110,45 +110,25 @@ app.get('/fleet/vehicles', async (req, res) => {
   }
 });
 
-// ─── Samsara: vehicle stats (direct proxy) ──────────────
-app.get('/fleet/vehicles/stats', async (req, res) => {
-  const apiKey = getSamsaraKey(req);
-  if (!apiKey) return res.status(401).json({ error: 'Missing Samsara API key' });
-
-  try {
-    const qs = req.originalUrl.substring(req.originalUrl.indexOf('?'));
-    const samsaraUrl = `${SAMSARA_BASE}/fleet/vehicles/stats${qs}`;
-    console.log(`[stats] Proxying: ${samsaraUrl}`);
-    const sRes = await fetch(samsaraUrl, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-    const data = await sRes.text();
-    const parsed = JSON.parse(data);
-    const count = parsed.data?.length || 0;
-    const withFuel = parsed.data?.filter(v => v.fuelPercent?.value !== undefined).length || 0;
-    console.log(`[stats] ${sRes.status} — ${count} vehicles, ${withFuel} with fuel data`);
-    res.status(sRes.status).set('Content-Type', 'application/json').send(data);
-  } catch (err) {
-    console.error('[stats] Error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ─── Samsara: generic proxy ──────────────────────────────
+// ─── Samsara: generic proxy (handles /fleet/vehicles/stats and all other /fleet/* calls) ──
 app.all('/fleet/*', async (req, res) => {
   const apiKey = getSamsaraKey(req);
   if (!apiKey) return res.status(401).json({ error: 'Missing Samsara API key' });
 
   try {
+    const samsaraUrl = `${SAMSARA_BASE}${req.originalUrl}`;
+    console.log(`[proxy] ${req.method} ${samsaraUrl}`);
     const opts = {
       method: req.method,
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${apiKey}` },
     };
     if (req.method !== 'GET' && req.method !== 'HEAD') opts.body = JSON.stringify(req.body);
-    const sRes = await fetch(`${SAMSARA_BASE}${req.originalUrl}`, opts);
+    const sRes = await fetch(samsaraUrl, opts);
     const data = await sRes.text();
+    console.log(`[proxy] → ${sRes.status} (${data.length} bytes)`);
     res.status(sRes.status).set('Content-Type', 'application/json').send(data);
   } catch (err) {
+    console.error(`[proxy] Error:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });

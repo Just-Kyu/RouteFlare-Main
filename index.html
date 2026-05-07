@@ -2374,10 +2374,6 @@ async function fetchVehicles(ci){
 
   if(apiKey){
     const backend = getBackendUrl();
-    if(!backend){
-      showToast('vwa','!','No Backend','Set Backend URL in Settings → Manage Companies');
-      return [];
-    }
     try{
       const headers = { Authorization: `Bearer ${apiKey}` };
 

@@ -174,6 +174,31 @@ app.get('/api/debug/samsara', async (req, res) => {
   res.json(out);
 });
 
+// ─── Shared config (companies, API keys, settings) ──────
+const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
+
+app.get('/api/config', (req, res) => {
+  const config = readJSON(CONFIG_FILE, null);
+  if (!config) return res.json({ ok: false });
+  res.json({ ok: true, config });
+});
+
+app.post('/api/config', (req, res) => {
+  const { companies, apiKeys, threshold, adminUrl } = req.body;
+  if (!companies || !apiKeys) return res.status(400).json({ error: 'Missing companies/apiKeys' });
+
+  const config = {
+    companies,
+    apiKeys,
+    threshold: threshold || 20,
+    adminUrl: adminUrl || '',
+    updatedAt: new Date().toISOString(),
+  };
+  writeJSON(CONFIG_FILE, config);
+  console.log(`[config] Saved ${companies.length} companies`);
+  res.json({ ok: true });
+});
+
 // ─── Transactions ────────────────────────────────────────
 app.post('/transactions', (req, res) => {
   try {

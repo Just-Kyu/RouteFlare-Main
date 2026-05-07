@@ -2157,6 +2157,15 @@ async function saveManageCo(){
   if(adminUrlVal) localStorage.setItem('rf_admin_url', adminUrlVal);
   updateAdminPortalLink();
 
+  // Save shared config to server so other team members get it automatically
+  try{
+    fetch('/api/config', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ companies: newNames, apiKeys: newKeys, threshold: newThreshold, adminUrl: adminUrlVal })
+    });
+  } catch(e){ console.warn('Config sync failed:', e.message); }
+
   // Re-fetch vehicles
   for(let i = 0; i < newNames.length; i++){
     statusEl.textContent = `Loading ${newNames[i]}...`;
@@ -2175,7 +2184,7 @@ async function saveManageCo(){
 }
 
 
-function init(){
+async function init(){
   document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
   seedFuelRecords();
 
@@ -2187,6 +2196,26 @@ function init(){
   const savedKeys      = JSON.parse(localStorage.getItem('ff_apiKeys') || '[]');
   const savedCompanies = JSON.parse(localStorage.getItem('ff_companies') || '[]');
   const savedThreshold = localStorage.getItem('ff_threshold') || '20';
+
+  // If no local config, try loading shared config from server
+  if(!savedCompanies.length){
+    try{
+      const cfgRes = await fetch('/api/config');
+      if(cfgRes.ok){
+        const cfgJson = await cfgRes.json();
+        if(cfgJson.ok && cfgJson.config){
+          const cfg = cfgJson.config;
+          localStorage.setItem('ff_companies', JSON.stringify(cfg.companies));
+          localStorage.setItem('ff_apiKeys', JSON.stringify(cfg.apiKeys));
+          localStorage.setItem('ff_threshold', cfg.threshold || 20);
+          if(cfg.adminUrl) localStorage.setItem('rf_admin_url', cfg.adminUrl);
+          // Reload with shared config applied
+          location.reload();
+          return;
+        }
+      }
+    } catch(e){ console.warn('Shared config load failed:', e.message); }
+  }
 
   if(savedCompanies.length){
     // Restore settings into hidden fields
@@ -2222,6 +2251,8 @@ function init(){
       const eiaStatus = document.getElementById('eiaStatus');
       if(eiaStatus) eiaStatus.textContent = 'Key saved — will use on next search';
       startAutoRefresh();
+      // Sync current config to server for team members
+      try{ fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ companies: savedCompanies, apiKeys: savedKeys, threshold: parseInt(savedThreshold), adminUrl: localStorage.getItem('rf_admin_url')||'' }) }); } catch(e){}
     }, 100);
   } else {
     // No saved session — show login page

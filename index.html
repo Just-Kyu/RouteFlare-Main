@@ -2507,26 +2507,27 @@ async function fetchVehicles(ci){
         showToast('vwa','!','Samsara License',`API key missing license for ${failedCritical.join(', ')} — data unavailable`);
       }
 
+      // Samsara may return stats as object {value,time} or array [{value,time}]
+      function statVal(field){ return Array.isArray(field) ? field[0] : field; }
+
       const trucks = vData.map(v => {
         const sv = statsMap[v.id] || {};
 
-        // FUEL — Samsara returns fuelPercent (singular object) with .value
-        const fuelVal = sv.fuelPercent?.value ?? null;
+        const fuel = statVal(sv.fuelPercent);
+        const fuelVal = fuel?.value ?? null;
 
-        // ENGINE STATE — singular object
-        const engineRaw = sv.engineState?.value ?? 'Off';
+        const engine = statVal(sv.engineState);
+        const engineRaw = engine?.value ?? 'Off';
         const engineState = engineRaw.charAt(0).toUpperCase() + engineRaw.slice(1).toLowerCase();
 
-        // ODOMETER — singular object, value in meters
-        const odomVal = sv.obdOdometerMeters?.value ?? sv.gpsOdometerMeters?.value ?? null;
+        const odom = statVal(sv.obdOdometerMeters) || statVal(sv.gpsOdometerMeters);
+        const odomVal = odom?.value ?? null;
         const odometer = odomVal ? `${Math.round(odomVal/1609).toLocaleString()} mi` : '—';
 
-        // GPS — singular object, reverseGeo.formattedLocation has full address
-        const gps = sv.gps ?? null;
+        const gps = statVal(sv.gps) ?? null;
         const formattedLoc = gps?.reverseGeo?.formattedLocation ?? null;
         let location = 'Unknown';
         if(formattedLoc){
-          // "10368 Taconic Terrace, Woodlawn, OH, 45215" → "Woodlawn, OH"
           const parts = formattedLoc.split(',').map(p=>p.trim());
           location = parts.length >= 3
             ? `${parts[parts.length-3]}, ${parts[parts.length-2]}`
@@ -2535,15 +2536,13 @@ async function fetchVehicles(ci){
           location = `${gps.latitude.toFixed(2)}, ${gps.longitude.toFixed(2)}`;
         }
 
-        const updatedAt = sv.fuelPercent?.time ?? sv.gps?.time ?? new Date().toISOString();
+        const updatedAt = fuel?.time ?? gps?.time ?? new Date().toISOString();
 
-        // Last Trip: engine state time = when engine last turned off
-        // Fall back to GPS time for inactive truck filter, but not for display
-        const engineTime = sv.engineState?.time ?? null;
-        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (engineTime ?? sv.gps?.time ?? null);
+        const engineTime = engine?.time ?? null;
+        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (engineTime ?? gps?.time ?? null);
         const lastTrip = engineState === 'On'
           ? 'On Trip'
-          : (engineTime ? formatRelativeTime(engineTime) : (sv.gps?.time ? formatRelativeTime(sv.gps.time) : 'Unknown'));
+          : (engineTime ? formatRelativeTime(engineTime) : (gps?.time ? formatRelativeTime(gps.time) : 'Unknown'));
 
         return {
           id:          v.id,

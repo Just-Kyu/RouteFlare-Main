@@ -2483,9 +2483,9 @@ async function fetchVehicles(ci){
       // NOTE: Samsara returns each stat as a SINGLE OBJECT, not an array
       // e.g. sv.fuelPercent.value (not sv.fuelPercents[0].value)
       let statsMap = {};
-      let licenseError = false;
-      // Try each stat type independently — different Samsara licenses gate different data
       const statTypes = ['gps', 'fuelPercents', 'engineStates', 'obdOdometerMeters'];
+      const criticalTypes = new Set(['gps', 'fuelPercents']);
+      let failedCritical = [];
       for(const type of statTypes){
         try{
           const sRes = await fetch(`${backend}/fleet/vehicles/stats?types=${type}&limit=200`, { headers });
@@ -2498,13 +2498,13 @@ async function fetchVehicles(ci){
             console.log(`[RouteFlare] Stats[${type}]: ${(sJson.data||[]).length} vehicles`);
           } else {
             const errTxt = await sRes.text();
-            if(errTxt.includes('licenses')) licenseError = true;
+            if(criticalTypes.has(type) && errTxt.includes('licenses')) failedCritical.push(type);
             console.warn(`Stats[${type}] failed:`, sRes.status, errTxt);
           }
         } catch(e){ console.warn(`Stats[${type}] error:`, e.message); }
       }
-      if(licenseError){
-        showToast('vwa','!','Samsara License','API key missing Vehicle Stats license — fuel/GPS data unavailable');
+      if(failedCritical.length){
+        showToast('vwa','!','Samsara License',`API key missing license for ${failedCritical.join(', ')} — data unavailable`);
       }
 
       const trucks = vData.map(v => {

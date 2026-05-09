@@ -8615,7 +8615,7 @@ function renderRelayPlans(){
       <td class="fl-total">${hasFueled ? '$'+parseFloat(r.discountTotal).toFixed(2) : '—'}</td>
       <td class="fl-saved">${hasFueled ? '$'+parseFloat(r.saved).toFixed(2) : '—'}</td>
       <td>${status}</td>
-      <td>${!hasFueled ? '<button class="dc-log-btn" style="font-size:10px;padding:4px 10px;" onclick="openUpdateRelay(\''+r.id+'\')">Update</button>' : ''}</td>
+      <td><button class="dc-log-btn" style="font-size:10px;padding:4px 10px;" onclick="openEditFuelRecord('${r.id}')">Edit</button></td>
     </tr>`;
   }).join('');
 }

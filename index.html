@@ -2507,6 +2507,28 @@ async function fetchVehicles(ci){
         showToast('vwa','!','Samsara License',`API key missing license for ${failedCritical.join(', ')} — data unavailable`);
       }
 
+      // Fetch engine state history for last 45 days to find actual last trip end
+      let lastTripMap = {};
+      try {
+        const now = new Date();
+        const startTime = new Date(now.getTime() - 45*24*60*60*1000).toISOString();
+        const endTime = now.toISOString();
+        const histRes = await fetch(`${backend}/fleet/vehicles/stats/history?types=engineStates&startTime=${encodeURIComponent(startTime)}&endTime=${encodeURIComponent(endTime)}`, { headers });
+        if(histRes.ok){
+          const histJson = await histRes.json();
+          (histJson.data||[]).forEach(vh => {
+            const states = vh.engineState || [];
+            for(let i = states.length - 1; i >= 0; i--){
+              if(states[i].value === 'Off'){
+                lastTripMap[vh.id] = states[i].time;
+                break;
+              }
+            }
+          });
+          console.log(`[RouteFlare] Last trip data for ${Object.keys(lastTripMap).length} vehicles`);
+        }
+      } catch(e){ console.warn('Engine history fetch failed:', e.message); }
+
       // Samsara may return stats as object {value,time} or array [{value,time}]
       function statVal(field){ return Array.isArray(field) ? field[0] : field; }
 
@@ -2538,11 +2560,11 @@ async function fetchVehicles(ci){
 
         const updatedAt = fuel?.time ?? gps?.time ?? new Date().toISOString();
 
-        const engineTime = engine?.time ?? null;
-        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (engineTime ?? gps?.time ?? null);
+        const tripEnd = lastTripMap[v.id] ?? null;
+        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (tripEnd ?? gps?.time ?? null);
         const lastTrip = engineState === 'On'
           ? 'On Trip'
-          : (engineTime ? formatRelativeTime(engineTime) : (gps?.time ? formatRelativeTime(gps.time) : 'Unknown'));
+          : (tripEnd ? formatRelativeTime(tripEnd) : 'Unknown');
 
         return {
           id:          v.id,

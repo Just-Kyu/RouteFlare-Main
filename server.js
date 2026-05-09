@@ -110,6 +110,25 @@ app.get('/fleet/vehicles', async (req, res) => {
   }
 });
 
+// ─── Samsara: Engine state history (for Last Trip) ───────
+app.get('/fleet/vehicles/stats/history', async (req, res) => {
+  const apiKey = getSamsaraKey(req);
+  if (!apiKey) return res.status(401).json({ error: 'Missing Samsara API key' });
+
+  try {
+    const samsaraUrl = `${SAMSARA_BASE}/fleet/vehicles/stats/history?${new URL(req.url, 'http://x').searchParams.toString()}`;
+    console.log(`[stats/history] ${samsaraUrl}`);
+    const sRes = await fetch(samsaraUrl, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    const data = await sRes.text();
+    res.status(sRes.status).set('Content-Type', 'application/json').send(data);
+  } catch (err) {
+    console.error('[stats/history]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Samsara: generic proxy (handles /fleet/vehicles/stats and all other /fleet/* calls) ──
 app.all('/fleet/*', async (req, res) => {
   const apiKey = getSamsaraKey(req);

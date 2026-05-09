@@ -2537,11 +2537,13 @@ async function fetchVehicles(ci){
 
         const updatedAt = sv.fuelPercent?.time ?? sv.gps?.time ?? new Date().toISOString();
 
-        // Last Trip: use engine state time (when engine last turned off) not GPS time
-        const lastTripTime = engineState === 'On' ? null : (sv.engineState?.time ?? null);
+        // Last Trip: engine state time = when engine last turned off
+        // Fall back to GPS time for inactive truck filter, but not for display
+        const engineTime = sv.engineState?.time ?? null;
+        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (engineTime ?? sv.gps?.time ?? null);
         const lastTrip = engineState === 'On'
           ? 'On Trip'
-          : (lastTripTime ? formatRelativeTime(lastTripTime) : 'Never active');
+          : (engineTime ? formatRelativeTime(engineTime) : (sv.gps?.time ? formatRelativeTime(sv.gps.time) : 'Unknown'));
 
         return {
           id:          v.id,

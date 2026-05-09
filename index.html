@@ -8471,17 +8471,20 @@ async function loadFuelLogsFromServer(){
     const data = await resp.json();
     if(!data.ok || !data.logs?.length) return;
     const local = getFuelLogHistory();
-    const localIds = new Set(local.map(r=>r.id));
-    let merged = [...local];
-    let added = 0;
+    const localMap = new Map(local.map(r=>[r.id, r]));
+    let changed = false;
     for(const log of data.logs){
-      if(!localIds.has(log.id)){
-        merged.push(log);
-        localIds.add(log.id);
-        added++;
+      const existing = localMap.get(log.id);
+      if(!existing){
+        localMap.set(log.id, log);
+        changed = true;
+      } else if(JSON.stringify(existing) !== JSON.stringify(log)){
+        localMap.set(log.id, log);
+        changed = true;
       }
     }
-    if(added > 0){
+    if(changed){
+      const merged = Array.from(localMap.values());
       merged.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
       localStorage.setItem('ff_fuel_log', JSON.stringify(merged));
       S.fuelRecords = merged;

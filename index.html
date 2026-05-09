@@ -1700,7 +1700,7 @@ body {
             <select class="month-select" id="flMonthSelect" onchange="renderFuelLog()">
               <option value="all">All Time</option>
             </select>
-            <button class="sync-btn" id="syncBtn" onclick="syncFuelTransactions()" title="Sync from Samsara/Relay">
+            <button class="sync-btn" id="syncBtn" onclick="syncFuelLogsNow()" title="Sync fuel logs with server">
               <svg class="sync-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
               Sync
             </button>
@@ -6381,7 +6381,7 @@ function saveFueling(){
     delete modal.dataset.dispatchId;
   }
   closeFuelModal();
-  renderDashboard(); refreshCharts();
+  renderDashboard(); renderFuelLog(); refreshCharts();
   const destLabel = dest === 'relay' ? 'Relay Plan' : 'RouteFlare';
   const galsMsg = gals > 0 ? `${gals} gals at ${station}` : `${station} (pending gallons)`;
   showToast('ok','ok',`Added to ${destLabel}`, galsMsg + (rec.saved > 0 ? ` — saved $${rec.saved.toFixed(2)}` : ''));
@@ -8443,6 +8443,27 @@ async function syncFuelLogsToServer(list){
     });
   } catch(e){ console.warn('Fuel log server sync failed:', e.message); }
 }
+async function syncFuelLogsNow(){
+  const btn = document.getElementById('syncBtn');
+  if(btn) btn.classList.add('syncing');
+  try {
+    const local = getFuelLogHistory();
+    await fetch('/api/fuel-logs', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(local)
+    });
+    await loadFuelLogsFromServer();
+    S.fuelRecords = getFuelLogHistory();
+    renderFuelLog();
+    renderDashboard(); refreshCharts();
+    showToast('ok','ok','Synced','Fuel logs synced with server');
+  } catch(e){
+    showToast('vwa','!','Sync Failed', e.message);
+  }
+  if(btn) btn.classList.remove('syncing');
+}
+
 async function loadFuelLogsFromServer(){
   try {
     const resp = await fetch('/api/fuel-logs');

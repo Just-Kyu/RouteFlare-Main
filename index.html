@@ -1865,6 +1865,52 @@ body {
   </div>
 </div>
 
+<!-- EDIT FUEL LOG MODAL -->
+<div class="modal-overlay" id="editFuelModal">
+  <div class="modal" style="max-width:520px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div class="modal-h" style="margin-bottom:2px">Edit Fueling Record</div>
+        <div class="modal-sub" style="margin-bottom:0">Update any field or attach a receipt</div>
+      </div>
+      <button class="modal-close" onclick="closeEditFuelModal()">✕</button>
+    </div>
+    <input type="hidden" id="editFuelId"/>
+    <div class="modal-grid">
+      <div class="ig"><label>Truck Unit #</label><input class="finput" style="margin-bottom:0" type="text" id="edUnit"/></div>
+      <div class="ig"><label>Fuel Station</label><input class="finput" style="margin-bottom:0" type="text" id="edStation"/></div>
+      <div class="ig"><label>Gallons Fueled</label><input class="finput" style="margin-bottom:0" type="number" id="edGallons" step="0.001"/></div>
+      <div class="ig"><label>Price per Gallon ($)</label><input class="finput" style="margin-bottom:0" type="number" id="edPrice" step="0.001"/></div>
+      <div class="ig"><label>Discounted Price ($)</label><input class="finput" style="margin-bottom:0" type="number" id="edDiscount" step="0.001"/></div>
+      <div class="ig"><label>State</label>
+        <select id="edState" class="finput" style="margin-bottom:0;appearance:none;cursor:pointer;">
+          <option value="">Select state...</option>
+          <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option>
+          <option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option>
+          <option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option>
+          <option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option>
+          <option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option>
+          <option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option>
+          <option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option>
+          <option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option>
+          <option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option>
+          <option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
+        </select>
+      </div>
+      <div class="ig full"><label>Date</label><input class="finput" style="margin-bottom:0" type="date" id="edDate"/></div>
+    </div>
+    <div style="margin-top:14px;border:2px dashed var(--border2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s;" id="receiptDropZone" onclick="document.getElementById('receiptFileInput').click()" ondragover="event.preventDefault();this.style.borderColor='var(--purple)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="handleReceiptDrop(event)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin-bottom:6px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div style="font-size:12px;color:var(--text2);font-weight:600;">Drop receipt here or click to upload</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;">PNG, JPG, PDF — or paste from clipboard</div>
+      <input type="file" id="receiptFileInput" accept=".png,.jpg,.jpeg,.pdf" style="display:none" onchange="handleReceiptFile(this.files[0])"/>
+    </div>
+    <div id="receiptPreview" style="margin-top:8px;"></div>
+    <div id="existingReceipts" style="margin-top:8px;"></div>
+    <button class="modal-save-btn" style="margin-top:14px;" onclick="saveEditFuel()">Save Changes</button>
+  </div>
+</div>
+
 <!-- TELEGRAM DISPATCH MODAL -->
 <div class="tg-modal-overlay" id="tgModal">
   <div class="tg-modal">
@@ -2257,6 +2303,7 @@ async function init(){
       document.getElementById('setup').style.display='none';
       document.getElementById('app').classList.add('on');
       seedFuelRecords(); // re-seed with real truck names
+      await loadFuelLogsFromServer();
       buildTabs(); renderDashboard(); buildCharts(); buildMaps();
       buildQuickPick(); populateTruckSelect();
       const savedEIA = getEIAKey();
@@ -2508,6 +2555,7 @@ async function fetchVehicles(ci){
           engineState,
           updatedAt,
           lastTrip,
+          lastTripTime,
           lat: gps?.latitude  ?? null,
           lng: gps?.longitude ?? null,
         };
@@ -6155,15 +6203,14 @@ const REAL_FUEL_RECORDS = [
 ]
 
 function seedFuelRecords(){
-  // Merge real transaction records into the fuel log on first load
   const stored = (() => { try { return JSON.parse(localStorage.getItem('ff_fuel_log')||'[]'); } catch(e) { return []; } })();
-  // Real records are keyed by 'real_' prefix — add any not already stored
   const storedIds = new Set(stored.map(r=>r.id));
   const toAdd = REAL_FUEL_RECORDS.filter(r=>!storedIds.has(r.id));
   if(toAdd.length){
     const merged = [...toAdd, ...stored];
     localStorage.setItem('ff_fuel_log', JSON.stringify(merged));
     S.fuelRecords = merged;
+    syncFuelLogsToServer(merged);
   } else {
     S.fuelRecords = stored;
   }
@@ -6376,10 +6423,15 @@ function renderDashboard(){
 
 function renderVehicles(veh){
   const grid=document.getElementById('vgrid');
-  let list=[...veh];
-  if(S.filter==='vcr') list=veh.filter(v=>v.fuelPercent<10);
-  else if(S.filter==='vwa') list=veh.filter(v=>v.fuelPercent>=10&&v.fuelPercent<S.threshold);
-  else if(S.filter==='vok') list=veh.filter(v=>v.fuelPercent>=S.threshold);
+  const oneMonthAgo = new Date(); oneMonthAgo.setMonth(oneMonthAgo.getMonth()-1);
+  let list = veh.filter(v => {
+    if(v.engineState === 'On') return true;
+    if(!v.lastTripTime) return false;
+    return new Date(v.lastTripTime) >= oneMonthAgo;
+  });
+  if(S.filter==='vcr') list=list.filter(v=>v.fuelPercent<10);
+  else if(S.filter==='vwa') list=list.filter(v=>v.fuelPercent>=10&&v.fuelPercent<S.threshold);
+  else if(S.filter==='vok') list=list.filter(v=>v.fuelPercent>=S.threshold);
   list.sort((a,b)=>a.fuelPercent-b.fuelPercent);
   if(!list.length){ grid.innerHTML=`<div class="empty"><div class="ei"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></div><p>No vehicles here</p></div>`; return; }
   grid.innerHTML='';
@@ -8376,6 +8428,40 @@ function getFuelLogHistory(){
 }
 function saveFuelLogHistory(list){
   localStorage.setItem('ff_fuel_log', JSON.stringify(list));
+  syncFuelLogsToServer(list);
+}
+async function syncFuelLogsToServer(list){
+  try {
+    await fetch('/api/fuel-logs', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(list)
+    });
+  } catch(e){ console.warn('Fuel log server sync failed:', e.message); }
+}
+async function loadFuelLogsFromServer(){
+  try {
+    const resp = await fetch('/api/fuel-logs');
+    if(!resp.ok) return;
+    const data = await resp.json();
+    if(!data.ok || !data.logs?.length) return;
+    const local = getFuelLogHistory();
+    const localIds = new Set(local.map(r=>r.id));
+    let merged = [...local];
+    let added = 0;
+    for(const log of data.logs){
+      if(!localIds.has(log.id)){
+        merged.push(log);
+        localIds.add(log.id);
+        added++;
+      }
+    }
+    if(added > 0){
+      merged.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      localStorage.setItem('ff_fuel_log', JSON.stringify(merged));
+      S.fuelRecords = merged;
+    }
+  } catch(e){ console.warn('Load fuel logs from server failed:', e.message); }
 }
 
 S._fuelDest = 'relay';
@@ -8607,19 +8693,24 @@ function renderFuelHistory(){
   if(S._histPage > totalPages) S._histPage = totalPages;
   const start = (S._histPage - 1) * HIST_PER_PAGE;
   const pageData = history.slice(start, start + HIST_PER_PAGE);
-  tbody.innerHTML = pageData.map((r,i)=>`
-    <tr>
+  tbody.innerHTML = pageData.map((r,i)=>{
+    const hasReceipt = r.receipts && r.receipts.length > 0;
+    const receiptIcon = hasReceipt ? `<span title="${r.receipts.length} receipt(s)" style="color:var(--green);margin-left:4px;cursor:pointer;" onclick="viewReceipts('${r.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM8 17h8v-2H8v2zm0-4h8v-2H8v2z"/></svg></span>` : '';
+    return `<tr>
       <td>${r.date}</td>
-      <td class="fl-station">${r.station}</td>
+      <td class="fl-station">${r.station}${receiptIcon}</td>
       <td>${r.truckUnit||'—'}</td>
       <td>${r.gallons}</td>
       <td>$${parseFloat(r.pricePerGal).toFixed(3)}</td>
       <td>$${parseFloat(r.discountedPrice).toFixed(3)}</td>
-      <td class="fl-total">$${parseFloat(r.discountTotal).toFixed(2)}</td>
+      <td class="fl-total">$${parseFloat(r.discountTotal||r.total).toFixed(2)}</td>
       <td class="fl-saved">$${parseFloat(r.saved).toFixed(2)}</td>
-      <td><button class="fl-del-btn" onclick="deleteFuelRecord('${r.id||(start+i)}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></td>
-    </tr>
-  `).join('');
+      <td style="white-space:nowrap;">
+        <button class="fl-del-btn" onclick="openEditFuelRecord('${r.id}')" title="Edit record" style="color:var(--purple-lt);margin-right:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="fl-del-btn" onclick="deleteFuelRecord('${r.id||(start+i)}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+      </td>
+    </tr>`;
+  }).join('');
   if(totalPages <= 1){ pag.innerHTML = ''; return; }
   let btns = `<button class="fl-page-btn" onclick="goHistPage(${S._histPage-1})" ${S._histPage===1?'disabled':''}>‹</button>`;
   const range = getPageRange(S._histPage, totalPages);
@@ -8655,10 +8746,144 @@ function deleteFuelRecord(recordId){
   history = history.filter(r=>(r.id||'')!==recordId);
   saveFuelLogHistory(history);
   S.fuelRecords = (S.fuelRecords||[]).filter(r=>(r.id||'')!==recordId);
+  fetch(`/api/fuel-logs/${encodeURIComponent(recordId)}`, {method:'DELETE'}).catch(()=>{});
   renderFuelLog();
   renderDashboard(); refreshCharts();
   showToast('ok','ok','Deleted','Fueling record removed');
 }
+
+S._editReceiptFile = null;
+
+function openEditFuelRecord(recordId){
+  const history = getFuelLogHistory();
+  const rec = history.find(r=>r.id===recordId);
+  if(!rec) return;
+  document.getElementById('editFuelId').value = rec.id;
+  document.getElementById('edUnit').value = rec.truckUnit || '';
+  document.getElementById('edStation').value = rec.station || '';
+  document.getElementById('edGallons').value = rec.gallons || '';
+  document.getElementById('edPrice').value = rec.pricePerGal || '';
+  document.getElementById('edDiscount').value = rec.discountedPrice || '';
+  document.getElementById('edDate').value = rec.date || '';
+  const stSel = document.getElementById('edState');
+  stSel.value = rec.state || '';
+  S._editReceiptFile = null;
+  document.getElementById('receiptPreview').innerHTML = '';
+  const existingDiv = document.getElementById('existingReceipts');
+  if(rec.receipts && rec.receipts.length){
+    existingDiv.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;">Attached Receipts:</div>' +
+      rec.receipts.map(r=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <a href="/api/receipts/${r.name}" target="_blank" style="font-size:11px;color:var(--purple-lt);text-decoration:underline;">${r.originalName}</a>
+        <span style="font-size:9px;color:var(--text3);">${new Date(r.uploadedAt).toLocaleDateString()}</span>
+      </div>`).join('');
+  } else {
+    existingDiv.innerHTML = '';
+  }
+  document.getElementById('editFuelModal').classList.add('on');
+}
+
+function closeEditFuelModal(){
+  document.getElementById('editFuelModal').classList.remove('on');
+  S._editReceiptFile = null;
+}
+
+async function saveEditFuel(){
+  const id = document.getElementById('editFuelId').value;
+  const history = getFuelLogHistory();
+  const rec = history.find(r=>r.id===id);
+  if(!rec) return;
+  rec.truckUnit = document.getElementById('edUnit').value;
+  rec.station = document.getElementById('edStation').value;
+  rec.gallons = parseFloat(document.getElementById('edGallons').value) || 0;
+  rec.pricePerGal = parseFloat(document.getElementById('edPrice').value) || 0;
+  rec.discountedPrice = parseFloat(document.getElementById('edDiscount').value) || rec.pricePerGal;
+  rec.state = document.getElementById('edState').value;
+  rec.date = document.getElementById('edDate').value;
+  rec.total = parseFloat((rec.gallons * rec.pricePerGal).toFixed(2));
+  rec.discountTotal = parseFloat((rec.gallons * rec.discountedPrice).toFixed(2));
+  rec.saved = parseFloat((rec.gallons * (rec.pricePerGal - rec.discountedPrice)).toFixed(2));
+  if(S._editReceiptFile){
+    try {
+      const resp = await fetch(`/api/fuel-logs/${encodeURIComponent(id)}/receipt`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(S._editReceiptFile)
+      });
+      if(resp.ok){
+        const data = await resp.json();
+        if(!rec.receipts) rec.receipts = [];
+        rec.receipts.push({ name: data.receipt, originalName: S._editReceiptFile.filename, mimeType: S._editReceiptFile.mimeType, uploadedAt: new Date().toISOString() });
+      }
+    } catch(e){ console.warn('Receipt upload failed:', e.message); }
+    S._editReceiptFile = null;
+  }
+  saveFuelLogHistory(history);
+  const memRec = S.fuelRecords.find(r=>r.id===id);
+  if(memRec) Object.assign(memRec, rec);
+  fetch(`/api/fuel-logs/${encodeURIComponent(id)}`, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(rec)
+  }).catch(()=>{});
+  closeEditFuelModal();
+  renderFuelLog();
+  renderDashboard(); refreshCharts();
+  showToast('ok','ok','Updated','Fueling record saved');
+}
+
+function handleReceiptFile(file){
+  if(!file) return;
+  const allowed = ['image/png','image/jpeg','image/jpg','application/pdf'];
+  if(!allowed.includes(file.type)) return showToast('vwa','!','Invalid File','Only PNG, JPG, or PDF allowed');
+  if(file.size > 10*1024*1024) return showToast('vwa','!','Too Large','Max file size is 10MB');
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const base64 = e.target.result.split(',')[1];
+    S._editReceiptFile = { data: base64, filename: file.name, mimeType: file.type };
+    const preview = document.getElementById('receiptPreview');
+    if(file.type.startsWith('image/')){
+      preview.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface2);border-radius:8px;">
+        <img src="${e.target.result}" style="max-height:60px;border-radius:4px;"/>
+        <span style="font-size:11px;color:var(--text2);">${file.name}</span>
+        <button onclick="S._editReceiptFile=null;document.getElementById('receiptPreview').innerHTML=''" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;">✕</button>
+      </div>`;
+    } else {
+      preview.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface2);border-radius:8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span style="font-size:11px;color:var(--text2);">${file.name}</span>
+        <button onclick="S._editReceiptFile=null;document.getElementById('receiptPreview').innerHTML=''" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;">✕</button>
+      </div>`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleReceiptDrop(e){
+  e.preventDefault();
+  document.getElementById('receiptDropZone').style.borderColor = 'var(--border2)';
+  const file = e.dataTransfer?.files?.[0];
+  if(file) handleReceiptFile(file);
+}
+
+function viewReceipts(recordId){
+  const history = getFuelLogHistory();
+  const rec = history.find(r=>r.id===recordId);
+  if(!rec?.receipts?.length) return;
+  openEditFuelRecord(recordId);
+}
+
+document.addEventListener('paste', function(e){
+  if(!document.getElementById('editFuelModal').classList.contains('on')) return;
+  const items = e.clipboardData?.items;
+  if(!items) return;
+  for(const item of items){
+    if(item.type.startsWith('image/') || item.type === 'application/pdf'){
+      const file = item.getAsFile();
+      if(file) handleReceiptFile(file);
+      break;
+    }
+  }
+});
 
 function renderMonthlyReport(){
   const selectedMonth = document.getElementById('flMonthSelect').value;
@@ -10111,6 +10336,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){ closeFuelModal(); closeTgModal(); }
 });
 document.getElementById('fuelModal').addEventListener('click',e=>{ if(e.target===document.getElementById('fuelModal')) closeFuelModal(); });
+document.getElementById('editFuelModal').addEventListener('click',e=>{ if(e.target===document.getElementById('editFuelModal')) closeEditFuelModal(); });
 document.getElementById('tgModal').addEventListener('click',e=>{ if(e.target===document.getElementById('tgModal')) closeTgModal(); });
 
 init();

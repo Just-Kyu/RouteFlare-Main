@@ -290,6 +290,95 @@ app.post('/webhook/relay', (req, res) => {
   }
 });
 
+// ─── Fuel Logs (persistent, shared across team) ─────────
+const FUEL_LOGS_FILE = path.join(DATA_DIR, 'fuel-logs.json');
+const RECEIPTS_DIR = path.join(DATA_DIR, 'receipts');
+if (!fs.existsSync(RECEIPTS_DIR)) fs.mkdirSync(RECEIPTS_DIR, { recursive: true });
+
+function getFuelLogs() { return readJSON(FUEL_LOGS_FILE, []); }
+function saveFuelLogs(logs) { writeJSON(FUEL_LOGS_FILE, logs); }
+
+app.get('/api/fuel-logs', (req, res) => {
+  const logs = getFuelLogs();
+  res.json({ ok: true, logs });
+});
+
+app.post('/api/fuel-logs', (req, res) => {
+  try {
+    const logs = getFuelLogs();
+    const items = Array.isArray(req.body) ? req.body : [req.body];
+    let added = 0;
+    const existingIds = new Set(logs.map(l => l.id));
+    for (const item of items) {
+      if (!item.id) continue;
+      if (existingIds.has(item.id)) continue;
+      logs.unshift(item);
+      existingIds.add(item.id);
+      added++;
+    }
+    saveFuelLogs(logs);
+    res.json({ ok: true, added, total: logs.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/fuel-logs/:id', (req, res) => {
+  try {
+    const logs = getFuelLogs();
+    const idx = logs.findIndex(l => l.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Not found' });
+    logs[idx] = { ...logs[idx], ...req.body, id: req.params.id };
+    saveFuelLogs(logs);
+    res.json({ ok: true, log: logs[idx] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/fuel-logs/:id', (req, res) => {
+  try {
+    let logs = getFuelLogs();
+    const before = logs.length;
+    logs = logs.filter(l => l.id !== req.params.id);
+    saveFuelLogs(logs);
+    res.json({ ok: true, deleted: before - logs.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Receipt upload (base64 in JSON body) ────────────────
+app.post('/api/fuel-logs/:id/receipt', (req, res) => {
+  try {
+    const { data, filename, mimeType } = req.body;
+    if (!data || !filename) return res.status(400).json({ error: 'Missing data or filename' });
+    const ext = path.extname(filename).toLowerCase() || '.bin';
+    const allowed = ['.png', '.jpg', '.jpeg', '.pdf'];
+    if (!allowed.includes(ext)) return res.status(400).json({ error: 'Only PNG, JPG, PDF allowed' });
+    const safeName = `${req.params.id}_${Date.now()}${ext}`;
+    const buf = Buffer.from(data, 'base64');
+    fs.writeFileSync(path.join(RECEIPTS_DIR, safeName), buf);
+    const logs = getFuelLogs();
+    const log = logs.find(l => l.id === req.params.id);
+    if (log) {
+      if (!log.receipts) log.receipts = [];
+      log.receipts.push({ name: safeName, originalName: filename, mimeType: mimeType || 'application/octet-stream', uploadedAt: new Date().toISOString() });
+      saveFuelLogs(logs);
+    }
+    res.json({ ok: true, receipt: safeName });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/receipts/:filename', (req, res) => {
+  const safeName = path.basename(req.params.filename);
+  const filePath = path.join(RECEIPTS_DIR, safeName);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+  res.sendFile(filePath);
+});
+
 // ─── API health check ────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({ service: 'RouteFlare Backend', status: 'ok', transactions: getTxs().length });

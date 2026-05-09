@@ -6401,7 +6401,7 @@ function buildTabs(){
 }
 
 function renderDashboard(){
-  const veh=S.vehicles[S.activeCompany]||[];
+  const veh = getActiveVehicles(S.vehicles[S.activeCompany]||[]);
   const cr=veh.filter(v=>v.fuelPercent<10);
   const wa=veh.filter(v=>v.fuelPercent>=10&&v.fuelPercent<S.threshold);
   const ok=veh.filter(v=>v.fuelPercent>=S.threshold);
@@ -6423,12 +6423,7 @@ function renderDashboard(){
 
 function renderVehicles(veh){
   const grid=document.getElementById('vgrid');
-  const oneMonthAgo = new Date(); oneMonthAgo.setMonth(oneMonthAgo.getMonth()-1);
-  let list = veh.filter(v => {
-    if(v.engineState === 'On') return true;
-    if(!v.lastTripTime) return false;
-    return new Date(v.lastTripTime) >= oneMonthAgo;
-  });
+  let list=[...veh];
   if(S.filter==='vcr') list=list.filter(v=>v.fuelPercent<10);
   else if(S.filter==='vwa') list=list.filter(v=>v.fuelPercent>=10&&v.fuelPercent<S.threshold);
   else if(S.filter==='vok') list=list.filter(v=>v.fuelPercent>=S.threshold);
@@ -6470,10 +6465,19 @@ function renderVehicles(veh){
 }
 
 
+function getActiveVehicles(vehList){
+  const oneMonthAgo = new Date(); oneMonthAgo.setMonth(oneMonthAgo.getMonth()-1);
+  return vehList.filter(v => {
+    if(v.engineState === 'On') return true;
+    if(!v.lastTripTime) return false;
+    return new Date(v.lastTripTime) >= oneMonthAgo;
+  });
+}
+
 function setFltr(f,btn){
   S.filter=f;
   document.querySelectorAll('.fltr').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
-  renderVehicles(S.vehicles[S.activeCompany]||[]);
+  renderVehicles(getActiveVehicles(S.vehicles[S.activeCompany]||[]));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -6500,9 +6504,9 @@ function updateTbAlerts(){
   const btn = document.getElementById('tbAlertBtn');
   const lowTrucks = [];
 
-  // Scan ALL companies
+  // Scan ALL companies (only active trucks)
   for(let ci = 0; ci < S.companies.length; ci++){
-    const vehs = S.vehicles[ci] || [];
+    const vehs = getActiveVehicles(S.vehicles[ci] || []);
     vehs.forEach(v => {
       if(v.fuelPercent < S.threshold){
         lowTrucks.push({ ...v, companyIndex: ci, companyName: S.companies[ci] });

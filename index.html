@@ -2537,8 +2537,8 @@ async function fetchVehicles(ci){
 
         const updatedAt = sv.fuelPercent?.time ?? sv.gps?.time ?? new Date().toISOString();
 
-        // Last Trip: "On Trip" if engine on, else relative time from last GPS update
-        const lastTripTime = sv.gps?.time ?? sv.fuelPercent?.time ?? null;
+        // Last Trip: use engine state time (when engine last turned off) not GPS time
+        const lastTripTime = engineState === 'On' ? null : (sv.engineState?.time ?? null);
         const lastTrip = engineState === 'On'
           ? 'On Trip'
           : (lastTripTime ? formatRelativeTime(lastTripTime) : 'Never active');
@@ -6469,8 +6469,9 @@ function getActiveVehicles(vehList){
   const oneMonthAgo = new Date(); oneMonthAgo.setMonth(oneMonthAgo.getMonth()-1);
   return vehList.filter(v => {
     if(v.engineState === 'On') return true;
-    if(!v.lastTripTime) return false;
-    return new Date(v.lastTripTime) >= oneMonthAgo;
+    const checkTime = v.lastTripTime || v.updatedAt;
+    if(!checkTime) return false;
+    return new Date(checkTime) >= oneMonthAgo;
   });
 }
 

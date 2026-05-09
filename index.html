@@ -2517,15 +2517,20 @@ async function fetchVehicles(ci){
         if(histRes.ok){
           const histJson = await histRes.json();
           (histJson.data||[]).forEach(vh => {
-            const states = vh.engineState || [];
-            for(let i = states.length - 1; i >= 0; i--){
-              if(states[i].value === 'Off'){
-                lastTripMap[vh.id] = states[i].time;
+            // History endpoint returns engineStates (plural) array; snapshot returns engineState (singular)
+            const states = vh.engineStates || vh.engineState || [];
+            const arr = Array.isArray(states) ? states : [states];
+            for(let i = arr.length - 1; i >= 0; i--){
+              if(arr[i]?.value === 'Off'){
+                lastTripMap[vh.id] = arr[i].time;
                 break;
               }
             }
           });
-          console.log(`[RouteFlare] Last trip data for ${Object.keys(lastTripMap).length} vehicles`);
+          console.log(`[RouteFlare] Engine history: ${(histJson.data||[]).length} vehicles, ${Object.keys(lastTripMap).length} with Off events`);
+        } else {
+          const errTxt = await histRes.text();
+          console.warn(`Engine history failed: ${histRes.status}`, errTxt.slice(0, 200));
         }
       } catch(e){ console.warn('Engine history fetch failed:', e.message); }
 

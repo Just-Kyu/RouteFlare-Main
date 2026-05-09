@@ -1964,7 +1964,7 @@ const S = {
 
 function startAutoRefresh(){
   if(S.refreshTimer) clearInterval(S.refreshTimer);
-  S.refreshTimer = setInterval(()=>{ refreshAll(); }, 300000);
+  S.refreshTimer = setInterval(()=>{ refreshAll(); }, 120000);
 };
 
 function toggleVis(inputId, btn){
@@ -10334,17 +10334,15 @@ function goPage(p,btn){
 
 async function refreshAll(){
   const btn=document.getElementById('refBtn'); btn.classList.add('spin');
-  // Invalidate cached live prices so they get re-fetched
   S_livePrices = null;
   S_livePriceDate = null;
   S_livePriceSource = null;
   for(let i=0;i<S.companies.length;i++) S.vehicles[i]=await fetchVehicles(i);
-  // Also sync fuel transactions from worker
-  const syncResult = await syncFuelTransactions(true);
-  renderDashboard(); buildQuickPick(); buildMaps(); updateTbAlerts();
+  await loadFuelLogsFromServer();
+  S.fuelRecords = getFuelLogHistory();
+  renderDashboard(); renderFuelLog(); buildQuickPick(); buildMaps(); updateTbAlerts();
   btn.classList.remove('spin');
-  const syncMsg = syncResult.synced > 0 ? ` + ${syncResult.synced} new fuel txns` : '';
-  showToast('ok','ok','Data Refreshed',`${Object.values(S.vehicles).flat().length} vehicles updated${syncMsg}`);
+  showToast('ok','ok','Data Refreshed',`${getActiveVehicles(Object.values(S.vehicles).flat()).length} active vehicles updated`);
 }
 
 function showLoader(t){ document.getElementById('ltxt').textContent=t; document.getElementById('loader').classList.add('on'); }
@@ -10358,7 +10356,7 @@ function animateCount(id,target){
 }
 
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){ closeFuelModal(); closeTgModal(); }
+  if(e.key==='Escape'){ closeFuelModal(); closeEditFuelModal(); closeTgModal(); }
 });
 document.getElementById('fuelModal').addEventListener('click',e=>{ if(e.target===document.getElementById('fuelModal')) closeFuelModal(); });
 document.getElementById('editFuelModal').addEventListener('click',e=>{ if(e.target===document.getElementById('editFuelModal')) closeEditFuelModal(); });

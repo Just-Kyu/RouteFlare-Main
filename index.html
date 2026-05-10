@@ -2549,6 +2549,40 @@ async function fetchVehicles(ci){
         }
       } catch(e){ console.warn('[RouteFlare] Engine history error:', e.message); }
 
+      // Fallback: fetch trips for vehicles missing from lastTripMap
+      const missingIds = vData.filter(v => !lastTripMap[v.id]).map(v => v.id);
+      if(missingIds.length > 0){
+        try {
+          const now = new Date();
+          const tripStart = new Date(now.getTime() - 45*24*60*60*1000).toISOString();
+          const tripEnd = now.toISOString();
+          let tripCursor = null;
+          let tripPages = 0;
+          do {
+            let tripUrl = `${backend}/fleet/trips?startTime=${encodeURIComponent(tripStart)}&endTime=${encodeURIComponent(tripEnd)}`;
+            if(tripCursor) tripUrl += `&after=${encodeURIComponent(tripCursor)}`;
+            const tripRes = await fetch(tripUrl, { headers });
+            if(!tripRes.ok){
+              console.warn(`[RouteFlare] Trips endpoint ${tripRes.status}`);
+              break;
+            }
+            const tripJson = await tripRes.json();
+            const trips = tripJson.data || [];
+            for(const trip of trips){
+              const vid = trip.vehicle?.id;
+              if(vid && !lastTripMap[vid]){
+                const end = trip.endTime || trip.tripEndTime || trip.endMs;
+                if(end) lastTripMap[vid] = typeof end === 'number' ? new Date(end).toISOString() : end;
+              }
+            }
+            tripCursor = tripJson.pagination?.endCursor || null;
+            tripPages++;
+            if(tripPages > 10) break;
+          } while(tripCursor);
+          console.log(`[RouteFlare] Trips fallback: now have ${Object.keys(lastTripMap).length} total trip-end times`);
+        } catch(e){ console.warn('[RouteFlare] Trips fallback error:', e.message); }
+      }
+
       const trucks = vData.map(v => {
         const sv = statsMap[v.id] || {};
 

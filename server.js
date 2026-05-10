@@ -116,12 +116,13 @@ app.get('/fleet/vehicles/stats/history', async (req, res) => {
   if (!apiKey) return res.status(401).json({ error: 'Missing Samsara API key' });
 
   try {
-    const samsaraUrl = `${SAMSARA_BASE}/fleet/vehicles/stats/history?${new URL(req.url, 'http://x').searchParams.toString()}`;
+    const samsaraUrl = `${SAMSARA_BASE}${req.originalUrl}`;
     console.log(`[stats/history] ${samsaraUrl}`);
     const sRes = await fetch(samsaraUrl, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     const data = await sRes.text();
+    console.log(`[stats/history] → ${sRes.status} (${data.length} bytes)`);
     res.status(sRes.status).set('Content-Type', 'application/json').send(data);
   } catch (err) {
     console.error('[stats/history]', err.message);

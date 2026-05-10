@@ -2507,43 +2507,22 @@ async function fetchVehicles(ci){
         showToast('vwa','!','Samsara License',`API key missing license for ${failedCritical.join(', ')} — data unavailable`);
       }
 
-      // Fetch engine state history for last 45 days to find actual last trip end
-      let lastTripMap = {};
-      try {
-        const now = new Date();
-        const startTime = new Date(now.getTime() - 45*24*60*60*1000).toISOString();
-        const endTime = now.toISOString();
-        const histRes = await fetch(`${backend}/fleet/vehicles/stats/history?types=engineStates&startTime=${encodeURIComponent(startTime)}&endTime=${encodeURIComponent(endTime)}`, { headers });
-        if(histRes.ok){
-          const histJson = await histRes.json();
-          (histJson.data||[]).forEach(vh => {
-            // History endpoint returns engineStates (plural) array; snapshot returns engineState (singular)
-            const states = vh.engineStates || vh.engineState || [];
-            const arr = Array.isArray(states) ? states : [states];
-            for(let i = arr.length - 1; i >= 0; i--){
-              if(arr[i]?.value === 'Off'){
-                lastTripMap[vh.id] = arr[i].time;
-                break;
-              }
-            }
-          });
-          console.log(`[RouteFlare] Engine history: ${(histJson.data||[]).length} vehicles, ${Object.keys(lastTripMap).length} with Off events`);
-        } else {
-          const errTxt = await histRes.text();
-          console.warn(`Engine history failed: ${histRes.status}`, errTxt.slice(0, 200));
-        }
-      } catch(e){ console.warn('Engine history fetch failed:', e.message); }
-
       // Samsara may return stats as object {value,time} or array [{value,time}]
+      // Also may use singular or plural field names
       function statVal(field){ return Array.isArray(field) ? field[0] : field; }
+
+      // Debug: log first vehicle's raw stat keys so we can see field names
+      const firstStatId = Object.keys(statsMap)[0];
+      if(firstStatId) console.log(`[RouteFlare] Sample stat keys for ${firstStatId}:`, Object.keys(statsMap[firstStatId]).join(', '));
+      if(firstStatId) console.log(`[RouteFlare] Sample engineState:`, JSON.stringify(statsMap[firstStatId].engineState ?? statsMap[firstStatId].engineStates ?? 'NOT FOUND'));
 
       const trucks = vData.map(v => {
         const sv = statsMap[v.id] || {};
 
-        const fuel = statVal(sv.fuelPercent);
+        const fuel = statVal(sv.fuelPercent || sv.fuelPercents);
         const fuelVal = fuel?.value ?? null;
 
-        const engine = statVal(sv.engineState);
+        const engine = statVal(sv.engineState || sv.engineStates);
         const engineRaw = engine?.value ?? 'Off';
         const engineState = engineRaw.charAt(0).toUpperCase() + engineRaw.slice(1).toLowerCase();
 
@@ -2565,12 +2544,11 @@ async function fetchVehicles(ci){
 
         const updatedAt = fuel?.time ?? gps?.time ?? new Date().toISOString();
 
-        const tripEnd = lastTripMap[v.id] ?? null;
         const engineTime = engine?.time ?? null;
-        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (tripEnd ?? engineTime ?? gps?.time ?? null);
+        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (engineTime ?? gps?.time ?? null);
         const lastTrip = engineState === 'On'
           ? 'On Trip'
-          : (tripEnd ? formatRelativeTime(tripEnd) : (engineTime ? formatRelativeTime(engineTime) : 'Unknown'));
+          : (engineTime ? formatRelativeTime(engineTime) : (gps?.time ? formatRelativeTime(gps.time) : 'Unknown'));
 
         return {
           id:          v.id,

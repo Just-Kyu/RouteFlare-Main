@@ -2519,23 +2519,33 @@ async function fetchVehicles(ci){
         const histStart = new Date(now.getTime() - 45*24*60*60*1000).toISOString();
         const histEnd = now.toISOString();
         const histUrl = `${backend}/fleet/vehicles/stats/history?types=engineStates&startTime=${encodeURIComponent(histStart)}&endTime=${encodeURIComponent(histEnd)}`;
+        console.log(`[RouteFlare] Fetching engine history...`);
         const histRes = await fetch(histUrl, { headers });
+        console.log(`[RouteFlare] Engine history response: ${histRes.status}`);
         if(histRes.ok){
           const histJson = await histRes.json();
           const histData = histJson.data || [];
+          console.log(`[RouteFlare] Engine history data: ${histData.length} vehicles`);
+          if(histData.length > 0){
+            const sample = histData[0];
+            const sampleStates = sample.engineStates || sample.engineState || [];
+            console.log(`[RouteFlare] History sample keys: ${Object.keys(sample).join(', ')}`);
+            console.log(`[RouteFlare] History sample states (${Array.isArray(sampleStates)?sampleStates.length:'obj'}):`, JSON.stringify(Array.isArray(sampleStates)?sampleStates.slice(-2):sampleStates));
+          }
           for(const vh of histData){
             const states = vh.engineStates || vh.engineState || [];
             const arr = Array.isArray(states) ? states : [states];
             for(let i = arr.length - 1; i >= 0; i--){
-              if(arr[i]?.value === 'Off' || arr[i]?.value === 'off'){
+              if(arr[i]?.value?.toLowerCase() === 'off'){
                 lastTripMap[vh.id] = arr[i].time;
                 break;
               }
             }
           }
-          console.log(`[RouteFlare] Engine history: ${histData.length} vehicles, ${Object.keys(lastTripMap).length} with trip-end times`);
+          console.log(`[RouteFlare] Last trip times found for ${Object.keys(lastTripMap).length} vehicles`);
         } else {
-          console.warn(`[RouteFlare] Engine history ${histRes.status}:`, (await histRes.text()).slice(0,200));
+          const errBody = await histRes.text();
+          console.warn(`[RouteFlare] Engine history failed ${histRes.status}:`, errBody.slice(0,300));
         }
       } catch(e){ console.warn('[RouteFlare] Engine history error:', e.message); }
 

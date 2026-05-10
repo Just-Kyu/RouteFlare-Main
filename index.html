@@ -2511,10 +2511,33 @@ async function fetchVehicles(ci){
       // Also may use singular or plural field names
       function statVal(field){ return Array.isArray(field) ? field[0] : field; }
 
-      // Debug: log first vehicle's raw stat keys so we can see field names
-      const firstStatId = Object.keys(statsMap)[0];
-      if(firstStatId) console.log(`[RouteFlare] Sample stat keys for ${firstStatId}:`, Object.keys(statsMap[firstStatId]).join(', '));
-      if(firstStatId) console.log(`[RouteFlare] Sample engineState:`, JSON.stringify(statsMap[firstStatId].engineState ?? statsMap[firstStatId].engineStates ?? 'NOT FOUND'));
+      // Fetch engine state HISTORY to find actual last trip end time
+      // (snapshot .time is just the last poll time, not when engine turned off)
+      let lastTripMap = {};
+      try {
+        const now = new Date();
+        const histStart = new Date(now.getTime() - 45*24*60*60*1000).toISOString();
+        const histEnd = now.toISOString();
+        const histUrl = `${backend}/fleet/vehicles/stats/history?types=engineStates&startTime=${encodeURIComponent(histStart)}&endTime=${encodeURIComponent(histEnd)}`;
+        const histRes = await fetch(histUrl, { headers });
+        if(histRes.ok){
+          const histJson = await histRes.json();
+          const histData = histJson.data || [];
+          for(const vh of histData){
+            const states = vh.engineStates || vh.engineState || [];
+            const arr = Array.isArray(states) ? states : [states];
+            for(let i = arr.length - 1; i >= 0; i--){
+              if(arr[i]?.value === 'Off' || arr[i]?.value === 'off'){
+                lastTripMap[vh.id] = arr[i].time;
+                break;
+              }
+            }
+          }
+          console.log(`[RouteFlare] Engine history: ${histData.length} vehicles, ${Object.keys(lastTripMap).length} with trip-end times`);
+        } else {
+          console.warn(`[RouteFlare] Engine history ${histRes.status}:`, (await histRes.text()).slice(0,200));
+        }
+      } catch(e){ console.warn('[RouteFlare] Engine history error:', e.message); }
 
       const trucks = vData.map(v => {
         const sv = statsMap[v.id] || {};
@@ -2544,11 +2567,11 @@ async function fetchVehicles(ci){
 
         const updatedAt = fuel?.time ?? gps?.time ?? new Date().toISOString();
 
-        const engineTime = engine?.time ?? null;
-        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (engineTime ?? gps?.time ?? null);
+        const tripEnd = lastTripMap[v.id] ?? null;
+        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (tripEnd ?? gps?.time ?? null);
         const lastTrip = engineState === 'On'
           ? 'On Trip'
-          : (engineTime ? formatRelativeTime(engineTime) : '—');
+          : (tripEnd ? formatRelativeTime(tripEnd) : '—');
 
         return {
           id:          v.id,

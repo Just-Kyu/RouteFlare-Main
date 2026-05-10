@@ -2548,7 +2548,7 @@ async function fetchVehicles(ci){
         const lastTripTime = engineState === 'On' ? new Date().toISOString() : (engineTime ?? gps?.time ?? null);
         const lastTrip = engineState === 'On'
           ? 'On Trip'
-          : (engineTime ? formatRelativeTime(engineTime) : (gps?.time ? formatRelativeTime(gps.time) : 'Unknown'));
+          : (engineTime ? formatRelativeTime(engineTime) : '—');
 
         return {
           id:          v.id,

@@ -2520,19 +2520,17 @@ async function fetchVehicles(ci){
         const histEnd = now.toISOString();
         let histCursor = null;
         let histPages = 0;
-        console.log(`[RouteFlare] Fetching engine history...`);
+        let prevCount = 0;
+        let stalePages = 0;
         do {
           let histUrl = `${backend}/fleet/vehicles/stats/history?types=engineStates&startTime=${encodeURIComponent(histStart)}&endTime=${encodeURIComponent(histEnd)}`;
           if(histCursor) histUrl += `&after=${encodeURIComponent(histCursor)}`;
           const histRes = await fetch(histUrl, { headers });
-          if(!histRes.ok){
-            const errBody = await histRes.text();
-            console.warn(`[RouteFlare] Engine history failed ${histRes.status}:`, errBody.slice(0,300));
-            break;
-          }
+          if(!histRes.ok){ console.warn(`[RouteFlare] Engine history ${histRes.status}`); break; }
           const histJson = await histRes.json();
           const histData = histJson.data || [];
           for(const vh of histData){
+            if(lastTripMap[vh.id]) continue;
             const states = vh.engineStates || vh.engineState || [];
             const arr = Array.isArray(states) ? states : [states];
             for(let i = arr.length - 1; i >= 0; i--){
@@ -2544,10 +2542,13 @@ async function fetchVehicles(ci){
           }
           histCursor = histJson.pagination?.endCursor || null;
           histPages++;
-          console.log(`[RouteFlare] Engine history page ${histPages}: ${histData.length} vehicles (cursor: ${histCursor ? 'yes' : 'no'})`);
-          if(histPages > 20) break;
-        } while(histCursor);
-        console.log(`[RouteFlare] Last trip times found for ${Object.keys(lastTripMap).length} vehicles total`);
+          const newCount = Object.keys(lastTripMap).length;
+          if(newCount === prevCount) stalePages++;
+          else stalePages = 0;
+          prevCount = newCount;
+          if(stalePages >= 3) break;
+        } while(histCursor && histPages < 50);
+        console.log(`[RouteFlare] Engine history: ${histPages} pages, ${Object.keys(lastTripMap).length} vehicles with trip-end times`);
       } catch(e){ console.warn('[RouteFlare] Engine history error:', e.message); }
 
       const trucks = vData.map(v => {

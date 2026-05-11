@@ -2648,14 +2648,21 @@ async function fetchVehicles(ci){
         const fuelVal = fuel?.value ?? null;
 
         const engine = statVal(sv.engineState || sv.engineStates);
-        const engineRaw = engine?.value ?? 'Off';
-        const engineState = engineRaw.charAt(0).toUpperCase() + engineRaw.slice(1).toLowerCase();
+        const engineRaw = engine?.value ?? null;
+        const gpsSnap = statVal(sv.gps) ?? null;
+        const gpsSpeed = gpsSnap?.speedMilesPerHour ?? 0;
+        let engineState;
+        if(engineRaw){
+          engineState = engineRaw.charAt(0).toUpperCase() + engineRaw.slice(1).toLowerCase();
+        } else {
+          engineState = gpsSpeed > 3 ? 'On' : 'Off';
+        }
 
         const odom = statVal(sv.obdOdometerMeters) || statVal(sv.gpsOdometerMeters);
         const odomVal = odom?.value ?? null;
         const odometer = odomVal ? `${Math.round(odomVal/1609).toLocaleString()} mi` : '—';
 
-        const gps = statVal(sv.gps) ?? null;
+        const gps = gpsSnap;
         const formattedLoc = gps?.reverseGeo?.formattedLocation ?? null;
         let location = 'Unknown';
         if(formattedLoc){
@@ -6602,7 +6609,7 @@ function getActiveVehicles(vehList){
   return vehList.filter(v => {
     if(v.engineState === 'On') return true;
     const checkTime = v.lastTripTime || v.updatedAt;
-    if(!checkTime) return false;
+    if(!checkTime) return true;
     return new Date(checkTime) >= oneMonthAgo;
   });
 }

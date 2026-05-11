@@ -2702,7 +2702,9 @@ async function fetchVehicles(ci){
 
       const withFuel = trucks.filter(t=>!t.fuelEst).length;
       const withGPS  = trucks.filter(t=>t.location!=='Unknown').length;
-      console.log(` [${S.companies[ci]}] ${trucks.length} trucks | fuel:${withFuel}/${trucks.length} | gps:${withGPS}/${trucks.length}`);
+      const withTrip = trucks.filter(t=>t.lastTripTime).length;
+      console.log(` [${S.companies[ci]}] ${trucks.length} trucks | fuel:${withFuel}/${trucks.length} | gps:${withGPS}/${trucks.length} | trip:${withTrip}/${trucks.length}`);
+      console.log(` [${S.companies[ci]}] Vehicle details:`, trucks.map(t=>({name:t.name, engine:t.engineState, trip:t.lastTrip, tripTime:t.lastTripTime, updated:t.updatedAt})));
       showToast('ok','ok',S.companies[ci],`${trucks.length} vehicles — ${withFuel} with live fuel data`);
       return trucks;
 
@@ -6606,12 +6608,16 @@ function renderVehicles(veh){
 
 function getActiveVehicles(vehList){
   const oneMonthAgo = new Date(); oneMonthAgo.setMonth(oneMonthAgo.getMonth()-1);
-  return vehList.filter(v => {
+  const result = vehList.filter(v => {
     if(v.engineState === 'On') return true;
     const checkTime = v.lastTripTime || v.updatedAt;
     if(!checkTime) return true;
-    return new Date(checkTime) >= oneMonthAgo;
+    const isActive = new Date(checkTime) >= oneMonthAgo;
+    if(!isActive) console.log(`[RouteFlare] Filtered out ${v.name}: checkTime=${checkTime}, oneMonthAgo=${oneMonthAgo.toISOString()}`);
+    return isActive;
   });
+  if(result.length !== vehList.length) console.log(`[RouteFlare] Active filter: ${result.length}/${vehList.length} vehicles passed`);
+  return result;
 }
 
 function setFltr(f,btn){

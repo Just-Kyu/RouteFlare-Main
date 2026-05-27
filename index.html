@@ -2620,10 +2620,12 @@ async function fetchVehicles(ci){
         const updatedAt = fuel?.time ?? gps?.time ?? new Date().toISOString();
 
         const tripEnd = lastTripMap[v.id] ?? null;
-        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (tripEnd ?? gps?.time ?? null);
+        const gpsAge = gps?.time ? (Date.now() - new Date(gps.time).getTime()) : Infinity;
+        const gpsAsTrip = gpsAge > 3600000 ? gps?.time : null;
+        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (tripEnd ?? gpsAsTrip ?? null);
         const lastTrip = engineState === 'On'
           ? 'On Trip'
-          : (tripEnd ? formatRelativeTime(tripEnd) : '—');
+          : (tripEnd ? formatRelativeTime(tripEnd) : (gpsAsTrip ? formatRelativeTime(gpsAsTrip) : '—'));
 
         return {
           id:          v.id,

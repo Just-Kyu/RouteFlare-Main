@@ -6607,13 +6607,13 @@ function renderVehicles(veh){
 
 
 function getActiveVehicles(vehList){
-  const oneMonthAgo = new Date(); oneMonthAgo.setMonth(oneMonthAgo.getMonth()-1);
+  const threeMonthsAgo = new Date(); threeMonthsAgo.setMonth(threeMonthsAgo.getMonth()-3);
   const result = vehList.filter(v => {
     if(v.engineState === 'On') return true;
-    const checkTime = v.lastTripTime || v.updatedAt;
-    if(!checkTime) return true;
-    const isActive = new Date(checkTime) >= oneMonthAgo;
-    if(!isActive) console.log(`[RouteFlare] Filtered out ${v.name}: checkTime=${checkTime}, oneMonthAgo=${oneMonthAgo.toISOString()}`);
+    const latest = [v.lastTripTime, v.updatedAt].filter(Boolean).sort().pop();
+    if(!latest) return true;
+    const isActive = new Date(latest) >= threeMonthsAgo;
+    if(!isActive) console.log(`[RouteFlare] Filtered out ${v.name}: latest=${latest}`);
     return isActive;
   });
   if(result.length !== vehList.length) console.log(`[RouteFlare] Active filter: ${result.length}/${vehList.length} vehicles passed`);

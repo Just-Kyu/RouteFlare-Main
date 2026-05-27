@@ -2552,16 +2552,14 @@ async function fetchVehicles(ci){
       } catch(e){ console.warn('[RouteFlare] Engine history error:', e.message); }
 
       // Fallback: use odometer history to detect last movement for remaining vehicles
-      // Odometer fallback: detect last movement by comparing consecutive readings
-      // Uses 0.5 mile threshold between consecutive readings to catch short trips
+      // Odometer fallback: detect last movement from consecutive readings
       function findLastMovement(readings){
         const arr = Array.isArray(readings) ? readings : [readings];
         if(arr.length < 2) return null;
         for(let i = arr.length - 1; i > 0; i--){
           const cur = arr[i]?.value, prev = arr[i-1]?.value;
           if(cur == null || prev == null) continue;
-          const diffMiles = Math.abs(cur - prev) / 1609;
-          if(diffMiles > 0.5) return arr[i].time;
+          if(Math.abs(cur - prev) / 1609 > 0.5) return arr[i].time;
         }
         return null;
       }
@@ -2570,39 +2568,67 @@ async function fetchVehicles(ci){
       if(missingTripIds.length > 0){
         const odoTypes = ['obdOdometerMeters', 'gpsOdometerMeters'];
         for(const odoType of odoTypes){
-          const stillMissing = vData.filter(v => !lastTripMap[v.id]);
-          if(!stillMissing.length) break;
+          if(!vData.some(v => !lastTripMap[v.id])) break;
           try {
             const now = new Date();
-            const odoStart = new Date(now.getTime() - 45*24*60*60*1000).toISOString();
+            const odoStart = new Date(now.getTime() - 7*24*60*60*1000).toISOString();
             const odoEnd = now.toISOString();
             let odoCursor = null;
             let odoPages = 0;
-            let odoStale = 0;
-            let odoPrevCount = Object.keys(lastTripMap).length;
             do {
               let odoUrl = `${backend}/fleet/vehicles/stats/history?types=${odoType}&startTime=${encodeURIComponent(odoStart)}&endTime=${encodeURIComponent(odoEnd)}`;
               if(odoCursor) odoUrl += `&after=${encodeURIComponent(odoCursor)}`;
               const odoRes = await fetch(odoUrl, { headers });
               if(!odoRes.ok){ console.warn(`[RouteFlare] ${odoType} history ${odoRes.status}`); break; }
               const odoJson = await odoRes.json();
-              const odoData = odoJson.data || [];
-              for(const vh of odoData){
-                if(lastTripMap[vh.id]) continue;
+              for(const vh of (odoJson.data || [])){
                 const readings = vh[odoType] || vh[odoType.replace(/s$/, '')] || [];
                 const tripTime = findLastMovement(readings);
-                if(tripTime) lastTripMap[vh.id] = tripTime;
+                if(tripTime && (!lastTripMap[vh.id] || tripTime > lastTripMap[vh.id])){
+                  lastTripMap[vh.id] = tripTime;
+                }
               }
               odoCursor = odoJson.pagination?.endCursor || null;
               odoPages++;
-              const odoNewCount = Object.keys(lastTripMap).length;
-              if(odoNewCount === odoPrevCount) odoStale++;
-              else odoStale = 0;
-              odoPrevCount = odoNewCount;
-              if(odoStale >= 3) break;
-            } while(odoCursor && odoPages < 50);
-            console.log(`[RouteFlare] ${odoType} fallback: ${odoPages} pages, now ${Object.keys(lastTripMap).length} total vehicles with trip times`);
-          } catch(e){ console.warn(`[RouteFlare] ${odoType} history error:`, e.message); }
+            } while(odoCursor && odoPages < 30);
+            console.log(`[RouteFlare] ${odoType} (7d): ${odoPages} pages, ${Object.keys(lastTripMap).length} vehicles with trip times`);
+          } catch(e){ console.warn(`[RouteFlare] ${odoType} error:`, e.message); }
+        }
+        // Second pass: 45-day window for vehicles still missing
+        const still = vData.filter(v => !lastTripMap[v.id]);
+        if(still.length > 0){
+          for(const odoType of odoTypes){
+            if(!vData.some(v => !lastTripMap[v.id])) break;
+            try {
+              const now = new Date();
+              const odoStart = new Date(now.getTime() - 45*24*60*60*1000).toISOString();
+              const odoEnd = new Date(now.getTime() - 7*24*60*60*1000).toISOString();
+              let odoCursor = null;
+              let odoPages = 0;
+              let odoStale = 0;
+              let prevFound = Object.keys(lastTripMap).length;
+              do {
+                let odoUrl = `${backend}/fleet/vehicles/stats/history?types=${odoType}&startTime=${encodeURIComponent(odoStart)}&endTime=${encodeURIComponent(odoEnd)}`;
+                if(odoCursor) odoUrl += `&after=${encodeURIComponent(odoCursor)}`;
+                const odoRes = await fetch(odoUrl, { headers });
+                if(!odoRes.ok) break;
+                const odoJson = await odoRes.json();
+                for(const vh of (odoJson.data || [])){
+                  if(lastTripMap[vh.id]) continue;
+                  const readings = vh[odoType] || vh[odoType.replace(/s$/, '')] || [];
+                  const tripTime = findLastMovement(readings);
+                  if(tripTime) lastTripMap[vh.id] = tripTime;
+                }
+                odoCursor = odoJson.pagination?.endCursor || null;
+                odoPages++;
+                const nowFound = Object.keys(lastTripMap).length;
+                if(nowFound === prevFound) odoStale++; else odoStale = 0;
+                prevFound = nowFound;
+                if(odoStale >= 5) break;
+              } while(odoCursor && odoPages < 30);
+              console.log(`[RouteFlare] ${odoType} (45d): ${odoPages} pages, ${Object.keys(lastTripMap).length} total`);
+            } catch(e){ console.warn(`[RouteFlare] ${odoType} 45d error:`, e.message); }
+          }
         }
       }
 

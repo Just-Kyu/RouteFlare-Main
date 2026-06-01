@@ -2222,7 +2222,7 @@ async function saveManageCo(){
 
   // Save shared config to server so other team members get it automatically
   try{
-    fetch('/api/config', {
+    await fetch('/api/config', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ companies: newNames, apiKeys: newKeys, threshold: newThreshold, adminUrl: adminUrlVal })
@@ -2266,13 +2266,13 @@ async function init(){
       const cfgRes = await fetch('/api/config');
       if(cfgRes.ok){
         const cfgJson = await cfgRes.json();
-        if(cfgJson.ok && cfgJson.config){
+        console.log('[RouteFlare] Server config:', cfgJson.ok ? `${cfgJson.config?.companies?.length} companies` : 'empty');
+        if(cfgJson.ok && cfgJson.config && cfgJson.config.companies?.length){
           const cfg = cfgJson.config;
           localStorage.setItem('ff_companies', JSON.stringify(cfg.companies));
           localStorage.setItem('ff_apiKeys', JSON.stringify(cfg.apiKeys));
           localStorage.setItem('ff_threshold', cfg.threshold || 20);
           if(cfg.adminUrl) localStorage.setItem('rf_admin_url', cfg.adminUrl);
-          // Reload with shared config applied
           location.reload();
           return;
         }
@@ -2404,6 +2404,9 @@ async function loginAndConnect(){
   const gmKey = document.getElementById('gmKeyInput')?.value?.trim() || '';
   if(gmKey) localStorage.setItem('gm_api_key', gmKey);
   S.threshold = parseInt(localStorage.getItem('ff_threshold') || '20');
+
+  // Sync config to server so other browsers/accounts get it
+  try{ await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ companies: cos, apiKeys, threshold: S.threshold }) }); } catch(e){}
 
   setLtxt('Loading vehicles...');
   for(let i=0; i<cos.length; i++){

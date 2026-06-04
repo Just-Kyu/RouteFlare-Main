@@ -1732,14 +1732,19 @@ body {
 
         <!-- Relay Fuel Plans -->
         <div class="fl-section" id="flRelay" style="margin-top:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <span style="font-size:12px;color:var(--text3);" id="relayPageInfo"></span>
+            <button class="tb-btn" onclick="downloadRelayPDF()" style="font-size:11px;padding:6px 14px;background:var(--purple);color:#fff;border-radius:8px;font-weight:600;">Download PDF</button>
+          </div>
           <div class="card" style="overflow-x:auto;">
             <table class="fl-table">
               <thead><tr>
-                <th class="sortable" data-sort="date" data-table="relay" onclick="sortFlTable(this)">Date</th><th>Station</th><th>Truck</th><th>Gallons</th>
+                <th style="width:40px;">#</th><th class="sortable" data-sort="date" data-table="relay" onclick="sortFlTable(this)">Date</th><th>Station</th><th>Truck</th><th>Gallons</th>
                 <th class="sortable" data-sort="pricePerGal" data-table="relay" onclick="sortFlTable(this)">Price/Gal</th><th class="sortable" data-sort="discountedPrice" data-table="relay" onclick="sortFlTable(this)">Disc. Price</th><th>Total</th><th>Saved</th><th>Status</th><th style="width:80px;"></th>
               </tr></thead>
               <tbody id="flRelayBody"></tbody>
             </table>
+            <div id="relayPagination" class="fl-pagination" style="display:flex;justify-content:center;gap:6px;padding:12px 0;"></div>
             <div class="empty-state" id="relayEmpty" style="display:none;">
               <div class="es-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
               <div class="es-text">No Relay fuel plans yet</div>
@@ -8687,22 +8692,40 @@ function openLogForDispatch(dispatchId){
 }
 
 
+S._relayPage = 1;
+const RELAY_PER_PAGE = 20;
+
+function getRelayPlans(){
+  return getFuelLogHistory().filter(r => r.fuelDest === 'relay');
+}
+
 function renderRelayPlans(){
-  const history = getFuelLogHistory().filter(r => r.fuelDest === 'relay');
+  const history = getRelayPlans();
   const tbody = document.getElementById('flRelayBody');
   const empty = document.getElementById('relayEmpty');
+  const pageInfo = document.getElementById('relayPageInfo');
+  const paginationEl = document.getElementById('relayPagination');
   if(!history.length){
     tbody.innerHTML = '';
     empty.style.display = 'block';
+    paginationEl.innerHTML = '';
+    pageInfo.textContent = '';
     return;
   }
   empty.style.display = 'none';
-  tbody.innerHTML = history.map(r => {
+  const totalPages = Math.ceil(history.length / RELAY_PER_PAGE);
+  if(S._relayPage > totalPages) S._relayPage = totalPages;
+  const start = (S._relayPage - 1) * RELAY_PER_PAGE;
+  const page = history.slice(start, start + RELAY_PER_PAGE);
+  pageInfo.textContent = `Showing ${start+1}–${start+page.length} of ${history.length} plans`;
+  tbody.innerHTML = page.map((r, idx) => {
+    const num = start + idx + 1;
     const hasFueled = r.gallons > 0;
     const status = hasFueled
       ? '<span style="color:var(--green);font-weight:700;font-size:11px;">Fueled</span>'
       : '<span style="color:var(--purple-lt);font-weight:600;font-size:11px;">Pending</span>';
     return `<tr>
+      <td style="color:var(--text3);font-size:11px;">${num}</td>
       <td>${r.date}</td>
       <td class="fl-station">${r.station}</td>
       <td>${r.truckUnit||'—'}</td>
@@ -8715,6 +8738,94 @@ function renderRelayPlans(){
       <td style="white-space:nowrap;"><button class="dc-log-btn" style="font-size:10px;padding:4px 10px;margin-right:4px;" onclick="openEditFuelRecord('${r.id}')">Edit</button><button class="fl-del-btn" onclick="deleteFuelRecord('${r.id}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></td>
     </tr>`;
   }).join('');
+  if(totalPages > 1){
+    let btns = '';
+    for(let p = 1; p <= totalPages; p++){
+      btns += `<button onclick="S._relayPage=${p};renderRelayPlans()" style="min-width:32px;height:32px;border-radius:6px;border:1px solid ${p===S._relayPage?'var(--purple)':'var(--border2)'};background:${p===S._relayPage?'var(--purple)':'var(--surface2)'};color:${p===S._relayPage?'#fff':'var(--text2)'};cursor:pointer;font-size:12px;font-weight:600;">${p}</button>`;
+    }
+    paginationEl.innerHTML = btns;
+  } else paginationEl.innerHTML = '';
+}
+
+function downloadRelayPDF(){
+  const plans = getRelayPlans();
+  if(!plans.length) return showToast('vwa','!','No Data','No relay fuel plans to export.');
+  const totalGals = plans.reduce((s,r)=>s+(parseFloat(r.gallons)||0),0);
+  const totalSpent = plans.reduce((s,r)=>s+(parseFloat(r.discountTotal)||0),0);
+  const totalSaved = plans.reduce((s,r)=>s+(parseFloat(r.saved)||0),0);
+  const fueled = plans.filter(r=>r.gallons>0).length;
+  const pending = plans.length - fueled;
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const company = S.companies[S.activeCompany] || 'All Companies';
+
+  const ROWS_PER_PDF_PAGE = 25;
+  const totalPdfPages = Math.ceil(plans.length / ROWS_PER_PDF_PAGE);
+
+  let html = `<!DOCTYPE html><html><head><title>Relay Fuel Plans – ${company}</title><style>
+    @page{size:landscape;margin:20mm 15mm;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#222;padding:20px;}
+    .page{page-break-after:always;}
+    .page:last-child{page-break-after:avoid;}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;border-bottom:2px solid #7C3AED;padding-bottom:10px;}
+    .header h1{font-size:18px;color:#7C3AED;margin-bottom:2px;}
+    .header .sub{font-size:11px;color:#666;}
+    .summary{display:flex;gap:20px;margin-bottom:12px;font-size:11px;}
+    .summary .item{background:#f5f3ff;padding:6px 12px;border-radius:6px;border:1px solid #e9e5ff;}
+    .summary .item b{color:#7C3AED;}
+    table{width:100%;border-collapse:collapse;font-size:10px;}
+    th{background:#7C3AED;color:#fff;padding:6px 8px;text-align:left;font-size:10px;font-weight:600;}
+    td{padding:5px 8px;border-bottom:1px solid #e5e7eb;}
+    tr:nth-child(even){background:#faf9ff;}
+    .fueled{color:#16a34a;font-weight:700;}
+    .pending{color:#7C3AED;font-weight:600;}
+    .total-row{background:#f5f3ff;font-weight:700;}
+    .total-row td{border-top:2px solid #7C3AED;padding-top:8px;}
+    .footer{margin-top:10px;text-align:center;font-size:9px;color:#999;border-top:1px solid #ddd;padding-top:6px;}
+  </style></head><body>`;
+
+  for(let pg = 0; pg < totalPdfPages; pg++){
+    const pgPlans = plans.slice(pg * ROWS_PER_PDF_PAGE, (pg+1) * ROWS_PER_PDF_PAGE);
+    const isLast = pg === totalPdfPages - 1;
+    html += `<div class="${isLast ? '' : 'page'}">`;
+    if(pg === 0){
+      html += `<div class="header"><div><h1>Relay Fuel Plans Report</h1><div class="sub">${company} — Generated ${dateStr}</div></div><div style="text-align:right;font-size:11px;color:#666;">${plans.length} Plans | ${fueled} Fueled | ${pending} Pending</div></div>`;
+      html += `<div class="summary"><div class="item">Total Gallons: <b>${totalGals.toFixed(1)}</b></div><div class="item">Total Spent: <b>$${totalSpent.toFixed(2)}</b></div><div class="item">Total Saved: <b>$${totalSaved.toFixed(2)}</b></div></div>`;
+    } else {
+      html += `<div style="margin-bottom:8px;font-size:11px;color:#666;">${company} — Relay Fuel Plans (continued)</div>`;
+    }
+    html += `<table><thead><tr><th>#</th><th>Date</th><th>Station</th><th>Truck</th><th>Gallons</th><th>Price/Gal</th><th>Disc. Price</th><th>Total</th><th>Saved</th><th>Status</th></tr></thead><tbody>`;
+    pgPlans.forEach((r, idx) => {
+      const num = pg * ROWS_PER_PDF_PAGE + idx + 1;
+      const hasFueled = r.gallons > 0;
+      html += `<tr>
+        <td>${num}</td>
+        <td>${r.date}</td>
+        <td>${r.station}</td>
+        <td>${r.truckUnit||'—'}</td>
+        <td>${hasFueled ? r.gallons : '—'}</td>
+        <td>$${parseFloat(r.pricePerGal).toFixed(3)}</td>
+        <td>$${parseFloat(r.discountedPrice).toFixed(3)}</td>
+        <td>${hasFueled ? '$'+parseFloat(r.discountTotal).toFixed(2) : '—'}</td>
+        <td>${hasFueled ? '$'+parseFloat(r.saved).toFixed(2) : '—'}</td>
+        <td class="${hasFueled?'fueled':'pending'}">${hasFueled?'Fueled':'Pending'}</td>
+      </tr>`;
+    });
+    if(isLast){
+      html += `<tr class="total-row"><td colspan="4" style="text-align:right;">TOTALS</td><td>${totalGals.toFixed(1)}</td><td></td><td></td><td>$${totalSpent.toFixed(2)}</td><td>$${totalSaved.toFixed(2)}</td><td></td></tr>`;
+    }
+    html += `</tbody></table>`;
+    html += `<div class="footer">Page ${pg+1} of ${totalPdfPages} — RouteFlare Relay Fuel Plans</div>`;
+    html += `</div>`;
+  }
+  html += `</body></html>`;
+
+  const w = window.open('', '_blank');
+  if(!w) return showToast('vwa','!','Popup Blocked','Allow popups to download PDF.');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>{ w.print(); }, 500);
 }
 
 function openUpdateRelay(id){
@@ -8750,6 +8861,7 @@ function sortFlTable(th){
   th.closest('thead').querySelectorAll('th.sortable').forEach(h=>{ h.classList.remove('asc','desc'); });
   th.classList.add(state.dir);
   if(table==='history'){ S._histPage=1; renderFuelHistory(); }
+  else if(table==='relay'){ S._relayPage=1; renderRelayPlans(); }
   else renderMonthlyReport();
 }
 

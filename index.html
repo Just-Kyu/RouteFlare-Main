@@ -1264,8 +1264,6 @@ body {
   .monthly-grid { grid-template-columns: repeat(2,1fr); }
 }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 <script>
@@ -8749,9 +8747,19 @@ function renderRelayPlans(){
   } else paginationEl.innerHTML = '';
 }
 
-function downloadRelayPDF(){
+function _loadScript(u){ return new Promise((ok,no)=>{ const s=document.createElement('script'); s.src=u; s.onload=ok; s.onerror=no; document.head.appendChild(s); }); }
+
+async function downloadRelayPDF(){
   const plans = getRelayPlans();
   if(!plans.length) return showToast('vwa','!','No Data','No relay fuel plans to export.');
+
+  if(!window.jspdf){
+    showToast('ok','ok','Preparing','Loading PDF engine...');
+    try{ await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js'); await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js'); }catch(e){
+    try{ await _loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js'); await _loadScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js'); }catch(e2){ _relayPdfFallback(plans); return; }}
+  }
+  if(!window.jspdf){ _relayPdfFallback(plans); return; }
+
   const totalGals = plans.reduce((s,r)=>s+(parseFloat(r.gallons)||0),0);
   const totalSpent = plans.reduce((s,r)=>s+(parseFloat(r.discountTotal)||0),0);
   const totalSaved = plans.reduce((s,r)=>s+(parseFloat(r.saved)||0),0);
@@ -8761,7 +8769,7 @@ function downloadRelayPDF(){
   const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const company = S.companies[S.activeCompany] || 'All Companies';
 
-  const { jsPDF } = window.jspdf;
+  try { const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
   const pw = doc.internal.pageSize.getWidth();
 
@@ -8839,6 +8847,27 @@ function downloadRelayPDF(){
 
   doc.save(`Relay_Fuel_Plans_${company.replace(/\s+/g,'_')}_${dateStr}.pdf`);
   showToast('ok','ok','PDF Downloaded',`${plans.length} fuel plans exported.`);
+  } catch(err){ console.error('PDF error:', err); _relayPdfFallback(plans); }
+}
+
+function _relayPdfFallback(plans){
+  const totalGals=plans.reduce((s,r)=>s+(parseFloat(r.gallons)||0),0);
+  const totalSpent=plans.reduce((s,r)=>s+(parseFloat(r.discountTotal)||0),0);
+  const totalSaved=plans.reduce((s,r)=>s+(parseFloat(r.saved)||0),0);
+  const fueled=plans.filter(r=>r.gallons>0).length, pending=plans.length-fueled;
+  const company=S.companies[S.activeCompany]||'All';
+  const d=new Date(), dateStr=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  let h=`<!DOCTYPE html><html><head><title>Relay Fuel Plans</title><style>@page{size:landscape;margin:15mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,'Segoe UI',sans-serif;font-size:11px;color:#222;padding:20px;}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;border-bottom:3px solid #7C3AED;padding-bottom:10px;}.hdr h1{font-size:20px;color:#7C3AED;}.hdr .sub{font-size:11px;color:#666;margin-top:2px;}.stats{display:flex;gap:16px;margin-bottom:14px;}.stats span{background:#f5f3ff;padding:6px 14px;border-radius:6px;border:1px solid #ddd;font-size:11px;}.stats b{color:#7C3AED;}table{width:100%;border-collapse:collapse;}th{background:#7C3AED;color:#fff;padding:7px 8px;text-align:left;font-size:10px;}td{padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:10px;}tr:nth-child(even){background:#faf9ff;}.g{color:#16a34a;font-weight:700;}.p{color:#7C3AED;font-weight:600;}.totals td{border-top:2px solid #7C3AED;font-weight:700;background:#f5f3ff;}@media print{.np{display:none!important;}}</style></head><body>`;
+  h+=`<div class="np" style="background:#7C3AED;color:#fff;padding:12px 20px;margin:-20px -20px 20px;display:flex;justify-content:space-between;align-items:center;"><b>Relay Fuel Plans Report</b><button onclick="window.print()" style="background:#fff;color:#7C3AED;border:none;padding:8px 20px;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px;">Save as PDF</button></div>`;
+  h+=`<div class="hdr"><div><h1>Relay Fuel Plans Report</h1><div class="sub">${company} — ${dateStr}</div></div><div style="text-align:right;font-size:11px;color:#666;">${plans.length} Plans | ${fueled} Fueled | ${pending} Pending</div></div>`;
+  h+=`<div class="stats"><span>Total Gallons: <b>${totalGals.toFixed(1)}</b></span><span>Total Spent: <b>$${totalSpent.toFixed(2)}</b></span><span>Total Saved: <b>$${totalSaved.toFixed(2)}</b></span></div>`;
+  h+=`<table><thead><tr><th>#</th><th>Date</th><th>Station</th><th>Truck</th><th>Gallons</th><th>Price/Gal</th><th>Disc. Price</th><th>Total</th><th>Saved</th><th>Status</th></tr></thead><tbody>`;
+  plans.forEach((r,i)=>{ const f=r.gallons>0; h+=`<tr><td>${i+1}</td><td>${r.date}</td><td>${r.station}</td><td>${r.truckUnit||'—'}</td><td>${f?r.gallons:'—'}</td><td>$${parseFloat(r.pricePerGal).toFixed(3)}</td><td>$${parseFloat(r.discountedPrice).toFixed(3)}</td><td>${f?'$'+parseFloat(r.discountTotal).toFixed(2):'—'}</td><td>${f?'$'+parseFloat(r.saved).toFixed(2):'—'}</td><td class="${f?'g':'p'}">${f?'Fueled':'Pending'}</td></tr>`; });
+  h+=`<tr class="totals"><td colspan="4" style="text-align:right;">TOTALS</td><td>${totalGals.toFixed(1)}</td><td></td><td></td><td>$${totalSpent.toFixed(2)}</td><td>$${totalSaved.toFixed(2)}</td><td></td></tr></tbody></table></body></html>`;
+  const w=window.open('','_blank');
+  if(!w) return showToast('vwa','!','Popup Blocked','Allow popups for this site.');
+  w.document.write(h); w.document.close();
+  setTimeout(()=>{ w.focus(); w.print(); }, 600);
 }
 
 function openUpdateRelay(id){

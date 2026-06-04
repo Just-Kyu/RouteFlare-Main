@@ -1264,6 +1264,8 @@ body {
   .monthly-grid { grid-template-columns: repeat(2,1fr); }
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 <script>
@@ -8759,73 +8761,84 @@ function downloadRelayPDF(){
   const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const company = S.companies[S.activeCompany] || 'All Companies';
 
-  const ROWS_PER_PDF_PAGE = 25;
-  const totalPdfPages = Math.ceil(plans.length / ROWS_PER_PDF_PAGE);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  const pw = doc.internal.pageSize.getWidth();
 
-  let html = `<!DOCTYPE html><html><head><title>Relay Fuel Plans – ${company}</title><style>
-    @page{size:landscape;margin:20mm 15mm;}
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#222;padding:20px;}
-    .page{page-break-after:always;}
-    .page:last-child{page-break-after:avoid;}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;border-bottom:2px solid #7C3AED;padding-bottom:10px;}
-    .header h1{font-size:18px;color:#7C3AED;margin-bottom:2px;}
-    .header .sub{font-size:11px;color:#666;}
-    .summary{display:flex;gap:20px;margin-bottom:12px;font-size:11px;}
-    .summary .item{background:#f5f3ff;padding:6px 12px;border-radius:6px;border:1px solid #e9e5ff;}
-    .summary .item b{color:#7C3AED;}
-    table{width:100%;border-collapse:collapse;font-size:10px;}
-    th{background:#7C3AED;color:#fff;padding:6px 8px;text-align:left;font-size:10px;font-weight:600;}
-    td{padding:5px 8px;border-bottom:1px solid #e5e7eb;}
-    tr:nth-child(even){background:#faf9ff;}
-    .fueled{color:#16a34a;font-weight:700;}
-    .pending{color:#7C3AED;font-weight:600;}
-    .total-row{background:#f5f3ff;font-weight:700;}
-    .total-row td{border-top:2px solid #7C3AED;padding-top:8px;}
-    .footer{margin-top:10px;text-align:center;font-size:9px;color:#999;border-top:1px solid #ddd;padding-top:6px;}
-  </style></head><body>`;
+  doc.setFontSize(18);
+  doc.setTextColor(124, 58, 237);
+  doc.text('Relay Fuel Plans Report', 14, 18);
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(`${company} — Generated ${dateStr}`, 14, 24);
+  doc.text(`${plans.length} Plans | ${fueled} Fueled | ${pending} Pending`, pw - 14, 18, { align: 'right' });
 
-  for(let pg = 0; pg < totalPdfPages; pg++){
-    const pgPlans = plans.slice(pg * ROWS_PER_PDF_PAGE, (pg+1) * ROWS_PER_PDF_PAGE);
-    const isLast = pg === totalPdfPages - 1;
-    html += `<div class="${isLast ? '' : 'page'}">`;
-    if(pg === 0){
-      html += `<div class="header"><div><h1>Relay Fuel Plans Report</h1><div class="sub">${company} — Generated ${dateStr}</div></div><div style="text-align:right;font-size:11px;color:#666;">${plans.length} Plans | ${fueled} Fueled | ${pending} Pending</div></div>`;
-      html += `<div class="summary"><div class="item">Total Gallons: <b>${totalGals.toFixed(1)}</b></div><div class="item">Total Spent: <b>$${totalSpent.toFixed(2)}</b></div><div class="item">Total Saved: <b>$${totalSaved.toFixed(2)}</b></div></div>`;
-    } else {
-      html += `<div style="margin-bottom:8px;font-size:11px;color:#666;">${company} — Relay Fuel Plans (continued)</div>`;
+  doc.setDrawColor(124, 58, 237);
+  doc.setLineWidth(0.5);
+  doc.line(14, 27, pw - 14, 27);
+
+  doc.setFontSize(9);
+  doc.setTextColor(60);
+  doc.text(`Total Gallons: ${totalGals.toFixed(1)}`, 14, 33);
+  doc.text(`Total Spent: $${totalSpent.toFixed(2)}`, 80, 33);
+  doc.text(`Total Saved: $${totalSaved.toFixed(2)}`, 146, 33);
+
+  const rows = plans.map((r, i) => {
+    const hasFueled = r.gallons > 0;
+    return [
+      i + 1,
+      r.date,
+      r.station,
+      r.truckUnit || '—',
+      hasFueled ? r.gallons : '—',
+      '$' + parseFloat(r.pricePerGal).toFixed(3),
+      '$' + parseFloat(r.discountedPrice).toFixed(3),
+      hasFueled ? '$' + parseFloat(r.discountTotal).toFixed(2) : '—',
+      hasFueled ? '$' + parseFloat(r.saved).toFixed(2) : '—',
+      hasFueled ? 'Fueled' : 'Pending'
+    ];
+  });
+
+  rows.push([
+    { content: 'TOTALS', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
+    { content: totalGals.toFixed(1), styles: { fontStyle: 'bold' } },
+    '', '',
+    { content: '$' + totalSpent.toFixed(2), styles: { fontStyle: 'bold' } },
+    { content: '$' + totalSaved.toFixed(2), styles: { fontStyle: 'bold' } },
+    ''
+  ]);
+
+  doc.autoTable({
+    startY: 37,
+    head: [['#', 'Date', 'Station', 'Truck', 'Gallons', 'Price/Gal', 'Disc. Price', 'Total', 'Saved', 'Status']],
+    body: rows,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [124, 58, 237], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+    alternateRowStyles: { fillColor: [248, 246, 255] },
+    columnStyles: {
+      0: { cellWidth: 10, halign: 'center' },
+      4: { halign: 'right' },
+      5: { halign: 'right' },
+      6: { halign: 'right' },
+      7: { halign: 'right' },
+      8: { halign: 'right' },
+    },
+    didParseCell: function(data){
+      if(data.column.index === 9 && data.section === 'body'){
+        if(data.cell.raw === 'Fueled') data.cell.styles.textColor = [22, 163, 74];
+        else if(data.cell.raw === 'Pending') data.cell.styles.textColor = [124, 58, 237];
+      }
+    },
+    didDrawPage: function(data){
+      const pg = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(`Page ${data.pageNumber} of ${pg} — RouteFlare`, pw / 2, doc.internal.pageSize.getHeight() - 8, { align: 'center' });
     }
-    html += `<table><thead><tr><th>#</th><th>Date</th><th>Station</th><th>Truck</th><th>Gallons</th><th>Price/Gal</th><th>Disc. Price</th><th>Total</th><th>Saved</th><th>Status</th></tr></thead><tbody>`;
-    pgPlans.forEach((r, idx) => {
-      const num = pg * ROWS_PER_PDF_PAGE + idx + 1;
-      const hasFueled = r.gallons > 0;
-      html += `<tr>
-        <td>${num}</td>
-        <td>${r.date}</td>
-        <td>${r.station}</td>
-        <td>${r.truckUnit||'—'}</td>
-        <td>${hasFueled ? r.gallons : '—'}</td>
-        <td>$${parseFloat(r.pricePerGal).toFixed(3)}</td>
-        <td>$${parseFloat(r.discountedPrice).toFixed(3)}</td>
-        <td>${hasFueled ? '$'+parseFloat(r.discountTotal).toFixed(2) : '—'}</td>
-        <td>${hasFueled ? '$'+parseFloat(r.saved).toFixed(2) : '—'}</td>
-        <td class="${hasFueled?'fueled':'pending'}">${hasFueled?'Fueled':'Pending'}</td>
-      </tr>`;
-    });
-    if(isLast){
-      html += `<tr class="total-row"><td colspan="4" style="text-align:right;">TOTALS</td><td>${totalGals.toFixed(1)}</td><td></td><td></td><td>$${totalSpent.toFixed(2)}</td><td>$${totalSaved.toFixed(2)}</td><td></td></tr>`;
-    }
-    html += `</tbody></table>`;
-    html += `<div class="footer">Page ${pg+1} of ${totalPdfPages} — RouteFlare Relay Fuel Plans</div>`;
-    html += `</div>`;
-  }
-  html += `</body></html>`;
+  });
 
-  const w = window.open('', '_blank');
-  if(!w) return showToast('vwa','!','Popup Blocked','Allow popups to download PDF.');
-  w.document.write(html);
-  w.document.close();
-  setTimeout(()=>{ w.print(); }, 500);
+  doc.save(`Relay_Fuel_Plans_${company.replace(/\s+/g,'_')}_${dateStr}.pdf`);
+  showToast('ok','ok','PDF Downloaded',`${plans.length} fuel plans exported.`);
 }
 
 function openUpdateRelay(id){

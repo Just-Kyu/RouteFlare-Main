@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const fs = require('fs');
 const path = require('path');
 
@@ -7,7 +8,15 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
+app.use(compression());
 app.use(express.json({ limit: '10mb' }));
+
+// ─── Response cache (cuts egress by caching Samsara responses) ──
+const _cache = new Map();
+const CACHE_TTL = 120000;
+function cacheKey(apiKey, url){ return apiKey.slice(-8) + ':' + url; }
+function getCached(key){ const e = _cache.get(key); if(!e) return null; if(Date.now() - e.t > CACHE_TTL){ _cache.delete(key); return null; } return e; }
+function setCache(key, status, body){ _cache.set(key, { t: Date.now(), s: status, b: body }); if(_cache.size > 500){ const first = _cache.keys().next().value; _cache.delete(first); } }
 
 // ─── JSON file storage ──────────────────────────────────
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
@@ -100,10 +109,15 @@ app.get('/fleet/vehicles', async (req, res) => {
   const apiKey = getSamsaraKey(req);
   if (!apiKey) return res.status(401).json({ error: 'Missing Samsara API key' });
 
+  const ck = cacheKey(apiKey, '/fleet/vehicles');
+  const hit = getCached(ck);
+  if(hit){ console.log('[vehicles] cache hit'); return res.status(hit.s).set('Content-Type','application/json').send(hit.b); }
   try {
     const all = await samsaraFetchAll('/fleet/vehicles', apiKey);
     console.log(`[vehicles] ${all.length} total`);
-    res.json({ data: all, pagination: { hasNextPage: false } });
+    const body = JSON.stringify({ data: all, pagination: { hasNextPage: false } });
+    setCache(ck, 200, body);
+    res.set('Content-Type','application/json').send(body);
   } catch (err) {
     console.error('[vehicles]', err.message);
     res.status(err.status || 500).json({ error: err.message });
@@ -117,7 +131,12 @@ app.all('/fleet/*', async (req, res) => {
 
   try {
     const samsaraUrl = `${SAMSARA_BASE}${req.originalUrl}`;
-    console.log(`[proxy] ${req.method} ${samsaraUrl}`);
+    if(req.method === 'GET'){
+      const ck = cacheKey(apiKey, req.originalUrl);
+      const hit = getCached(ck);
+      if(hit){ console.log(`[proxy] cache hit ${req.originalUrl.slice(0,60)}`); return res.status(hit.s).set('Content-Type','application/json').send(hit.b); }
+    }
+    console.log(`[proxy] ${req.method} ${samsaraUrl.slice(0,80)}`);
     const opts = {
       method: req.method,
       headers: { Authorization: `Bearer ${apiKey}` },
@@ -126,6 +145,7 @@ app.all('/fleet/*', async (req, res) => {
     const sRes = await fetch(samsaraUrl, opts);
     const data = await sRes.text();
     console.log(`[proxy] → ${sRes.status} (${data.length} bytes)`);
+    if(req.method === 'GET') setCache(cacheKey(apiKey, req.originalUrl), sRes.status, data);
     res.status(sRes.status).set('Content-Type', 'application/json').send(data);
   } catch (err) {
     console.error(`[proxy] Error:`, err.message);

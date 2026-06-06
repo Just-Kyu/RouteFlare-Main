@@ -1969,7 +1969,7 @@ const S = {
 
 function startAutoRefresh(){
   if(S.refreshTimer) clearInterval(S.refreshTimer);
-  S.refreshTimer = setInterval(()=>{ refreshAll(); }, 120000);
+  S.refreshTimer = setInterval(()=>{ refreshAll(); }, 300000);
 };
 
 function toggleVis(inputId, btn){

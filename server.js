@@ -404,6 +404,13 @@ app.get('/api/health', (req, res) => {
   res.json({ service: 'RouteFlare Backend', status: 'ok', transactions: getTxs().length });
 });
 
+// ─── Seed data for first-time setup ──────────────────────
+app.get('/api/seed-data', (req, res) => {
+  const seedFile = path.join(__dirname, 'seed-data.json');
+  if (fs.existsSync(seedFile)) return res.sendFile(seedFile);
+  res.json({});
+});
+
 // ─── Serve frontend (AFTER api routes) ───────────────────
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/logo-icon.png', (req, res) => res.sendFile(path.join(__dirname, 'logo-icon.png')));

@@ -2160,6 +2160,41 @@ function closeManageCo(){
   document.getElementById('manageCoModal').style.display = 'none';
 }
 
+function exportAllData(){
+  const data = {};
+  for(let i = 0; i < localStorage.length; i++){
+    const k = localStorage.key(i);
+    data[k] = localStorage.getItem(k);
+  }
+  const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'routeflare-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('ok','ok','Export Complete','Data file downloaded successfully');
+}
+
+function importAllData(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try {
+      const data = JSON.parse(ev.target.result);
+      const keys = Object.keys(data);
+      if(!keys.length) throw new Error('Empty file');
+      keys.forEach(k => localStorage.setItem(k, data[k]));
+      showToast('ok','ok','Import Complete', keys.length + ' items restored. Reloading...');
+      setTimeout(() => location.reload(), 1500);
+    } catch(err){
+      showToast('vwa','!','Import Failed', err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
 function manageAddCo(){
   const list = document.getElementById('manageCoList');
   const i = list.children.length;
@@ -10661,6 +10696,16 @@ init();
 
     <button onclick="saveManageCo()" style="width:100%;margin-top:20px;padding:13px;background:linear-gradient(135deg,#7C3AED,#6D28D9);color:#fff;border:none;border-radius:12px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.4);">Save & Reconnect</button>
     <div id="manageCoStatus" style="display:none;margin-top:10px;font-size:12px;text-align:center;"></div>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px;">Data Migration</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="exportAllData()" style="flex:1;padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--green);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;">↓ Export Data</button>
+        <button onclick="document.getElementById('importFileInput').click()" style="flex:1;padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--orange);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;">↑ Import Data</button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importAllData(event)">
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px;">Export from old site, import on new site to migrate all fuel logs & settings</div>
+    </div>
   </div>
 </div>
 

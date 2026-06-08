@@ -197,6 +197,24 @@ app.get('/api/debug/samsara', async (req, res) => {
 // ─── Shared config (companies, API keys, settings) ──────
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
 
+// Auto-seed config from seed-data.json on first run (company names only, no API keys)
+if (!fs.existsSync(CONFIG_FILE) && fs.existsSync(SEED_FILE)) {
+  try {
+    const seed = JSON.parse(fs.readFileSync(SEED_FILE, 'utf8'));
+    if (seed.ff_companies) {
+      const companies = JSON.parse(seed.ff_companies);
+      const config = {
+        companies,
+        apiKeys: companies.map(() => ''),
+        threshold: parseInt(seed.ff_threshold) || 20,
+        updatedAt: new Date().toISOString(),
+      };
+      writeJSON(CONFIG_FILE, config);
+      console.log(`[RouteFlare] Seeded config with ${config.companies.length} companies`);
+    }
+  } catch (e) { console.warn('Config seed failed:', e.message); }
+}
+
 app.get('/api/config', (req, res) => {
   const config = readJSON(CONFIG_FILE, null);
   if (!config) return res.json({ ok: false });
@@ -317,6 +335,21 @@ if (!fs.existsSync(RECEIPTS_DIR)) fs.mkdirSync(RECEIPTS_DIR, { recursive: true }
 
 function getFuelLogs() { return readJSON(FUEL_LOGS_FILE, []); }
 function saveFuelLogs(logs) { writeJSON(FUEL_LOGS_FILE, logs); }
+
+// Auto-seed fuel logs from seed-data.json on first run
+const SEED_FILE = path.join(__dirname, 'seed-data.json');
+if (getFuelLogs().length === 0 && fs.existsSync(SEED_FILE)) {
+  try {
+    const seed = JSON.parse(fs.readFileSync(SEED_FILE, 'utf8'));
+    if (seed.ff_fuel_log) {
+      const logs = JSON.parse(seed.ff_fuel_log);
+      if (logs.length) {
+        saveFuelLogs(logs);
+        console.log(`[RouteFlare] Seeded ${logs.length} fuel logs from seed-data.json`);
+      }
+    }
+  } catch (e) { console.warn('Seed load failed:', e.message); }
+}
 
 app.get('/api/fuel-logs', (req, res) => {
   const logs = getFuelLogs();

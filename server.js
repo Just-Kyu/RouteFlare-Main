@@ -24,6 +24,7 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 const TX_FILE = path.join(DATA_DIR, 'transactions.json');
 const META_FILE = path.join(DATA_DIR, 'meta.json');
+const SEED_FILE = path.join(__dirname, 'seed-data.json');
 
 function readJSON(file, fallback) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
@@ -337,7 +338,6 @@ function getFuelLogs() { return readJSON(FUEL_LOGS_FILE, []); }
 function saveFuelLogs(logs) { writeJSON(FUEL_LOGS_FILE, logs); }
 
 // Auto-seed fuel logs from seed-data.json on first run
-const SEED_FILE = path.join(__dirname, 'seed-data.json');
 if (getFuelLogs().length === 0 && fs.existsSync(SEED_FILE)) {
   try {
     const seed = JSON.parse(fs.readFileSync(SEED_FILE, 'utf8'));

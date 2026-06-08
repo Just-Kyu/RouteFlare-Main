@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: routeflare
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /data
+    disk:
+      name: routeflare-data
+      mountPath: /data
+      sizeGB: 1

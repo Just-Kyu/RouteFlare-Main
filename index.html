@@ -1700,7 +1700,7 @@ body {
             <select class="month-select" id="flMonthSelect" onchange="renderFuelLog()">
               <option value="all">All Time</option>
             </select>
-            <button class="sync-btn" id="syncBtn" onclick="syncFuelTransactions()" title="Sync from Samsara/Relay">
+            <button class="sync-btn" id="syncBtn" onclick="syncFuelLogsNow()" title="Sync fuel logs with server">
               <svg class="sync-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
               Sync
             </button>
@@ -1732,14 +1732,19 @@ body {
 
         <!-- Relay Fuel Plans -->
         <div class="fl-section" id="flRelay" style="margin-top:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <span style="font-size:12px;color:var(--text3);" id="relayPageInfo"></span>
+            <button class="tb-btn" onclick="downloadRelayPDF()" style="font-size:11px;padding:6px 14px;background:var(--purple);color:#fff;border-radius:8px;font-weight:600;">Download PDF</button>
+          </div>
           <div class="card" style="overflow-x:auto;">
             <table class="fl-table">
               <thead><tr>
-                <th class="sortable" data-sort="date" data-table="relay" onclick="sortFlTable(this)">Date</th><th>Station</th><th>Truck</th><th>Gallons</th>
+                <th style="width:40px;">#</th><th class="sortable" data-sort="date" data-table="relay" onclick="sortFlTable(this)">Date</th><th>Station</th><th>Truck</th><th>Gallons</th>
                 <th class="sortable" data-sort="pricePerGal" data-table="relay" onclick="sortFlTable(this)">Price/Gal</th><th class="sortable" data-sort="discountedPrice" data-table="relay" onclick="sortFlTable(this)">Disc. Price</th><th>Total</th><th>Saved</th><th>Status</th><th style="width:80px;"></th>
               </tr></thead>
               <tbody id="flRelayBody"></tbody>
             </table>
+            <div id="relayPagination" class="fl-pagination" style="display:flex;justify-content:center;gap:6px;padding:12px 0;"></div>
             <div class="empty-state" id="relayEmpty" style="display:none;">
               <div class="es-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
               <div class="es-text">No Relay fuel plans yet</div>
@@ -1865,6 +1870,52 @@ body {
   </div>
 </div>
 
+<!-- EDIT FUEL LOG MODAL -->
+<div class="modal-overlay" id="editFuelModal">
+  <div class="modal" style="max-width:520px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div class="modal-h" style="margin-bottom:2px">Edit Fueling Record</div>
+        <div class="modal-sub" style="margin-bottom:0">Update any field or attach a receipt</div>
+      </div>
+      <button class="modal-close" onclick="closeEditFuelModal()">✕</button>
+    </div>
+    <input type="hidden" id="editFuelId"/>
+    <div class="modal-grid">
+      <div class="ig"><label>Truck Unit #</label><input class="finput" style="margin-bottom:0" type="text" id="edUnit"/></div>
+      <div class="ig"><label>Fuel Station</label><input class="finput" style="margin-bottom:0" type="text" id="edStation"/></div>
+      <div class="ig"><label>Gallons Fueled</label><input class="finput" style="margin-bottom:0" type="number" id="edGallons" step="0.001"/></div>
+      <div class="ig"><label>Price per Gallon ($)</label><input class="finput" style="margin-bottom:0" type="number" id="edPrice" step="0.001"/></div>
+      <div class="ig"><label>Discounted Price ($)</label><input class="finput" style="margin-bottom:0" type="number" id="edDiscount" step="0.001"/></div>
+      <div class="ig"><label>State</label>
+        <select id="edState" class="finput" style="margin-bottom:0;appearance:none;cursor:pointer;">
+          <option value="">Select state...</option>
+          <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option>
+          <option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option>
+          <option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option>
+          <option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option>
+          <option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option>
+          <option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option>
+          <option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option>
+          <option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option>
+          <option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option>
+          <option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
+        </select>
+      </div>
+      <div class="ig full"><label>Date</label><input class="finput" style="margin-bottom:0" type="date" id="edDate"/></div>
+    </div>
+    <div style="margin-top:14px;border:2px dashed var(--border2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s;" id="receiptDropZone" onclick="document.getElementById('receiptFileInput').click()" ondragover="event.preventDefault();this.style.borderColor='var(--purple)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="handleReceiptDrop(event)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin-bottom:6px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div style="font-size:12px;color:var(--text2);font-weight:600;">Drop receipt here or click to upload</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;">PNG, JPG, PDF — or paste from clipboard</div>
+      <input type="file" id="receiptFileInput" accept=".png,.jpg,.jpeg,.pdf" style="display:none" onchange="handleReceiptFile(this.files[0])"/>
+    </div>
+    <div id="receiptPreview" style="margin-top:8px;"></div>
+    <div id="existingReceipts" style="margin-top:8px;"></div>
+    <button class="modal-save-btn" style="margin-top:14px;" onclick="saveEditFuel()">Save Changes</button>
+  </div>
+</div>
+
 <!-- TELEGRAM DISPATCH MODAL -->
 <div class="tg-modal-overlay" id="tgModal">
   <div class="tg-modal">
@@ -1973,6 +2024,23 @@ function getBackendUrl(){
   return (localStorage.getItem('rf_backend_url') || '').replace(/\/+$/, '');
 }
 
+function formatRelativeTime(iso){
+  const then = new Date(iso).getTime();
+  if(isNaN(then)) return '—';
+  const diff = Date.now() - then;
+  const mins = Math.floor(diff/60000);
+  if(mins < 1) return 'Just now';
+  if(mins < 60) return `${mins} min${mins===1?'':'s'} ago`;
+  const hrs = Math.floor(mins/60);
+  if(hrs < 24) return `${hrs} hour${hrs===1?'':'s'} ago`;
+  const days = Math.floor(hrs/24);
+  if(days < 30) return days===1 ? 'a day ago' : `${days} days ago`;
+  const months = Math.floor(days/30);
+  if(months < 12) return months===1 ? 'a month ago' : `${months} months ago`;
+  const years = Math.floor(days/365);
+  return years===1 ? 'a year ago' : `${years} years ago`;
+}
+
 async function debugSamsara(){
   const apiKey = (S.apiKeys && S.apiKeys[0]) || S.apiKey || '';
   if(!apiKey){ alert('No API key found in S.apiKeys[0] or S.apiKey'); return; }
@@ -1993,7 +2061,7 @@ async function debugSamsara(){
     output += `First vehicle ID: "${firstId}"\n\n`;
 
     // 2. Stats for just that vehicle
-    const sRes = await fetch(`${getBackendUrl()}/fleet/vehicles/stats?types=fuelPercents,gps,engineStates,obdOdometerMeters&decorations=reverseGeo&limit=3`, { headers });
+    const sRes = await fetch(`${getBackendUrl()}/fleet/vehicles/stats?types=fuelPercents,gps,engineStates,obdOdometerMeters&limit=3`, { headers });
     const sJson = await sRes.json();
     const statsItems = sJson.data || [];
 
@@ -2157,6 +2225,15 @@ async function saveManageCo(){
   if(adminUrlVal) localStorage.setItem('rf_admin_url', adminUrlVal);
   updateAdminPortalLink();
 
+  // Save shared config to server so other team members get it automatically
+  try{
+    await fetch('/api/config', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ companies: newNames, apiKeys: newKeys, threshold: newThreshold, adminUrl: adminUrlVal })
+    });
+  } catch(e){ console.warn('Config sync failed:', e.message); }
+
   // Re-fetch vehicles
   for(let i = 0; i < newNames.length; i++){
     statusEl.textContent = `Loading ${newNames[i]}...`;
@@ -2175,7 +2252,7 @@ async function saveManageCo(){
 }
 
 
-function init(){
+async function init(){
   document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
   seedFuelRecords();
 
@@ -2187,6 +2264,26 @@ function init(){
   const savedKeys      = JSON.parse(localStorage.getItem('ff_apiKeys') || '[]');
   const savedCompanies = JSON.parse(localStorage.getItem('ff_companies') || '[]');
   const savedThreshold = localStorage.getItem('ff_threshold') || '20';
+
+  // If no local config, try loading shared config from server
+  if(!savedCompanies.length){
+    try{
+      const cfgRes = await fetch('/api/config');
+      if(cfgRes.ok){
+        const cfgJson = await cfgRes.json();
+        console.log('[RouteFlare] Server config:', cfgJson.ok ? `${cfgJson.config?.companies?.length} companies` : 'empty');
+        if(cfgJson.ok && cfgJson.config && cfgJson.config.companies?.length){
+          const cfg = cfgJson.config;
+          localStorage.setItem('ff_companies', JSON.stringify(cfg.companies));
+          localStorage.setItem('ff_apiKeys', JSON.stringify(cfg.apiKeys));
+          localStorage.setItem('ff_threshold', cfg.threshold || 20);
+          if(cfg.adminUrl) localStorage.setItem('rf_admin_url', cfg.adminUrl);
+          location.reload();
+          return;
+        }
+      }
+    } catch(e){ console.warn('Shared config load failed:', e.message); }
+  }
 
   if(savedCompanies.length){
     // Restore settings into hidden fields
@@ -2211,6 +2308,7 @@ function init(){
       document.getElementById('setup').style.display='none';
       document.getElementById('app').classList.add('on');
       seedFuelRecords(); // re-seed with real truck names
+      await loadFuelLogsFromServer();
       buildTabs(); renderDashboard(); buildCharts(); buildMaps();
       buildQuickPick(); populateTruckSelect();
       const savedEIA = getEIAKey();
@@ -2222,6 +2320,8 @@ function init(){
       const eiaStatus = document.getElementById('eiaStatus');
       if(eiaStatus) eiaStatus.textContent = 'Key saved — will use on next search';
       startAutoRefresh();
+      // Sync current config to server for team members
+      try{ fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ companies: savedCompanies, apiKeys: savedKeys, threshold: parseInt(savedThreshold), adminUrl: localStorage.getItem('rf_admin_url')||'' }) }); } catch(e){}
     }, 100);
   } else {
     // No saved session — show login page
@@ -2310,6 +2410,9 @@ async function loginAndConnect(){
   if(gmKey) localStorage.setItem('gm_api_key', gmKey);
   S.threshold = parseInt(localStorage.getItem('ff_threshold') || '20');
 
+  // Sync config to server so other browsers/accounts get it
+  try{ await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ companies: cos, apiKeys, threshold: S.threshold }) }); } catch(e){}
+
   setLtxt('Loading vehicles...');
   for(let i=0; i<cos.length; i++){
     setLtxt('Loading ' + cos[i] + '...');
@@ -2374,10 +2477,6 @@ async function fetchVehicles(ci){
 
   if(apiKey){
     const backend = getBackendUrl();
-    if(!backend){
-      showToast('vwa','!','No Backend','Set Backend URL in Settings → Manage Companies');
-      return [];
-    }
     try{
       const headers = { Authorization: `Bearer ${apiKey}` };
 
@@ -2392,39 +2491,132 @@ async function fetchVehicles(ci){
       // NOTE: Samsara returns each stat as a SINGLE OBJECT, not an array
       // e.g. sv.fuelPercent.value (not sv.fuelPercents[0].value)
       let statsMap = {};
-      try{
-        const sRes = await fetch(
-          `${backend}/fleet/vehicles/stats?types=fuelPercents,engineStates,gps,obdOdometerMeters&decorations=reverseGeo`,
-          { headers }
-        );
-        if(sRes.ok){
-          const sJson = await sRes.json();
-          (sJson.data||[]).forEach(sv => { statsMap[sv.id] = sv; });
-        } else {
-          console.warn('Stats failed:', sRes.status);
+      const statTypes = ['gps', 'fuelPercents', 'engineStates', 'obdOdometerMeters'];
+      const criticalTypes = new Set(['gps', 'fuelPercents']);
+      let failedCritical = [];
+      for(const type of statTypes){
+        try{
+          const sRes = await fetch(`${backend}/fleet/vehicles/stats?types=${type}&limit=200`, { headers });
+          if(sRes.ok){
+            const sJson = await sRes.json();
+            (sJson.data||[]).forEach(sv => {
+              if(!statsMap[sv.id]) statsMap[sv.id] = {};
+              Object.assign(statsMap[sv.id], sv);
+            });
+            console.log(`[RouteFlare] Stats[${type}]: ${(sJson.data||[]).length} vehicles`);
+          } else {
+            const errTxt = await sRes.text();
+            if(criticalTypes.has(type) && errTxt.includes('licenses')) failedCritical.push(type);
+            console.warn(`Stats[${type}] failed:`, sRes.status, errTxt);
+          }
+        } catch(e){ console.warn(`Stats[${type}] error:`, e.message); }
+      }
+      if(failedCritical.length){
+        showToast('vwa','!','Samsara License',`API key missing license for ${failedCritical.join(', ')} — data unavailable`);
+      }
+
+      // Samsara may return stats as object {value,time} or array [{value,time}]
+      // Also may use singular or plural field names
+      function statVal(field){ return Array.isArray(field) ? field[0] : field; }
+
+      // Fetch engine state HISTORY to find actual last trip end time
+      // (snapshot .time is just the last poll time, not when engine turned off)
+      let lastTripMap = {};
+      try {
+        const now = new Date();
+        const histStart = new Date(now.getTime() - 7*24*60*60*1000).toISOString();
+        const histEnd = now.toISOString();
+        let histCursor = null;
+        let histPages = 0;
+        do {
+          let histUrl = `${backend}/fleet/vehicles/stats/history?types=engineStates&startTime=${encodeURIComponent(histStart)}&endTime=${encodeURIComponent(histEnd)}`;
+          if(histCursor) histUrl += `&after=${encodeURIComponent(histCursor)}`;
+          const histRes = await fetch(histUrl, { headers });
+          if(!histRes.ok){ console.warn(`[RouteFlare] Engine history ${histRes.status}`); break; }
+          const histJson = await histRes.json();
+          for(const vh of (histJson.data || [])){
+            const states = vh.engineStates || vh.engineState || [];
+            const arr = Array.isArray(states) ? states : [states];
+            for(let i = arr.length - 1; i >= 0; i--){
+              if(arr[i]?.value?.toLowerCase() === 'off'){
+                if(!lastTripMap[vh.id] || arr[i].time > lastTripMap[vh.id])
+                  lastTripMap[vh.id] = arr[i].time;
+                break;
+              }
+            }
+          }
+          histCursor = histJson.pagination?.endCursor || null;
+          histPages++;
+        } while(histCursor && histPages < 5);
+        console.log(`[RouteFlare] Engine history: ${histPages} pages, ${Object.keys(lastTripMap).length} vehicles`);
+      } catch(e){ console.warn('[RouteFlare] Engine history error:', e.message); }
+
+      // Odometer fallback for vehicles without engine history
+      function findLastMovement(readings){
+        const arr = Array.isArray(readings) ? readings : [readings];
+        if(arr.length < 2) return null;
+        for(let i = arr.length - 1; i > 0; i--){
+          const cur = arr[i]?.value, prev = arr[i-1]?.value;
+          if(cur == null || prev == null) continue;
+          if(Math.abs(cur - prev) / 1609 > 0.5) return arr[i].time;
         }
-      } catch(e){ console.warn('Stats error:', e.message); }
+        return null;
+      }
+
+      if(vData.some(v => !lastTripMap[v.id])){
+        const now = new Date();
+        const odoStart = new Date(now.getTime() - 3*24*60*60*1000).toISOString();
+        const odoEnd = now.toISOString();
+        for(const odoType of ['obdOdometerMeters', 'gpsOdometerMeters']){
+          if(!vData.some(v => !lastTripMap[v.id])) break;
+          try {
+            let odoCursor = null;
+            let odoPages = 0;
+            do {
+              let odoUrl = `${backend}/fleet/vehicles/stats/history?types=${odoType}&startTime=${encodeURIComponent(odoStart)}&endTime=${encodeURIComponent(odoEnd)}`;
+              if(odoCursor) odoUrl += `&after=${encodeURIComponent(odoCursor)}`;
+              const odoRes = await fetch(odoUrl, { headers });
+              if(!odoRes.ok) break;
+              const odoJson = await odoRes.json();
+              for(const vh of (odoJson.data || [])){
+                const readings = vh[odoType] || vh[odoType.replace(/s$/, '')] || [];
+                const tripTime = findLastMovement(readings);
+                if(tripTime && (!lastTripMap[vh.id] || tripTime > lastTripMap[vh.id]))
+                  lastTripMap[vh.id] = tripTime;
+              }
+              odoCursor = odoJson.pagination?.endCursor || null;
+              odoPages++;
+            } while(odoCursor && odoPages < 3);
+            console.log(`[RouteFlare] ${odoType}: ${odoPages} pages, ${Object.keys(lastTripMap).length} vehicles`);
+          } catch(e){ /* skip */ }
+        }
+      }
 
       const trucks = vData.map(v => {
         const sv = statsMap[v.id] || {};
 
-        // FUEL — Samsara returns fuelPercent (singular object) with .value
-        const fuelVal = sv.fuelPercent?.value ?? null;
+        const fuel = statVal(sv.fuelPercent || sv.fuelPercents);
+        const fuelVal = fuel?.value ?? null;
 
-        // ENGINE STATE — singular object
-        const engineRaw = sv.engineState?.value ?? 'Off';
-        const engineState = engineRaw.charAt(0).toUpperCase() + engineRaw.slice(1).toLowerCase();
+        const engine = statVal(sv.engineState || sv.engineStates);
+        const engineRaw = engine?.value ?? null;
+        const gpsSnap = statVal(sv.gps) ?? null;
+        const gpsSpeed = gpsSnap?.speedMilesPerHour ?? 0;
+        let engineState;
+        if(engineRaw){
+          engineState = engineRaw.charAt(0).toUpperCase() + engineRaw.slice(1).toLowerCase();
+        } else {
+          engineState = gpsSpeed > 3 ? 'On' : 'Off';
+        }
 
-        // ODOMETER — singular object, value in meters
-        const odomVal = sv.obdOdometerMeters?.value ?? sv.gpsOdometerMeters?.value ?? null;
+        const odom = statVal(sv.obdOdometerMeters) || statVal(sv.gpsOdometerMeters);
+        const odomVal = odom?.value ?? null;
         const odometer = odomVal ? `${Math.round(odomVal/1609).toLocaleString()} mi` : '—';
 
-        // GPS — singular object, reverseGeo.formattedLocation has full address
-        const gps = sv.gps ?? null;
+        const gps = gpsSnap;
         const formattedLoc = gps?.reverseGeo?.formattedLocation ?? null;
         let location = 'Unknown';
         if(formattedLoc){
-          // "10368 Taconic Terrace, Woodlawn, OH, 45215" → "Woodlawn, OH"
           const parts = formattedLoc.split(',').map(p=>p.trim());
           location = parts.length >= 3
             ? `${parts[parts.length-3]}, ${parts[parts.length-2]}`
@@ -2433,7 +2625,15 @@ async function fetchVehicles(ci){
           location = `${gps.latitude.toFixed(2)}, ${gps.longitude.toFixed(2)}`;
         }
 
-        const updatedAt = sv.fuelPercent?.time ?? sv.gps?.time ?? new Date().toISOString();
+        const updatedAt = fuel?.time ?? gps?.time ?? new Date().toISOString();
+
+        const tripEnd = lastTripMap[v.id] ?? null;
+        const gpsAge = gps?.time ? (Date.now() - new Date(gps.time).getTime()) : Infinity;
+        const gpsAsTrip = gpsAge > 3600000 ? gps?.time : null;
+        const lastTripTime = engineState === 'On' ? new Date().toISOString() : (tripEnd ?? gpsAsTrip ?? null);
+        const lastTrip = engineState === 'On'
+          ? 'On Trip'
+          : (tripEnd ? formatRelativeTime(tripEnd) : (gpsAsTrip ? formatRelativeTime(gpsAsTrip) : '—'));
 
         return {
           id:          v.id,
@@ -2446,6 +2646,8 @@ async function fetchVehicles(ci){
           odometer,
           engineState,
           updatedAt,
+          lastTrip,
+          lastTripTime,
           lat: gps?.latitude  ?? null,
           lng: gps?.longitude ?? null,
         };
@@ -2453,7 +2655,9 @@ async function fetchVehicles(ci){
 
       const withFuel = trucks.filter(t=>!t.fuelEst).length;
       const withGPS  = trucks.filter(t=>t.location!=='Unknown').length;
-      console.log(` [${S.companies[ci]}] ${trucks.length} trucks | fuel:${withFuel}/${trucks.length} | gps:${withGPS}/${trucks.length}`);
+      const withTrip = trucks.filter(t=>t.lastTripTime).length;
+      console.log(` [${S.companies[ci]}] ${trucks.length} trucks | fuel:${withFuel}/${trucks.length} | gps:${withGPS}/${trucks.length} | trip:${withTrip}/${trucks.length}`);
+      console.log(` [${S.companies[ci]}] Vehicle details:`, trucks.map(t=>({name:t.name, engine:t.engineState, trip:t.lastTrip, tripTime:t.lastTripTime, updated:t.updatedAt})));
       showToast('ok','ok',S.companies[ci],`${trucks.length} vehicles — ${withFuel} with live fuel data`);
       return trucks;
 
@@ -6093,15 +6297,14 @@ const REAL_FUEL_RECORDS = [
 ]
 
 function seedFuelRecords(){
-  // Merge real transaction records into the fuel log on first load
   const stored = (() => { try { return JSON.parse(localStorage.getItem('ff_fuel_log')||'[]'); } catch(e) { return []; } })();
-  // Real records are keyed by 'real_' prefix — add any not already stored
   const storedIds = new Set(stored.map(r=>r.id));
   const toAdd = REAL_FUEL_RECORDS.filter(r=>!storedIds.has(r.id));
   if(toAdd.length){
     const merged = [...toAdd, ...stored];
     localStorage.setItem('ff_fuel_log', JSON.stringify(merged));
     S.fuelRecords = merged;
+    syncFuelLogsToServer(merged);
   } else {
     S.fuelRecords = stored;
   }
@@ -6272,7 +6475,7 @@ function saveFueling(){
     delete modal.dataset.dispatchId;
   }
   closeFuelModal();
-  renderDashboard(); refreshCharts();
+  renderDashboard(); renderFuelLog(); refreshCharts();
   const destLabel = dest === 'relay' ? 'Relay Plan' : 'RouteFlare';
   const galsMsg = gals > 0 ? `${gals} gals at ${station}` : `${station} (pending gallons)`;
   showToast('ok','ok',`Added to ${destLabel}`, galsMsg + (rec.saved > 0 ? ` — saved $${rec.saved.toFixed(2)}` : ''));
@@ -6292,7 +6495,7 @@ function buildTabs(){
 }
 
 function renderDashboard(){
-  const veh=S.vehicles[S.activeCompany]||[];
+  const veh = getActiveVehicles(S.vehicles[S.activeCompany]||[]);
   const cr=veh.filter(v=>v.fuelPercent<10);
   const wa=veh.filter(v=>v.fuelPercent>=10&&v.fuelPercent<S.threshold);
   const ok=veh.filter(v=>v.fuelPercent>=S.threshold);
@@ -6315,9 +6518,9 @@ function renderDashboard(){
 function renderVehicles(veh){
   const grid=document.getElementById('vgrid');
   let list=[...veh];
-  if(S.filter==='vcr') list=veh.filter(v=>v.fuelPercent<10);
-  else if(S.filter==='vwa') list=veh.filter(v=>v.fuelPercent>=10&&v.fuelPercent<S.threshold);
-  else if(S.filter==='vok') list=veh.filter(v=>v.fuelPercent>=S.threshold);
+  if(S.filter==='vcr') list=list.filter(v=>v.fuelPercent<10);
+  else if(S.filter==='vwa') list=list.filter(v=>v.fuelPercent>=10&&v.fuelPercent<S.threshold);
+  else if(S.filter==='vok') list=list.filter(v=>v.fuelPercent>=S.threshold);
   list.sort((a,b)=>a.fuelPercent-b.fuelPercent);
   if(!list.length){ grid.innerHTML=`<div class="empty"><div class="ei"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></div><p>No vehicles here</p></div>`; return; }
   grid.innerHTML='';
@@ -6329,6 +6532,8 @@ function renderVehicles(veh){
     const engineBadge = v.engineState==='On'
       ? `<span style="background:#22C55E22;color:#22C55E;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:6px;">ON</span>`
       : `<span style="background:#6B728022;color:#6B7280;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:6px;">OFF</span>`;
+    const tripLabel = v.lastTrip || '—';
+    const tripColor = v.lastTrip === 'On Trip' ? 'var(--green)' : 'var(--text2)';
     const fuelLabel = v.fuelEst
       ? `${v.fuelPercent}%<span style="font-size:9px;color:#aaa;margin-left:2px;">est.</span>`
       : `${v.fuelPercent}%`;
@@ -6347,16 +6552,31 @@ function renderVehicles(veh){
         <div class="vmi"><span>${S.companies[S.activeCompany]}</span></div>
         <div class="vmi"><span>${upd}</span></div>
       </div>
+      <div style="font-size:11px;color:${tripColor};margin-top:6px;font-weight:600;">Last Trip: ${tripLabel}</div>
       ${lvl!=='vok'?`<button class="vfind-btn" onclick="goFindForTruck('${v.location.replace(/'/g,"\\'")}',${v.lat!=null?v.lat:'null'},${v.lng!=null?v.lng:'null'})">Find Nearest Fuel Stop</button>`:''}`;
     grid.appendChild(card);
   });
 }
 
 
+function getActiveVehicles(vehList){
+  const threeMonthsAgo = new Date(); threeMonthsAgo.setMonth(threeMonthsAgo.getMonth()-3);
+  const result = vehList.filter(v => {
+    if(v.engineState === 'On') return true;
+    const latest = [v.lastTripTime, v.updatedAt].filter(Boolean).sort().pop();
+    if(!latest) return true;
+    const isActive = new Date(latest) >= threeMonthsAgo;
+    if(!isActive) console.log(`[RouteFlare] Filtered out ${v.name}: latest=${latest}`);
+    return isActive;
+  });
+  if(result.length !== vehList.length) console.log(`[RouteFlare] Active filter: ${result.length}/${vehList.length} vehicles passed`);
+  return result;
+}
+
 function setFltr(f,btn){
   S.filter=f;
   document.querySelectorAll('.fltr').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
-  renderVehicles(S.vehicles[S.activeCompany]||[]);
+  renderVehicles(getActiveVehicles(S.vehicles[S.activeCompany]||[]));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -6383,9 +6603,9 @@ function updateTbAlerts(){
   const btn = document.getElementById('tbAlertBtn');
   const lowTrucks = [];
 
-  // Scan ALL companies
+  // Scan ALL companies (only active trucks)
   for(let ci = 0; ci < S.companies.length; ci++){
-    const vehs = S.vehicles[ci] || [];
+    const vehs = getActiveVehicles(S.vehicles[ci] || []);
     vehs.forEach(v => {
       if(v.fuelPercent < S.threshold){
         lowTrucks.push({ ...v, companyIndex: ci, companyName: S.companies[ci] });
@@ -8311,6 +8531,64 @@ function getFuelLogHistory(){
 }
 function saveFuelLogHistory(list){
   localStorage.setItem('ff_fuel_log', JSON.stringify(list));
+  syncFuelLogsToServer(list);
+}
+async function syncFuelLogsToServer(list){
+  try {
+    await fetch('/api/fuel-logs', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(list)
+    });
+  } catch(e){ console.warn('Fuel log server sync failed:', e.message); }
+}
+async function syncFuelLogsNow(){
+  const btn = document.getElementById('syncBtn');
+  if(btn) btn.classList.add('syncing');
+  try {
+    const local = getFuelLogHistory();
+    await fetch('/api/fuel-logs', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(local)
+    });
+    await loadFuelLogsFromServer();
+    S.fuelRecords = getFuelLogHistory();
+    renderFuelLog();
+    renderDashboard(); refreshCharts();
+    showToast('ok','ok','Synced','Fuel logs synced with server');
+  } catch(e){
+    showToast('vwa','!','Sync Failed', e.message);
+  }
+  if(btn) btn.classList.remove('syncing');
+}
+
+async function loadFuelLogsFromServer(){
+  try {
+    const resp = await fetch('/api/fuel-logs');
+    if(!resp.ok) return;
+    const data = await resp.json();
+    if(!data.ok || !data.logs?.length) return;
+    const local = getFuelLogHistory();
+    const localMap = new Map(local.map(r=>[r.id, r]));
+    let changed = false;
+    for(const log of data.logs){
+      const existing = localMap.get(log.id);
+      if(!existing){
+        localMap.set(log.id, log);
+        changed = true;
+      } else if(JSON.stringify(existing) !== JSON.stringify(log)){
+        localMap.set(log.id, log);
+        changed = true;
+      }
+    }
+    if(changed){
+      const merged = Array.from(localMap.values());
+      merged.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      localStorage.setItem('ff_fuel_log', JSON.stringify(merged));
+      S.fuelRecords = merged;
+    }
+  } catch(e){ console.warn('Load fuel logs from server failed:', e.message); }
 }
 
 S._fuelDest = 'relay';
@@ -8414,22 +8692,40 @@ function openLogForDispatch(dispatchId){
 }
 
 
+S._relayPage = 1;
+const RELAY_PER_PAGE = 20;
+
+function getRelayPlans(){
+  return getFuelLogHistory().filter(r => r.fuelDest === 'relay');
+}
+
 function renderRelayPlans(){
-  const history = getFuelLogHistory().filter(r => r.fuelDest === 'relay');
+  const history = getRelayPlans();
   const tbody = document.getElementById('flRelayBody');
   const empty = document.getElementById('relayEmpty');
+  const pageInfo = document.getElementById('relayPageInfo');
+  const paginationEl = document.getElementById('relayPagination');
   if(!history.length){
     tbody.innerHTML = '';
     empty.style.display = 'block';
+    paginationEl.innerHTML = '';
+    pageInfo.textContent = '';
     return;
   }
   empty.style.display = 'none';
-  tbody.innerHTML = history.map(r => {
+  const totalPages = Math.ceil(history.length / RELAY_PER_PAGE);
+  if(S._relayPage > totalPages) S._relayPage = totalPages;
+  const start = (S._relayPage - 1) * RELAY_PER_PAGE;
+  const page = history.slice(start, start + RELAY_PER_PAGE);
+  pageInfo.textContent = `Showing ${start+1}–${start+page.length} of ${history.length} plans`;
+  tbody.innerHTML = page.map((r, idx) => {
+    const num = start + idx + 1;
     const hasFueled = r.gallons > 0;
     const status = hasFueled
       ? '<span style="color:var(--green);font-weight:700;font-size:11px;">Fueled</span>'
       : '<span style="color:var(--purple-lt);font-weight:600;font-size:11px;">Pending</span>';
     return `<tr>
+      <td style="color:var(--text3);font-size:11px;">${num}</td>
       <td>${r.date}</td>
       <td class="fl-station">${r.station}</td>
       <td>${r.truckUnit||'—'}</td>
@@ -8439,9 +8735,139 @@ function renderRelayPlans(){
       <td class="fl-total">${hasFueled ? '$'+parseFloat(r.discountTotal).toFixed(2) : '—'}</td>
       <td class="fl-saved">${hasFueled ? '$'+parseFloat(r.saved).toFixed(2) : '—'}</td>
       <td>${status}</td>
-      <td>${!hasFueled ? '<button class="dc-log-btn" style="font-size:10px;padding:4px 10px;" onclick="openUpdateRelay(\''+r.id+'\')">Update</button>' : ''}</td>
+      <td style="white-space:nowrap;"><button class="dc-log-btn" style="font-size:10px;padding:4px 10px;margin-right:4px;" onclick="openEditFuelRecord('${r.id}')">Edit</button><button class="fl-del-btn" onclick="deleteFuelRecord('${r.id}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></td>
     </tr>`;
   }).join('');
+  if(totalPages > 1){
+    let btns = '';
+    for(let p = 1; p <= totalPages; p++){
+      btns += `<button onclick="S._relayPage=${p};renderRelayPlans()" style="min-width:32px;height:32px;border-radius:6px;border:1px solid ${p===S._relayPage?'var(--purple)':'var(--border2)'};background:${p===S._relayPage?'var(--purple)':'var(--surface2)'};color:${p===S._relayPage?'#fff':'var(--text2)'};cursor:pointer;font-size:12px;font-weight:600;">${p}</button>`;
+    }
+    paginationEl.innerHTML = btns;
+  } else paginationEl.innerHTML = '';
+}
+
+function _loadScript(u){ return new Promise((ok,no)=>{ const s=document.createElement('script'); s.src=u; s.onload=ok; s.onerror=no; document.head.appendChild(s); }); }
+
+async function downloadRelayPDF(){
+  const plans = getRelayPlans();
+  if(!plans.length) return showToast('vwa','!','No Data','No relay fuel plans to export.');
+
+  if(!window.jspdf){
+    showToast('ok','ok','Preparing','Loading PDF engine...');
+    try{ await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js'); await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js'); }catch(e){
+    try{ await _loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js'); await _loadScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js'); }catch(e2){ _relayPdfFallback(plans); return; }}
+  }
+  if(!window.jspdf){ _relayPdfFallback(plans); return; }
+
+  const totalGals = plans.reduce((s,r)=>s+(parseFloat(r.gallons)||0),0);
+  const totalSpent = plans.reduce((s,r)=>s+(parseFloat(r.discountTotal)||0),0);
+  const totalSaved = plans.reduce((s,r)=>s+(parseFloat(r.saved)||0),0);
+  const fueled = plans.filter(r=>r.gallons>0).length;
+  const pending = plans.length - fueled;
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const company = S.companies[S.activeCompany] || 'All Companies';
+
+  try { const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  const pw = doc.internal.pageSize.getWidth();
+
+  doc.setFontSize(18);
+  doc.setTextColor(124, 58, 237);
+  doc.text('Relay Fuel Plans Report', 14, 18);
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(`${company} — Generated ${dateStr}`, 14, 24);
+  doc.text(`${plans.length} Plans | ${fueled} Fueled | ${pending} Pending`, pw - 14, 18, { align: 'right' });
+
+  doc.setDrawColor(124, 58, 237);
+  doc.setLineWidth(0.5);
+  doc.line(14, 27, pw - 14, 27);
+
+  doc.setFontSize(9);
+  doc.setTextColor(60);
+  doc.text(`Total Gallons: ${totalGals.toFixed(1)}`, 14, 33);
+  doc.text(`Total Spent: $${totalSpent.toFixed(2)}`, 80, 33);
+  doc.text(`Total Saved: $${totalSaved.toFixed(2)}`, 146, 33);
+
+  const rows = plans.map((r, i) => {
+    const hasFueled = r.gallons > 0;
+    return [
+      i + 1,
+      r.date,
+      r.station,
+      r.truckUnit || '—',
+      hasFueled ? r.gallons : '—',
+      '$' + parseFloat(r.pricePerGal).toFixed(3),
+      '$' + parseFloat(r.discountedPrice).toFixed(3),
+      hasFueled ? '$' + parseFloat(r.discountTotal).toFixed(2) : '—',
+      hasFueled ? '$' + parseFloat(r.saved).toFixed(2) : '—',
+      hasFueled ? 'Fueled' : 'Pending'
+    ];
+  });
+
+  rows.push([
+    { content: 'TOTALS', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
+    { content: totalGals.toFixed(1), styles: { fontStyle: 'bold' } },
+    '', '',
+    { content: '$' + totalSpent.toFixed(2), styles: { fontStyle: 'bold' } },
+    { content: '$' + totalSaved.toFixed(2), styles: { fontStyle: 'bold' } },
+    ''
+  ]);
+
+  doc.autoTable({
+    startY: 37,
+    head: [['#', 'Date', 'Station', 'Truck', 'Gallons', 'Price/Gal', 'Disc. Price', 'Total', 'Saved', 'Status']],
+    body: rows,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [124, 58, 237], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+    alternateRowStyles: { fillColor: [248, 246, 255] },
+    columnStyles: {
+      0: { cellWidth: 10, halign: 'center' },
+      4: { halign: 'right' },
+      5: { halign: 'right' },
+      6: { halign: 'right' },
+      7: { halign: 'right' },
+      8: { halign: 'right' },
+    },
+    didParseCell: function(data){
+      if(data.column.index === 9 && data.section === 'body'){
+        if(data.cell.raw === 'Fueled') data.cell.styles.textColor = [22, 163, 74];
+        else if(data.cell.raw === 'Pending') data.cell.styles.textColor = [124, 58, 237];
+      }
+    },
+    didDrawPage: function(data){
+      const pg = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(`Page ${data.pageNumber} of ${pg} — RouteFlare`, pw / 2, doc.internal.pageSize.getHeight() - 8, { align: 'center' });
+    }
+  });
+
+  doc.save(`Relay_Fuel_Plans_${company.replace(/\s+/g,'_')}_${dateStr}.pdf`);
+  showToast('ok','ok','PDF Downloaded',`${plans.length} fuel plans exported.`);
+  } catch(err){ console.error('PDF error:', err); _relayPdfFallback(plans); }
+}
+
+function _relayPdfFallback(plans){
+  const totalGals=plans.reduce((s,r)=>s+(parseFloat(r.gallons)||0),0);
+  const totalSpent=plans.reduce((s,r)=>s+(parseFloat(r.discountTotal)||0),0);
+  const totalSaved=plans.reduce((s,r)=>s+(parseFloat(r.saved)||0),0);
+  const fueled=plans.filter(r=>r.gallons>0).length, pending=plans.length-fueled;
+  const company=S.companies[S.activeCompany]||'All';
+  const d=new Date(), dateStr=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  let h=`<!DOCTYPE html><html><head><title>Relay Fuel Plans</title><style>@page{size:landscape;margin:15mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,'Segoe UI',sans-serif;font-size:11px;color:#222;padding:20px;}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;border-bottom:3px solid #7C3AED;padding-bottom:10px;}.hdr h1{font-size:20px;color:#7C3AED;}.hdr .sub{font-size:11px;color:#666;margin-top:2px;}.stats{display:flex;gap:16px;margin-bottom:14px;}.stats span{background:#f5f3ff;padding:6px 14px;border-radius:6px;border:1px solid #ddd;font-size:11px;}.stats b{color:#7C3AED;}table{width:100%;border-collapse:collapse;}th{background:#7C3AED;color:#fff;padding:7px 8px;text-align:left;font-size:10px;}td{padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:10px;}tr:nth-child(even){background:#faf9ff;}.g{color:#16a34a;font-weight:700;}.p{color:#7C3AED;font-weight:600;}.totals td{border-top:2px solid #7C3AED;font-weight:700;background:#f5f3ff;}@media print{.np{display:none!important;}}</style></head><body>`;
+  h+=`<div class="np" style="background:#7C3AED;color:#fff;padding:12px 20px;margin:-20px -20px 20px;display:flex;justify-content:space-between;align-items:center;"><b>Relay Fuel Plans Report</b><button onclick="window.print()" style="background:#fff;color:#7C3AED;border:none;padding:8px 20px;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px;">Save as PDF</button></div>`;
+  h+=`<div class="hdr"><div><h1>Relay Fuel Plans Report</h1><div class="sub">${company} — ${dateStr}</div></div><div style="text-align:right;font-size:11px;color:#666;">${plans.length} Plans | ${fueled} Fueled | ${pending} Pending</div></div>`;
+  h+=`<div class="stats"><span>Total Gallons: <b>${totalGals.toFixed(1)}</b></span><span>Total Spent: <b>$${totalSpent.toFixed(2)}</b></span><span>Total Saved: <b>$${totalSaved.toFixed(2)}</b></span></div>`;
+  h+=`<table><thead><tr><th>#</th><th>Date</th><th>Station</th><th>Truck</th><th>Gallons</th><th>Price/Gal</th><th>Disc. Price</th><th>Total</th><th>Saved</th><th>Status</th></tr></thead><tbody>`;
+  plans.forEach((r,i)=>{ const f=r.gallons>0; h+=`<tr><td>${i+1}</td><td>${r.date}</td><td>${r.station}</td><td>${r.truckUnit||'—'}</td><td>${f?r.gallons:'—'}</td><td>$${parseFloat(r.pricePerGal).toFixed(3)}</td><td>$${parseFloat(r.discountedPrice).toFixed(3)}</td><td>${f?'$'+parseFloat(r.discountTotal).toFixed(2):'—'}</td><td>${f?'$'+parseFloat(r.saved).toFixed(2):'—'}</td><td class="${f?'g':'p'}">${f?'Fueled':'Pending'}</td></tr>`; });
+  h+=`<tr class="totals"><td colspan="4" style="text-align:right;">TOTALS</td><td>${totalGals.toFixed(1)}</td><td></td><td></td><td>$${totalSpent.toFixed(2)}</td><td>$${totalSaved.toFixed(2)}</td><td></td></tr></tbody></table></body></html>`;
+  const w=window.open('','_blank');
+  if(!w) return showToast('vwa','!','Popup Blocked','Allow popups for this site.');
+  w.document.write(h); w.document.close();
+  setTimeout(()=>{ w.focus(); w.print(); }, 600);
 }
 
 function openUpdateRelay(id){
@@ -8477,6 +8903,7 @@ function sortFlTable(th){
   th.closest('thead').querySelectorAll('th.sortable').forEach(h=>{ h.classList.remove('asc','desc'); });
   th.classList.add(state.dir);
   if(table==='history'){ S._histPage=1; renderFuelHistory(); }
+  else if(table==='relay'){ S._relayPage=1; renderRelayPlans(); }
   else renderMonthlyReport();
 }
 
@@ -8542,19 +8969,24 @@ function renderFuelHistory(){
   if(S._histPage > totalPages) S._histPage = totalPages;
   const start = (S._histPage - 1) * HIST_PER_PAGE;
   const pageData = history.slice(start, start + HIST_PER_PAGE);
-  tbody.innerHTML = pageData.map((r,i)=>`
-    <tr>
+  tbody.innerHTML = pageData.map((r,i)=>{
+    const hasReceipt = r.receipts && r.receipts.length > 0;
+    const receiptIcon = hasReceipt ? `<span title="${r.receipts.length} receipt(s)" style="color:var(--green);margin-left:4px;cursor:pointer;" onclick="viewReceipts('${r.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM8 17h8v-2H8v2zm0-4h8v-2H8v2z"/></svg></span>` : '';
+    return `<tr>
       <td>${r.date}</td>
-      <td class="fl-station">${r.station}</td>
+      <td class="fl-station">${r.station}${receiptIcon}</td>
       <td>${r.truckUnit||'—'}</td>
       <td>${r.gallons}</td>
       <td>$${parseFloat(r.pricePerGal).toFixed(3)}</td>
       <td>$${parseFloat(r.discountedPrice).toFixed(3)}</td>
-      <td class="fl-total">$${parseFloat(r.discountTotal).toFixed(2)}</td>
+      <td class="fl-total">$${parseFloat(r.discountTotal||r.total).toFixed(2)}</td>
       <td class="fl-saved">$${parseFloat(r.saved).toFixed(2)}</td>
-      <td><button class="fl-del-btn" onclick="deleteFuelRecord('${r.id||(start+i)}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></td>
-    </tr>
-  `).join('');
+      <td style="white-space:nowrap;">
+        <button class="fl-del-btn" onclick="openEditFuelRecord('${r.id}')" title="Edit record" style="color:var(--purple-lt);margin-right:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="fl-del-btn" onclick="deleteFuelRecord('${r.id||(start+i)}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+      </td>
+    </tr>`;
+  }).join('');
   if(totalPages <= 1){ pag.innerHTML = ''; return; }
   let btns = `<button class="fl-page-btn" onclick="goHistPage(${S._histPage-1})" ${S._histPage===1?'disabled':''}>‹</button>`;
   const range = getPageRange(S._histPage, totalPages);
@@ -8590,10 +9022,144 @@ function deleteFuelRecord(recordId){
   history = history.filter(r=>(r.id||'')!==recordId);
   saveFuelLogHistory(history);
   S.fuelRecords = (S.fuelRecords||[]).filter(r=>(r.id||'')!==recordId);
+  fetch(`/api/fuel-logs/${encodeURIComponent(recordId)}`, {method:'DELETE'}).catch(()=>{});
   renderFuelLog();
   renderDashboard(); refreshCharts();
   showToast('ok','ok','Deleted','Fueling record removed');
 }
+
+S._editReceiptFile = null;
+
+function openEditFuelRecord(recordId){
+  const history = getFuelLogHistory();
+  const rec = history.find(r=>r.id===recordId);
+  if(!rec) return;
+  document.getElementById('editFuelId').value = rec.id;
+  document.getElementById('edUnit').value = rec.truckUnit || '';
+  document.getElementById('edStation').value = rec.station || '';
+  document.getElementById('edGallons').value = rec.gallons || '';
+  document.getElementById('edPrice').value = rec.pricePerGal || '';
+  document.getElementById('edDiscount').value = rec.discountedPrice || '';
+  document.getElementById('edDate').value = rec.date || '';
+  const stSel = document.getElementById('edState');
+  stSel.value = rec.state || '';
+  S._editReceiptFile = null;
+  document.getElementById('receiptPreview').innerHTML = '';
+  const existingDiv = document.getElementById('existingReceipts');
+  if(rec.receipts && rec.receipts.length){
+    existingDiv.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;">Attached Receipts:</div>' +
+      rec.receipts.map(r=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <a href="/api/receipts/${r.name}" target="_blank" style="font-size:11px;color:var(--purple-lt);text-decoration:underline;">${r.originalName}</a>
+        <span style="font-size:9px;color:var(--text3);">${new Date(r.uploadedAt).toLocaleDateString()}</span>
+      </div>`).join('');
+  } else {
+    existingDiv.innerHTML = '';
+  }
+  document.getElementById('editFuelModal').classList.add('on');
+}
+
+function closeEditFuelModal(){
+  document.getElementById('editFuelModal').classList.remove('on');
+  S._editReceiptFile = null;
+}
+
+async function saveEditFuel(){
+  const id = document.getElementById('editFuelId').value;
+  const history = getFuelLogHistory();
+  const rec = history.find(r=>r.id===id);
+  if(!rec) return;
+  rec.truckUnit = document.getElementById('edUnit').value;
+  rec.station = document.getElementById('edStation').value;
+  rec.gallons = parseFloat(document.getElementById('edGallons').value) || 0;
+  rec.pricePerGal = parseFloat(document.getElementById('edPrice').value) || 0;
+  rec.discountedPrice = parseFloat(document.getElementById('edDiscount').value) || rec.pricePerGal;
+  rec.state = document.getElementById('edState').value;
+  rec.date = document.getElementById('edDate').value;
+  rec.total = parseFloat((rec.gallons * rec.pricePerGal).toFixed(2));
+  rec.discountTotal = parseFloat((rec.gallons * rec.discountedPrice).toFixed(2));
+  rec.saved = parseFloat((rec.gallons * (rec.pricePerGal - rec.discountedPrice)).toFixed(2));
+  if(S._editReceiptFile){
+    try {
+      const resp = await fetch(`/api/fuel-logs/${encodeURIComponent(id)}/receipt`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(S._editReceiptFile)
+      });
+      if(resp.ok){
+        const data = await resp.json();
+        if(!rec.receipts) rec.receipts = [];
+        rec.receipts.push({ name: data.receipt, originalName: S._editReceiptFile.filename, mimeType: S._editReceiptFile.mimeType, uploadedAt: new Date().toISOString() });
+      }
+    } catch(e){ console.warn('Receipt upload failed:', e.message); }
+    S._editReceiptFile = null;
+  }
+  saveFuelLogHistory(history);
+  const memRec = S.fuelRecords.find(r=>r.id===id);
+  if(memRec) Object.assign(memRec, rec);
+  fetch(`/api/fuel-logs/${encodeURIComponent(id)}`, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(rec)
+  }).catch(()=>{});
+  closeEditFuelModal();
+  renderFuelLog();
+  renderDashboard(); refreshCharts();
+  showToast('ok','ok','Updated','Fueling record saved');
+}
+
+function handleReceiptFile(file){
+  if(!file) return;
+  const allowed = ['image/png','image/jpeg','image/jpg','application/pdf'];
+  if(!allowed.includes(file.type)) return showToast('vwa','!','Invalid File','Only PNG, JPG, or PDF allowed');
+  if(file.size > 10*1024*1024) return showToast('vwa','!','Too Large','Max file size is 10MB');
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const base64 = e.target.result.split(',')[1];
+    S._editReceiptFile = { data: base64, filename: file.name, mimeType: file.type };
+    const preview = document.getElementById('receiptPreview');
+    if(file.type.startsWith('image/')){
+      preview.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface2);border-radius:8px;">
+        <img src="${e.target.result}" style="max-height:60px;border-radius:4px;"/>
+        <span style="font-size:11px;color:var(--text2);">${file.name}</span>
+        <button onclick="S._editReceiptFile=null;document.getElementById('receiptPreview').innerHTML=''" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;">✕</button>
+      </div>`;
+    } else {
+      preview.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface2);border-radius:8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--purple-lt)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span style="font-size:11px;color:var(--text2);">${file.name}</span>
+        <button onclick="S._editReceiptFile=null;document.getElementById('receiptPreview').innerHTML=''" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;">✕</button>
+      </div>`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleReceiptDrop(e){
+  e.preventDefault();
+  document.getElementById('receiptDropZone').style.borderColor = 'var(--border2)';
+  const file = e.dataTransfer?.files?.[0];
+  if(file) handleReceiptFile(file);
+}
+
+function viewReceipts(recordId){
+  const history = getFuelLogHistory();
+  const rec = history.find(r=>r.id===recordId);
+  if(!rec?.receipts?.length) return;
+  openEditFuelRecord(recordId);
+}
+
+document.addEventListener('paste', function(e){
+  if(!document.getElementById('editFuelModal').classList.contains('on')) return;
+  const items = e.clipboardData?.items;
+  if(!items) return;
+  for(const item of items){
+    if(item.type.startsWith('image/') || item.type === 'application/pdf'){
+      const file = item.getAsFile();
+      if(file) handleReceiptFile(file);
+      break;
+    }
+  }
+});
 
 function renderMonthlyReport(){
   const selectedMonth = document.getElementById('flMonthSelect').value;
@@ -10019,17 +10585,15 @@ function goPage(p,btn){
 
 async function refreshAll(){
   const btn=document.getElementById('refBtn'); btn.classList.add('spin');
-  // Invalidate cached live prices so they get re-fetched
   S_livePrices = null;
   S_livePriceDate = null;
   S_livePriceSource = null;
   for(let i=0;i<S.companies.length;i++) S.vehicles[i]=await fetchVehicles(i);
-  // Also sync fuel transactions from worker
-  const syncResult = await syncFuelTransactions(true);
-  renderDashboard(); buildQuickPick(); buildMaps(); updateTbAlerts();
+  await loadFuelLogsFromServer();
+  S.fuelRecords = getFuelLogHistory();
+  renderDashboard(); renderFuelLog(); buildQuickPick(); buildMaps(); updateTbAlerts();
   btn.classList.remove('spin');
-  const syncMsg = syncResult.synced > 0 ? ` + ${syncResult.synced} new fuel txns` : '';
-  showToast('ok','ok','Data Refreshed',`${Object.values(S.vehicles).flat().length} vehicles updated${syncMsg}`);
+  showToast('ok','ok','Data Refreshed',`${getActiveVehicles(Object.values(S.vehicles).flat()).length} active vehicles updated`);
 }
 
 function showLoader(t){ document.getElementById('ltxt').textContent=t; document.getElementById('loader').classList.add('on'); }
@@ -10043,9 +10607,10 @@ function animateCount(id,target){
 }
 
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){ closeFuelModal(); closeTgModal(); }
+  if(e.key==='Escape'){ closeFuelModal(); closeEditFuelModal(); closeTgModal(); }
 });
 document.getElementById('fuelModal').addEventListener('click',e=>{ if(e.target===document.getElementById('fuelModal')) closeFuelModal(); });
+document.getElementById('editFuelModal').addEventListener('click',e=>{ if(e.target===document.getElementById('editFuelModal')) closeEditFuelModal(); });
 document.getElementById('tgModal').addEventListener('click',e=>{ if(e.target===document.getElementById('tgModal')) closeTgModal(); });
 
 init();

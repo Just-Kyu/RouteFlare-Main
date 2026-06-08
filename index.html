@@ -2320,6 +2320,18 @@ async function init(){
     } catch(e){ console.warn('Shared config load failed:', e.message); }
   }
 
+  if(!localStorage.getItem('ff_fuel_log')){
+    try{
+      const seedRes = await fetch('/api/seed-data');
+      if(seedRes.ok){
+        const seed = await seedRes.json();
+        if(seed.ff_fuel_log){ localStorage.setItem('ff_fuel_log', seed.ff_fuel_log); console.log('[RouteFlare] Restored fuel logs from seed data'); }
+        if(seed.ff_companies) localStorage.setItem('ff_companies', seed.ff_companies);
+        if(seed.ff_threshold) localStorage.setItem('ff_threshold', seed.ff_threshold);
+      }
+    } catch(e){ console.warn('Seed data load failed:', e.message); }
+  }
+
   if(savedCompanies.length){
     // Restore settings into hidden fields
     const apiInp = document.getElementById('apiInput');

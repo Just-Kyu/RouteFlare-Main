@@ -360,17 +360,22 @@ app.post('/api/fuel-logs', (req, res) => {
   try {
     const logs = getFuelLogs();
     const items = Array.isArray(req.body) ? req.body : [req.body];
-    let added = 0;
-    const existingIds = new Set(logs.map(l => l.id));
+    let added = 0, updated = 0;
+    const existingMap = new Map(logs.map((l, i) => [l.id, i]));
     for (const item of items) {
       if (!item.id) continue;
-      if (existingIds.has(item.id)) continue;
-      logs.unshift(item);
-      existingIds.add(item.id);
-      added++;
+      const idx = existingMap.get(item.id);
+      if (idx === undefined) {
+        logs.unshift(item);
+        existingMap.set(item.id, logs.length - 1);
+        added++;
+      } else if (item.editedAt && (!logs[idx].editedAt || item.editedAt > logs[idx].editedAt)) {
+        logs[idx] = item;
+        updated++;
+      }
     }
-    saveFuelLogs(logs);
-    res.json({ ok: true, added, total: logs.length });
+    if (added || updated) saveFuelLogs(logs);
+    res.json({ ok: true, added, updated, total: logs.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -8642,20 +8642,41 @@ async function loadFuelLogsFromServer(){
     const resp = await fetch('/api/fuel-logs');
     if(!resp.ok) return;
     const data = await resp.json();
-    if(!data.ok || !data.logs?.length) return;
+    const serverLogs = data.ok ? (data.logs || []) : [];
     const local = getFuelLogHistory();
+    const serverMap = new Map(serverLogs.map(r=>[r.id, r]));
     const localMap = new Map(local.map(r=>[r.id, r]));
     let changed = false;
-    for(const log of data.logs){
+
+    // Merge server → local (new records from other computers)
+    for(const log of serverLogs){
       const existing = localMap.get(log.id);
       if(!existing){
         localMap.set(log.id, log);
         changed = true;
-      } else if(JSON.stringify(existing) !== JSON.stringify(log)){
+      } else if(log.editedAt && (!existing.editedAt || log.editedAt > existing.editedAt)){
         localMap.set(log.id, log);
         changed = true;
       }
     }
+
+    // Remove locally-deleted records that server still has (user deleted on another computer)
+    // Only if server has meaningful data (not a cold-start with just seed data)
+    if(serverLogs.length > 0){
+      const deletedOnServer = local.filter(r => r.id && !serverMap.has(r.id));
+      // If server has most records but is missing a few, those were deleted
+      if(deletedOnServer.length > 0 && deletedOnServer.length < local.length * 0.5){
+        for(const d of deletedOnServer) localMap.delete(d.id);
+        changed = true;
+      }
+    }
+
+    // Push local-only records to server (handles ephemeral filesystem restarts)
+    const localOnly = Array.from(localMap.values()).filter(r => r.id && !serverMap.has(r.id));
+    if(localOnly.length > 0){
+      fetch('/api/fuel-logs', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(localOnly) }).catch(()=>{});
+    }
+
     if(changed){
       const merged = Array.from(localMap.values());
       merged.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
@@ -10708,9 +10729,9 @@ init();
     <button onclick="manageAddCo()" style="width:100%;padding:10px;background:var(--surface2);border:1px dashed var(--border2);border-radius:10px;color:var(--purple-lt);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;">+ Add Company</button>
 
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;">Backend URL (Railway)</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;">Backend URL</div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-        <input type="text" id="manageBackendUrl" placeholder="https://routeflare-backend-production.up.railway.app"
+        <input type="text" id="manageBackendUrl" placeholder="https://routeflare-main.onrender.com"
           style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:12px;"/>
         <button onclick="testBackendUrl()" style="background:var(--purple-dim);border:1px solid var(--purple);color:var(--purple-lt);border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;">Test</button>
       </div>

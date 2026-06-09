@@ -2309,12 +2309,15 @@ async function init(){
         console.log('[RouteFlare] Server config:', cfgJson.ok ? `${cfgJson.config?.companies?.length} companies` : 'empty');
         if(cfgJson.ok && cfgJson.config && cfgJson.config.companies?.length){
           const cfg = cfgJson.config;
-          localStorage.setItem('ff_companies', JSON.stringify(cfg.companies));
-          localStorage.setItem('ff_apiKeys', JSON.stringify(cfg.apiKeys));
-          localStorage.setItem('ff_threshold', cfg.threshold || 20);
-          if(cfg.adminUrl) localStorage.setItem('rf_admin_url', cfg.adminUrl);
-          location.reload();
-          return;
+          const hasKeys = cfg.apiKeys?.some(k => k && k.length > 0);
+          if(hasKeys){
+            localStorage.setItem('ff_companies', JSON.stringify(cfg.companies));
+            localStorage.setItem('ff_apiKeys', JSON.stringify(cfg.apiKeys));
+            localStorage.setItem('ff_threshold', cfg.threshold || 20);
+            if(cfg.adminUrl) localStorage.setItem('rf_admin_url', cfg.adminUrl);
+            location.reload();
+            return;
+          }
         }
       }
     } catch(e){ console.warn('Shared config load failed:', e.message); }
@@ -2348,7 +2351,7 @@ async function init(){
       S.threshold = parseInt(savedThreshold);
       if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
 
-      // Show cached dashboard instantly while fresh data loads
+      // Show cached dashboard instantly while fresh data loads in background
       const cachedVehicles = localStorage.getItem('ff_vehicles_cache');
       let usedCache = false;
       if(cachedVehicles){
@@ -2360,14 +2363,14 @@ async function init(){
           document.getElementById('setup').style.display='none';
           document.getElementById('app').classList.add('on');
           seedFuelRecords();
-          await loadFuelLogsFromServer();
+          loadFuelLogsFromServer();
           buildTabs(); renderDashboard(); buildCharts(); buildMaps();
           buildQuickPick(); populateTruckSelect();
         } catch(e){ usedCache = false; }
       }
 
       // Fetch all companies in parallel
-      setLtxt('Loading all companies...');
+      if(!usedCache) setLtxt('Loading all companies...');
       const results = await Promise.all(savedCompanies.map((name, i) => fetchVehicles(i)));
       for(let i=0;i<results.length;i++) S.vehicles[i] = results[i] || [];
 
@@ -6387,10 +6390,10 @@ function seedFuelRecords(){
 // FUEL SYNC — Auto-sync from Cloudflare Worker
 // ═══════════════════════════════════════════════════════
 // Set this to your deployed worker URL after running setup.sh
-const FUEL_SYNC_URL = localStorage.getItem('fuel_sync_url') || localStorage.getItem('rf_backend_url') || '';
+function getFuelSyncUrl(){ return localStorage.getItem('fuel_sync_url') || localStorage.getItem('rf_backend_url') || ''; }
 
 async function syncFuelTransactions(silent){
-  const syncUrl = FUEL_SYNC_URL || localStorage.getItem('fuel_sync_url') || '';
+  const syncUrl = getFuelSyncUrl();
   if(!syncUrl){
     if(!silent) showToast('vwa','!','Sync Not Configured','Set up the Fuel Sync Worker first. Go to Settings.');
     return { synced: 0 };
@@ -6512,7 +6515,10 @@ async function pushRecordsToSync(){
 
 function saveFueling(){
   const dest = S._fuelDest || 'routeflare';
-  const unit=document.getElementById('mUnit').value;
+  const unitHidden = document.getElementById('mUnit').value;
+  const unitSearch = document.getElementById('mUnitSearch')?.value?.trim() || '';
+  const unit = unitHidden || unitSearch;
+  if(unitSearch && !unitHidden) document.getElementById('mUnit').value = unitSearch;
   const station=document.getElementById('mStation').value.trim();
   const galsRaw=document.getElementById('mGallons').value;
   const gals=parseFloat(galsRaw) || 0;
@@ -10587,7 +10593,7 @@ function filterTruckDropdown(query){
   ) : S._truckList;
 
   if(!filtered.length){
-    dd.innerHTML = '<div class="truck-empty">No trucks match "' + (query||'') + '"</div>';
+    dd.innerHTML = q ? '<div class="truck-opt" onmousedown="selectTruck(\''+q.replace(/'/g,"\\'")+'\',\''+q.replace(/'/g,"\\'")+'\')"><span class="t-unit">'+q+'</span><span class="t-name" style="color:var(--text3);">Use this number</span></div>' : '<div class="truck-empty">Type a truck number</div>';
     return;
   }
   dd.innerHTML = filtered.map(t =>

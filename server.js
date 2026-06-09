@@ -198,23 +198,7 @@ app.get('/api/debug/samsara', async (req, res) => {
 // ─── Shared config (companies, API keys, settings) ──────
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
 
-// Auto-seed config from seed-data.json on first run (company names only, no API keys)
-if (!fs.existsSync(CONFIG_FILE) && fs.existsSync(SEED_FILE)) {
-  try {
-    const seed = JSON.parse(fs.readFileSync(SEED_FILE, 'utf8'));
-    if (seed.ff_companies) {
-      const companies = JSON.parse(seed.ff_companies);
-      const config = {
-        companies,
-        apiKeys: companies.map(() => ''),
-        threshold: parseInt(seed.ff_threshold) || 20,
-        updatedAt: new Date().toISOString(),
-      };
-      writeJSON(CONFIG_FILE, config);
-      console.log(`[RouteFlare] Seeded config with ${config.companies.length} companies`);
-    }
-  } catch (e) { console.warn('Config seed failed:', e.message); }
-}
+// Config is synced from clients on every page load — no need to seed empty keys
 
 app.get('/api/config', (req, res) => {
   const config = readJSON(CONFIG_FILE, null);

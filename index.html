@@ -2347,15 +2347,40 @@ async function init(){
       S.companies = savedCompanies;
       S.threshold = parseInt(savedThreshold);
       if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
-      for(let i=0;i<savedCompanies.length;i++){
-        setLtxt(`Loading ${savedCompanies[i]}...`);
-        S.vehicles[i] = await fetchVehicles(i);
+
+      // Show cached dashboard instantly while fresh data loads
+      const cachedVehicles = localStorage.getItem('ff_vehicles_cache');
+      let usedCache = false;
+      if(cachedVehicles){
+        try{
+          const cached = JSON.parse(cachedVehicles);
+          for(let i=0;i<savedCompanies.length;i++) S.vehicles[i] = cached[i] || [];
+          usedCache = true;
+          hideLoader();
+          document.getElementById('setup').style.display='none';
+          document.getElementById('app').classList.add('on');
+          seedFuelRecords();
+          await loadFuelLogsFromServer();
+          buildTabs(); renderDashboard(); buildCharts(); buildMaps();
+          buildQuickPick(); populateTruckSelect();
+        } catch(e){ usedCache = false; }
       }
-      hideLoader();
-      document.getElementById('setup').style.display='none';
-      document.getElementById('app').classList.add('on');
-      seedFuelRecords(); // re-seed with real truck names
-      await loadFuelLogsFromServer();
+
+      // Fetch all companies in parallel
+      setLtxt('Loading all companies...');
+      const results = await Promise.all(savedCompanies.map((name, i) => fetchVehicles(i)));
+      for(let i=0;i<results.length;i++) S.vehicles[i] = results[i] || [];
+
+      // Cache for next visit
+      try{ localStorage.setItem('ff_vehicles_cache', JSON.stringify(S.vehicles)); } catch(e){}
+
+      if(!usedCache){
+        hideLoader();
+        document.getElementById('setup').style.display='none';
+        document.getElementById('app').classList.add('on');
+        seedFuelRecords();
+        await loadFuelLogsFromServer();
+      }
       buildTabs(); renderDashboard(); buildCharts(); buildMaps();
       buildQuickPick(); populateTruckSelect();
       const savedEIA = getEIAKey();
@@ -2541,7 +2566,7 @@ async function fetchVehicles(ci){
       const statTypes = ['gps', 'fuelPercents', 'engineStates', 'obdOdometerMeters'];
       const criticalTypes = new Set(['gps', 'fuelPercents']);
       let failedCritical = [];
-      for(const type of statTypes){
+      await Promise.all(statTypes.map(async type => {
         try{
           const sRes = await fetch(`${backend}/fleet/vehicles/stats?types=${type}&limit=200`, { headers });
           if(sRes.ok){
@@ -2557,7 +2582,7 @@ async function fetchVehicles(ci){
             console.warn(`Stats[${type}] failed:`, sRes.status, errTxt);
           }
         } catch(e){ console.warn(`Stats[${type}] error:`, e.message); }
-      }
+      }));
       if(failedCritical.length){
         showToast('vwa','!','Samsara License',`API key missing license for ${failedCritical.join(', ')} — data unavailable`);
       }
@@ -2594,7 +2619,7 @@ async function fetchVehicles(ci){
           }
           histCursor = histJson.pagination?.endCursor || null;
           histPages++;
-        } while(histCursor && histPages < 5);
+        } while(histCursor && histPages < 2);
         console.log(`[RouteFlare] Engine history: ${histPages} pages, ${Object.keys(lastTripMap).length} vehicles`);
       } catch(e){ console.warn('[RouteFlare] Engine history error:', e.message); }
 
@@ -2633,7 +2658,7 @@ async function fetchVehicles(ci){
               }
               odoCursor = odoJson.pagination?.endCursor || null;
               odoPages++;
-            } while(odoCursor && odoPages < 3);
+            } while(odoCursor && odoPages < 1);
             console.log(`[RouteFlare] ${odoType}: ${odoPages} pages, ${Object.keys(lastTripMap).length} vehicles`);
           } catch(e){ /* skip */ }
         }

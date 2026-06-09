@@ -350,10 +350,13 @@ app.post('/api/fuel-logs', (req, res) => {
       if (!item.id) continue;
       const idx = existingMap.get(item.id);
       if (idx === undefined) {
-        logs.unshift(item);
+        logs.push(item);
         existingMap.set(item.id, logs.length - 1);
         added++;
       } else if (item.editedAt && (!logs[idx].editedAt || item.editedAt > logs[idx].editedAt)) {
+        logs[idx] = item;
+        updated++;
+      } else if (item.createdAt && !logs[idx].createdAt) {
         logs[idx] = item;
         updated++;
       }
@@ -384,10 +387,21 @@ app.delete('/api/fuel-logs/:id', (req, res) => {
     const before = logs.length;
     logs = logs.filter(l => l.id !== req.params.id);
     saveFuelLogs(logs);
+    // Track deleted IDs so other clients learn about deletions
+    const deleted = readJSON(path.join(DATA_DIR, 'deleted-ids.json'), []);
+    if (!deleted.includes(req.params.id)) {
+      deleted.push(req.params.id);
+      writeJSON(path.join(DATA_DIR, 'deleted-ids.json'), deleted);
+    }
     res.json({ ok: true, deleted: before - logs.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+app.get('/api/fuel-logs/deleted', (req, res) => {
+  const deleted = readJSON(path.join(DATA_DIR, 'deleted-ids.json'), []);
+  res.json({ ok: true, ids: deleted });
 });
 
 // ─── Receipt upload (base64 in JSON body) ────────────────
@@ -423,7 +437,7 @@ app.get('/api/receipts/:filename', (req, res) => {
 
 // ─── API health check ────────────────────────────────────
 app.get('/api/health', (req, res) => {
-  res.json({ service: 'RouteFlare Backend', status: 'ok', transactions: getTxs().length });
+  res.json({ service: 'RouteFlare Backend', status: 'ok', fuelLogs: getFuelLogs().length, transactions: getTxs().length, uptime: Math.floor(process.uptime()) });
 });
 
 // ─── Seed data for first-time setup ──────────────────────

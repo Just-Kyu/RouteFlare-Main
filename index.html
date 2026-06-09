@@ -1970,6 +1970,21 @@ const S = {
 function startAutoRefresh(){
   if(S.refreshTimer) clearInterval(S.refreshTimer);
   S.refreshTimer = setInterval(()=>{ refreshAll(); }, 300000);
+
+  // Sync fuel logs every 2 minutes so other computers get new entries faster
+  if(S._fuelSyncTimer) clearInterval(S._fuelSyncTimer);
+  S._fuelSyncTimer = setInterval(async ()=>{
+    try {
+      await loadFuelLogsFromServer();
+      S.fuelRecords = getFuelLogHistory();
+    } catch(e){}
+  }, 120000);
+
+  // Keep-alive ping every 10 minutes to prevent Render from sleeping
+  if(S._keepAliveTimer) clearInterval(S._keepAliveTimer);
+  S._keepAliveTimer = setInterval(()=>{
+    fetch('/api/health').catch(()=>{});
+  }, 600000);
 };
 
 function toggleVis(inputId, btn){
@@ -8645,17 +8660,31 @@ async function syncFuelLogsNow(){
 
 async function loadFuelLogsFromServer(){
   try {
-    const resp = await fetch('/api/fuel-logs');
+    const [resp, delResp] = await Promise.all([
+      fetch('/api/fuel-logs'),
+      fetch('/api/fuel-logs/deleted').catch(()=>null)
+    ]);
     if(!resp.ok) return;
     const data = await resp.json();
     const serverLogs = data.ok ? (data.logs || []) : [];
+
+    // Get deleted IDs from server (other computers' deletions) and local
+    let serverDeleted = [];
+    try { if(delResp && delResp.ok){ const d = await delResp.json(); serverDeleted = d.ids || []; } } catch(e){}
+    const localDeleted = JSON.parse(localStorage.getItem('ff_deleted_ids')||'[]');
+    const allDeleted = new Set([...serverDeleted, ...localDeleted]);
+    // Persist merged deleted list locally
+    if(serverDeleted.length > localDeleted.length){
+      localStorage.setItem('ff_deleted_ids', JSON.stringify([...allDeleted]));
+    }
+
     const local = getFuelLogHistory();
-    const serverMap = new Map(serverLogs.map(r=>[r.id, r]));
     const localMap = new Map(local.map(r=>[r.id, r]));
     let changed = false;
 
-    // Merge server → local (new records from other computers)
+    // Merge server → local (new records + edits from other computers)
     for(const log of serverLogs){
+      if(!log.id || allDeleted.has(log.id)) continue;
       const existing = localMap.get(log.id);
       if(!existing){
         localMap.set(log.id, log);
@@ -8666,25 +8695,19 @@ async function loadFuelLogsFromServer(){
       }
     }
 
-    // Remove locally-deleted records that server still has (user deleted on another computer)
-    // Only if server has meaningful data (not a cold-start with just seed data)
-    if(serverLogs.length > 0){
-      const deletedOnServer = local.filter(r => r.id && !serverMap.has(r.id));
-      // If server has most records but is missing a few, those were deleted
-      if(deletedOnServer.length > 0 && deletedOnServer.length < local.length * 0.5){
-        for(const d of deletedOnServer) localMap.delete(d.id);
-        changed = true;
-      }
+    // Remove locally-held records that were deleted on other computers
+    for(const id of allDeleted){
+      if(localMap.has(id)){ localMap.delete(id); changed = true; }
     }
 
-    // Push local-only records to server (handles ephemeral filesystem restarts)
-    const localOnly = Array.from(localMap.values()).filter(r => r.id && !serverMap.has(r.id));
-    if(localOnly.length > 0){
-      fetch('/api/fuel-logs', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(localOnly) }).catch(()=>{});
+    // Push ALL local records to server to restore data after ephemeral restart
+    const localRecords = Array.from(localMap.values());
+    if(localRecords.length > 0){
+      fetch('/api/fuel-logs', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(localRecords) }).catch(()=>{});
     }
 
     if(changed){
-      const merged = Array.from(localMap.values());
+      const merged = localRecords.slice();
       merged.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
       localStorage.setItem('ff_fuel_log', JSON.stringify(merged));
       S.fuelRecords = merged;
@@ -9316,8 +9339,13 @@ function deleteFuelLog(id){
   let history = getFuelLogHistory();
   history = history.filter(r=>r.id!==id);
   saveFuelLogHistory(history);
-  // Also remove from in-memory records
   S.fuelRecords = S.fuelRecords.filter(r=>r.id!==id);
+  // Track deleted ID locally so it stays deleted even after server sync
+  try {
+    const deleted = JSON.parse(localStorage.getItem('ff_deleted_ids')||'[]');
+    if(!deleted.includes(id)){ deleted.push(id); localStorage.setItem('ff_deleted_ids', JSON.stringify(deleted)); }
+  } catch(e){}
+  fetch(`/api/fuel-logs/${encodeURIComponent(id)}`, { method:'DELETE' }).catch(()=>{});
   renderFuelLog();
   renderDashboard(); refreshCharts();
   showToast('ok','ok','Deleted','Fueling record removed');

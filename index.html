@@ -2351,7 +2351,11 @@ async function init(){
       S.threshold = parseInt(savedThreshold);
       if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
 
-      // Show cached dashboard instantly while fresh data loads in background
+      // Always sync fuel logs from server first
+      await loadFuelLogsFromServer();
+      seedFuelRecords();
+
+      // Show cached dashboard instantly while fresh vehicle data loads
       const cachedVehicles = localStorage.getItem('ff_vehicles_cache');
       let usedCache = false;
       if(cachedVehicles){
@@ -2362,9 +2366,7 @@ async function init(){
           hideLoader();
           document.getElementById('setup').style.display='none';
           document.getElementById('app').classList.add('on');
-          seedFuelRecords();
-          loadFuelLogsFromServer();
-          buildTabs(); renderDashboard(); buildCharts(); buildMaps();
+          buildTabs(); renderDashboard(); renderFuelLog(); buildCharts(); buildMaps();
           buildQuickPick(); populateTruckSelect();
         } catch(e){ usedCache = false; }
       }
@@ -2381,10 +2383,8 @@ async function init(){
         hideLoader();
         document.getElementById('setup').style.display='none';
         document.getElementById('app').classList.add('on');
-        seedFuelRecords();
-        await loadFuelLogsFromServer();
       }
-      buildTabs(); renderDashboard(); buildCharts(); buildMaps();
+      buildTabs(); renderDashboard(); renderFuelLog(); buildCharts(); buildMaps();
       buildQuickPick(); populateTruckSelect();
       const savedEIA = getEIAKey();
       const eiaInput = document.getElementById('eiaApiKey');

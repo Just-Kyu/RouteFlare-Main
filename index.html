@@ -6552,6 +6552,7 @@ function saveFueling(){
   const destLabel = dest === 'relay' ? 'Relay Plan' : 'RouteFlare';
   const galsMsg = gals > 0 ? `${gals} gals at ${station}` : `${station} (pending gallons)`;
   showToast('ok','ok',`Added to ${destLabel}`, galsMsg + (rec.saved > 0 ? ` — saved $${rec.saved.toFixed(2)}` : ''));
+  fetch('/api/fuel-logs', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(rec) }).catch(()=>{});
 }
 
 // ═══════════════════════════════════════════════════════
@@ -10665,7 +10666,9 @@ async function refreshAll(){
   S_livePrices = null;
   S_livePriceDate = null;
   S_livePriceSource = null;
-  for(let i=0;i<S.companies.length;i++) S.vehicles[i]=await fetchVehicles(i);
+  const results = await Promise.all(S.companies.map((_, i) => fetchVehicles(i)));
+  for(let i=0;i<results.length;i++) S.vehicles[i] = results[i] || [];
+  try{ localStorage.setItem('ff_vehicles_cache', JSON.stringify(S.vehicles)); } catch(e){}
   await loadFuelLogsFromServer();
   S.fuelRecords = getFuelLogHistory();
   renderDashboard(); renderFuelLog(); buildQuickPick(); buildMaps(); updateTbAlerts();

@@ -1740,7 +1740,7 @@ body {
             <table class="fl-table">
               <thead><tr>
                 <th style="width:40px;">#</th><th class="sortable" data-sort="date" data-table="relay" onclick="sortFlTable(this)">Date</th><th>Station</th><th>Truck</th><th>Gallons</th>
-                <th class="sortable" data-sort="pricePerGal" data-table="relay" onclick="sortFlTable(this)">Price/Gal</th><th class="sortable" data-sort="discountedPrice" data-table="relay" onclick="sortFlTable(this)">Disc. Price</th><th>Total</th><th>Saved</th><th>Status</th><th style="width:80px;"></th>
+                <th class="sortable" data-sort="pricePerGal" data-table="relay" onclick="sortFlTable(this)">Price/Gal</th><th class="sortable" data-sort="discountedPrice" data-table="relay" onclick="sortFlTable(this)">Disc. Price</th><th>Total</th><th>Saved</th><th>Status</th><th>Added</th><th style="width:80px;"></th>
               </tr></thead>
               <tbody id="flRelayBody"></tbody>
             </table>
@@ -6505,6 +6505,7 @@ function saveFueling(){
     discountTotal:parseFloat((gals*disc).toFixed(2)),
     saved:parseFloat((gals*(price-disc)).toFixed(2)),
     fuelDest: dest,
+    createdAt: new Date().toISOString(),
   };
   S.fuelRecords.push(rec);
   // Persist to localStorage fuel log
@@ -8771,6 +8772,8 @@ function renderRelayPlans(){
     const status = hasFueled
       ? '<span style="color:var(--green);font-weight:700;font-size:11px;">Fueled</span>'
       : '<span style="color:var(--purple-lt);font-weight:600;font-size:11px;">Pending</span>';
+    const addedTime = r.createdAt ? new Date(r.createdAt).toLocaleString('en-US', {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '—';
+    const editedLabel = r.editedAt ? `<div style="font-size:9px;color:var(--orange);">Edited ${new Date(r.editedAt).toLocaleString('en-US', {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>` : '';
     return `<tr>
       <td style="color:var(--text3);font-size:11px;">${num}</td>
       <td>${r.date}</td>
@@ -8782,6 +8785,7 @@ function renderRelayPlans(){
       <td class="fl-total">${hasFueled ? '$'+parseFloat(r.discountTotal).toFixed(2) : '—'}</td>
       <td class="fl-saved">${hasFueled ? '$'+parseFloat(r.saved).toFixed(2) : '—'}</td>
       <td>${status}</td>
+      <td style="font-size:10px;color:var(--text3);white-space:nowrap;">${addedTime}${editedLabel}</td>
       <td style="white-space:nowrap;"><button class="dc-log-btn" style="font-size:10px;padding:4px 10px;margin-right:4px;" onclick="openEditFuelRecord('${r.id}')">Edit</button><button class="fl-del-btn" onclick="deleteFuelRecord('${r.id}')" title="Delete record"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></td>
     </tr>`;
   }).join('');
@@ -9125,6 +9129,7 @@ async function saveEditFuel(){
   rec.total = parseFloat((rec.gallons * rec.pricePerGal).toFixed(2));
   rec.discountTotal = parseFloat((rec.gallons * rec.discountedPrice).toFixed(2));
   rec.saved = parseFloat((rec.gallons * (rec.pricePerGal - rec.discountedPrice)).toFixed(2));
+  rec.editedAt = new Date().toISOString();
   if(S._editReceiptFile){
     try {
       const resp = await fetch(`/api/fuel-logs/${encodeURIComponent(id)}/receipt`, {

@@ -1971,20 +1971,21 @@ function startAutoRefresh(){
   if(S.refreshTimer) clearInterval(S.refreshTimer);
   S.refreshTimer = setInterval(()=>{ refreshAll(); }, 300000);
 
-  // Sync fuel logs every 2 minutes so other computers get new entries faster
+  // Sync fuel logs every 5 minutes (lightweight — only downloads if count changed)
   if(S._fuelSyncTimer) clearInterval(S._fuelSyncTimer);
   S._fuelSyncTimer = setInterval(async ()=>{
     try {
       await loadFuelLogsFromServer();
       S.fuelRecords = getFuelLogHistory();
     } catch(e){}
-  }, 120000);
+  }, 300000);
 
-  // Keep-alive ping every 10 minutes to prevent Render from sleeping
+  // Keep-alive ping every 13 minutes (just under Render's 15-min sleep threshold)
   if(S._keepAliveTimer) clearInterval(S._keepAliveTimer);
   S._keepAliveTimer = setInterval(()=>{
-    fetch('/api/health').catch(()=>{});
-  }, 600000);
+    const h = new Date().getHours();
+    if(h >= 5 && h < 23) fetch('/api/health').catch(()=>{});
+  }, 780000);
 };
 
 function toggleVis(inputId, btn){
@@ -2577,30 +2578,26 @@ async function fetchVehicles(ci){
       const vData = vJson.data || [];
       if(!vData.length) throw new Error('No vehicles returned — check API key permissions');
 
-      // Stats — single call with all types
+      // Stats — single call with all types combined (saves 3 API calls per company)
       // NOTE: Samsara returns each stat as a SINGLE OBJECT, not an array
       // e.g. sv.fuelPercent.value (not sv.fuelPercents[0].value)
       let statsMap = {};
-      const statTypes = ['gps', 'fuelPercents', 'engineStates', 'obdOdometerMeters'];
-      const criticalTypes = new Set(['gps', 'fuelPercents']);
       let failedCritical = [];
-      await Promise.all(statTypes.map(async type => {
-        try{
-          const sRes = await fetch(`${backend}/fleet/vehicles/stats?types=${type}&limit=200`, { headers });
-          if(sRes.ok){
-            const sJson = await sRes.json();
-            (sJson.data||[]).forEach(sv => {
-              if(!statsMap[sv.id]) statsMap[sv.id] = {};
-              Object.assign(statsMap[sv.id], sv);
-            });
-            console.log(`[RouteFlare] Stats[${type}]: ${(sJson.data||[]).length} vehicles`);
-          } else {
-            const errTxt = await sRes.text();
-            if(criticalTypes.has(type) && errTxt.includes('licenses')) failedCritical.push(type);
-            console.warn(`Stats[${type}] failed:`, sRes.status, errTxt);
-          }
-        } catch(e){ console.warn(`Stats[${type}] error:`, e.message); }
-      }));
+      try{
+        const sRes = await fetch(`${backend}/fleet/vehicles/stats?types=gps,fuelPercents,engineStates,obdOdometerMeters&limit=200`, { headers });
+        if(sRes.ok){
+          const sJson = await sRes.json();
+          (sJson.data||[]).forEach(sv => {
+            if(!statsMap[sv.id]) statsMap[sv.id] = {};
+            Object.assign(statsMap[sv.id], sv);
+          });
+          console.log(`[RouteFlare] Stats: ${(sJson.data||[]).length} vehicles`);
+        } else {
+          const errTxt = await sRes.text();
+          if(errTxt.includes('licenses')) failedCritical.push('stats');
+          console.warn(`Stats failed:`, sRes.status, errTxt);
+        }
+      } catch(e){ console.warn(`Stats error:`, e.message); }
       if(failedCritical.length){
         showToast('vwa','!','Samsara License',`API key missing license for ${failedCritical.join(', ')} — data unavailable`);
       }
@@ -6394,7 +6391,7 @@ function seedFuelRecords(){
     const merged = [...toAdd, ...stored];
     localStorage.setItem('ff_fuel_log', JSON.stringify(merged));
     S.fuelRecords = merged;
-    syncFuelLogsToServer(merged);
+    fetch('/api/fuel-logs', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(toAdd) }).catch(()=>{});
   } else {
     S.fuelRecords = stored;
   }
@@ -8626,16 +8623,6 @@ function getFuelLogHistory(){
 }
 function saveFuelLogHistory(list){
   localStorage.setItem('ff_fuel_log', JSON.stringify(list));
-  syncFuelLogsToServer(list);
-}
-async function syncFuelLogsToServer(list){
-  try {
-    await fetch('/api/fuel-logs', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(list)
-    });
-  } catch(e){ console.warn('Fuel log server sync failed:', e.message); }
 }
 async function syncFuelLogsNow(){
   const btn = document.getElementById('syncBtn');
@@ -8660,6 +8647,24 @@ async function syncFuelLogsNow(){
 
 async function loadFuelLogsFromServer(){
   try {
+    const local = getFuelLogHistory();
+    const localDeleted = JSON.parse(localStorage.getItem('ff_deleted_ids')||'[]');
+
+    // Quick count check — skip full download if server has same count as local
+    const countResp = await fetch('/api/fuel-logs?countOnly=1');
+    if(!countResp.ok) return;
+    const countData = await countResp.json();
+    const serverCount = countData.count || 0;
+    const needsFullSync = serverCount !== local.length || serverCount === 0;
+
+    // If server restarted (low count vs local), push local data to restore it
+    if(serverCount < local.length && local.length > 0){
+      fetch('/api/fuel-logs', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(local) }).catch(()=>{});
+    }
+
+    // Only download full logs if counts differ (new data on server from other computers)
+    if(!needsFullSync) return;
+
     const [resp, delResp] = await Promise.all([
       fetch('/api/fuel-logs'),
       fetch('/api/fuel-logs/deleted').catch(()=>null)
@@ -8668,17 +8673,14 @@ async function loadFuelLogsFromServer(){
     const data = await resp.json();
     const serverLogs = data.ok ? (data.logs || []) : [];
 
-    // Get deleted IDs from server (other computers' deletions) and local
+    // Get deleted IDs from server (other computers' deletions)
     let serverDeleted = [];
     try { if(delResp && delResp.ok){ const d = await delResp.json(); serverDeleted = d.ids || []; } } catch(e){}
-    const localDeleted = JSON.parse(localStorage.getItem('ff_deleted_ids')||'[]');
     const allDeleted = new Set([...serverDeleted, ...localDeleted]);
-    // Persist merged deleted list locally
-    if(serverDeleted.length > localDeleted.length){
+    if(serverDeleted.length > 0){
       localStorage.setItem('ff_deleted_ids', JSON.stringify([...allDeleted]));
     }
 
-    const local = getFuelLogHistory();
     const localMap = new Map(local.map(r=>[r.id, r]));
     let changed = false;
 
@@ -8700,14 +8702,15 @@ async function loadFuelLogsFromServer(){
       if(localMap.has(id)){ localMap.delete(id); changed = true; }
     }
 
-    // Push ALL local records to server to restore data after ephemeral restart
-    const localRecords = Array.from(localMap.values());
-    if(localRecords.length > 0){
-      fetch('/api/fuel-logs', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(localRecords) }).catch(()=>{});
+    // Push only records the server doesn't have (not ALL records)
+    const serverIdSet = new Set(serverLogs.map(r=>r.id));
+    const toSync = Array.from(localMap.values()).filter(r => r.id && !serverIdSet.has(r.id));
+    if(toSync.length > 0){
+      fetch('/api/fuel-logs', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(toSync) }).catch(()=>{});
     }
 
     if(changed){
-      const merged = localRecords.slice();
+      const merged = Array.from(localMap.values());
       merged.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
       localStorage.setItem('ff_fuel_log', JSON.stringify(merged));
       S.fuelRecords = merged;

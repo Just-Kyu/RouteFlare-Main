@@ -13,7 +13,7 @@ app.use(express.json({ limit: '10mb' }));
 
 // ─── Response cache (cuts egress by caching Samsara responses) ──
 const _cache = new Map();
-const CACHE_TTL = 120000;
+const CACHE_TTL = 300000;
 function cacheKey(apiKey, url){ return apiKey.slice(-8) + ':' + url; }
 function getCached(key){ const e = _cache.get(key); if(!e) return null; if(Date.now() - e.t > CACHE_TTL){ _cache.delete(key); return null; } return e; }
 function setCache(key, status, body){ _cache.set(key, { t: Date.now(), s: status, b: body }); if(_cache.size > 500){ const first = _cache.keys().next().value; _cache.delete(first); } }
@@ -337,7 +337,10 @@ if (getFuelLogs().length === 0 && fs.existsSync(SEED_FILE)) {
 
 app.get('/api/fuel-logs', (req, res) => {
   const logs = getFuelLogs();
-  res.json({ ok: true, logs });
+  if (req.query.countOnly === '1') {
+    return res.json({ ok: true, count: logs.length });
+  }
+  res.json({ ok: true, count: logs.length, logs });
 });
 
 app.post('/api/fuel-logs', (req, res) => {

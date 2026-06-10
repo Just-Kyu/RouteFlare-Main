@@ -2316,8 +2316,10 @@ async function init(){
   const savedCompanies = JSON.parse(localStorage.getItem('ff_companies') || '[]');
   const savedThreshold = localStorage.getItem('ff_threshold') || '20';
 
-  // If no local config, try loading shared config from server
-  if(!savedCompanies.length){
+  // Load shared config from server — adopt API keys if local is missing them.
+  // Trucks are fetched live from Samsara, so every computer needs the same keys.
+  const localHasKeys = savedKeys.some(k => k && k.length > 0);
+  if(!savedCompanies.length || !localHasKeys){
     try{
       const cfgRes = await fetch('/api/config');
       if(cfgRes.ok){
@@ -2325,8 +2327,8 @@ async function init(){
         console.log('[RouteFlare] Server config:', cfgJson.ok ? `${cfgJson.config?.companies?.length} companies` : 'empty');
         if(cfgJson.ok && cfgJson.config && cfgJson.config.companies?.length){
           const cfg = cfgJson.config;
-          const hasKeys = cfg.apiKeys?.some(k => k && k.length > 0);
-          if(hasKeys){
+          const serverHasKeys = cfg.apiKeys?.some(k => k && k.length > 0);
+          if(serverHasKeys){
             localStorage.setItem('ff_companies', JSON.stringify(cfg.companies));
             localStorage.setItem('ff_apiKeys', JSON.stringify(cfg.apiKeys));
             localStorage.setItem('ff_threshold', cfg.threshold || 20);
@@ -2411,8 +2413,11 @@ async function init(){
       const eiaStatus = document.getElementById('eiaStatus');
       if(eiaStatus) eiaStatus.textContent = 'Key saved — will use on next search';
       startAutoRefresh();
-      // Sync current config to server for team members
-      try{ fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ companies: savedCompanies, apiKeys: savedKeys, threshold: parseInt(savedThreshold), adminUrl: localStorage.getItem('rf_admin_url')||'' }) }); } catch(e){}
+      // Sync current config to server for team members — only if WE have valid keys,
+      // so we never overwrite good server config with empty keys (keeps trucks visible everywhere)
+      if(savedKeys.some(k => k && k.length > 0)){
+        try{ fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ companies: savedCompanies, apiKeys: savedKeys, threshold: parseInt(savedThreshold), adminUrl: localStorage.getItem('rf_admin_url')||'' }) }); } catch(e){}
+      }
     }, 100);
   } else {
     // No saved session — show login page

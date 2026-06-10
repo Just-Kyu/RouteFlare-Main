@@ -210,6 +210,15 @@ app.post('/api/config', (req, res) => {
   const { companies, apiKeys, threshold, adminUrl } = req.body;
   if (!companies || !apiKeys) return res.status(400).json({ error: 'Missing companies/apiKeys' });
 
+  // Never overwrite a config that has valid API keys with one that has none.
+  // This protects the shared keys (and therefore truck visibility) on every computer.
+  const incomingHasKeys = apiKeys.some(k => k && k.length > 0);
+  const existing = readJSON(CONFIG_FILE, null);
+  const existingHasKeys = existing && Array.isArray(existing.apiKeys) && existing.apiKeys.some(k => k && k.length > 0);
+  if (!incomingHasKeys && existingHasKeys) {
+    return res.json({ ok: true, skipped: 'kept existing keys' });
+  }
+
   const config = {
     companies,
     apiKeys,
@@ -218,7 +227,7 @@ app.post('/api/config', (req, res) => {
     updatedAt: new Date().toISOString(),
   };
   writeJSON(CONFIG_FILE, config);
-  console.log(`[config] Saved ${companies.length} companies`);
+  console.log(`[config] Saved ${companies.length} companies (keys: ${incomingHasKeys})`);
   res.json({ ok: true });
 });
 

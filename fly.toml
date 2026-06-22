@@ -1,4 +1,4 @@
-app = 'routeflare-fleet'
+app = 'routeflare-main'
 primary_region = 'iad'
 
 [build]

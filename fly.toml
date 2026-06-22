@@ -1,4 +1,4 @@
-app = 'routeflare-main'
+app = 'routeflare-fleet'
 primary_region = 'iad'
 
 [build]
@@ -6,7 +6,6 @@ primary_region = 'iad'
 [env]
   PORT = '8080'
   NODE_ENV = 'production'
-  DATA_DIR = '/data'
 
 [http_service]
   internal_port = 8080
@@ -14,10 +13,6 @@ primary_region = 'iad'
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-
-[mounts]
-  source = 'routeflare_data'
-  destination = '/data'
 
 [[vm]]
   memory = '256mb'

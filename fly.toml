@@ -9,6 +9,10 @@ primary_region = 'iad'
 [build]
 
 [env]
+
+  PORT = '8080'
+  NODE_ENV = 'production'
+
   DATA_DIR = '/data'
   NODE_ENV = 'production'
   PORT = '8080'

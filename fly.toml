@@ -11,6 +11,11 @@ primary_region = 'iad'
 [env]
   PORT = '8080'
   NODE_ENV = 'production'
+  DATA_DIR = '/data'
+
+[mounts]
+  source = 'routeflare_data'
+  destination = '/data'
 
 [http_service]
   internal_port = 8080

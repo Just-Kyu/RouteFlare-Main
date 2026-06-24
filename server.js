@@ -460,9 +460,18 @@ app.get('/api/seed-data', (req, res) => {
 });
 
 // ─── Serve frontend (AFTER api routes) ───────────────────
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/logo-icon.png', (req, res) => res.sendFile(path.join(__dirname, 'logo-icon.png')));
-app.get('/logo-full.png', (req, res) => res.sendFile(path.join(__dirname, 'logo-full.png')));
+app.get('/', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+app.get('/logo-icon.png', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.sendFile(path.join(__dirname, 'logo-icon.png'));
+});
+app.get('/logo-full.png', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.sendFile(path.join(__dirname, 'logo-full.png'));
+});
 
 // ─── Start ───────────────────────────────────────────────
 app.listen(PORT, () => {
